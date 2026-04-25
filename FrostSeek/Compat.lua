@@ -120,16 +120,25 @@ if textureMt and not textureMt.__index.SetColorTexture then
 end
 
 -- ==================== Region:SetShown Polyfill ====================
-local regionMt = getmetatable(CreateFrame("Frame"))
-if regionMt and not regionMt.__index.SetShown then
-    regionMt.__index.SetShown = function(self, shown)
-        if shown then
-            self:Show()
-        else
-            self:Hide()
-        end
+-- Frame metatable
+local frameMt = getmetatable(CreateFrame("Frame"))
+if frameMt and not frameMt.__index.SetShown then
+    frameMt.__index.SetShown = function(self, shown)
+        if shown then self:Show() else self:Hide() end
     end
 end
+
+-- Texture metatable
+local testFrame = CreateFrame("Frame")
+local testTex = testFrame:CreateTexture()
+local textureMt = getmetatable(testTex)
+if textureMt and not textureMt.__index.SetShown then
+    textureMt.__index.SetShown = function(self, shown)
+        if shown then self:Show() else self:Hide() end
+    end
+end
+testFrame = nil
+testTex = nil
 
 FrostSeekCompat = FrostSeekCompat or {}
 FrostSeekCompat.hasBackdropTemplate = false
