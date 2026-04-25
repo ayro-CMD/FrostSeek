@@ -19,7 +19,7 @@ Real-time player stats, average ilvl, role info, and module status overview.
 Automatic boss start/kill announcements with sound alerts and health tracking.
 
 ⚡ QOL
-Fast item deletion, friend online/offline notifications.
+Fast item deletion, friend online/offline notifications, chat spam filter, interupt tool.
 
 ⚙️ Settings
 8 categories: General, LFG, Popups, Word Filter, Custom Messages, Boss Alerts, UI, Advanced. Minimap button, position saving, UI scale, debug mode.
