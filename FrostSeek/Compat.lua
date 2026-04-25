@@ -115,7 +115,8 @@ end
 local textureMt = getmetatable(CreateFrame("Frame"):CreateTexture())
 if textureMt and not textureMt.__index.SetColorTexture then
     textureMt.__index.SetColorTexture = function(self, r, g, b, a)
-        self:SetTexture(r, g, b, a)
+        self:SetTexture(r, g, b)
+        if a then self:SetAlpha(a) end
     end
 end
 
