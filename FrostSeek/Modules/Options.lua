@@ -122,8 +122,10 @@ local function GetPlayerData()
             ["WARRIOR"] = "Warrior", ["PALADIN"] = "Paladin", ["HUNTER"] = "Hunter",
             ["ROGUE"] = "Rogue", ["PRIEST"] = "Priest", ["DEATHKNIGHT"] = "Death Knight",
             ["SHAMAN"] = "Shaman", ["MAGE"] = "Mage", ["WARLOCK"] = "Warlock",
-            ["DRUID"] = "Druid", ["HERO"] = "Hero",
-            -- Ascension A52 & CoA
+            ["DRUID"] = "Druid",
+            --A52(ascension)
+            ["HERO"] = "Hero",
+            --CoA
             ["NECROMANCER"] = "Necromancer", ["PYROMANCER"] = "Pyromancer",
             ["CULTIST"] = "Cultist", ["STARCALLER"] = "Starcaller",
             ["SUNCLERIC"] = "Suncleric", ["TINKER"] = "Tinker",
@@ -1067,17 +1069,28 @@ function Options:Initialize(parentFrame)
     self.desc:SetTextColor(0.8, 0.8, 0.8)
     
     local buttonsFrame = CreateFrame("Frame", nil, self.frame)
-    buttonsFrame:SetSize(760, 250)
-    buttonsFrame:SetPoint("CENTER", self.frame, "CENTER", 0, -30)
+    buttonsFrame:SetSize(760, 280)
+    buttonsFrame:SetPoint("CENTER", self.frame, "CENTER", 0, -60)
     
     self.openBtn = CreateModernButton(buttonsFrame, "Open Settings Window", 220, 45)
     self.openBtn:SetPoint("TOP", buttonsFrame, "TOP", 0, 0)
     self.openBtn:SetScript("OnClick", ShowOptionsWindow)
     
-    -- Funzione link (Discord, Curse, BugReport)
-    local function CreateLinkButton(parentFrame, text, link, color, yOffset)
-        local btn = CreateModernButton(parentFrame, text, 160, 35)
+        -- Funzione link con icona
+    local function CreateLinkButton(parentFrame, text, link, color, yOffset, iconPath)
+        local btn = CreateModernButton(parentFrame, text, 180, 35)
         btn:SetPoint("TOP", parentFrame, "TOP", 0, yOffset)
+
+        -- Icona
+        if iconPath then
+            local icon = btn:CreateTexture(nil, "OVERLAY")
+            icon:SetSize(20, 20)
+            icon:SetPoint("LEFT", btn, "LEFT", 10, 0)
+            icon:SetTexture(iconPath)
+            btn.text:ClearAllPoints()
+            btn.text:SetPoint("LEFT", icon, "RIGHT", 8, 0)
+        end
+
         btn:SetScript("OnClick", function()
             local editBox = ChatEdit_ChooseBoxForSend()
             if not editBox:IsVisible() then ChatEdit_ActivateChat(editBox) end
@@ -1104,9 +1117,10 @@ function Options:Initialize(parentFrame)
         return btn
     end
 
-    CreateLinkButton(buttonsFrame, "Discord", "https://discord.gg/T5rtyW9yX4", {r=0.345, g=0.396, b=0.949}, -60)
-    CreateLinkButton(buttonsFrame, "CurseForge", "https://www.curseforge.com/wow/addons/frostseek", {r=0.937, g=0.502, b=0.196}, -110)
-    CreateLinkButton(buttonsFrame, "BugReport", "https://discord.gg/uvtvKXzbXW", {r=0.863, g=0.078, b=0.235}, -160)
+    CreateLinkButton(buttonsFrame, "Discord", "https://discord.gg/T5rtyW9yX4", {r=0.345, g=0.396, b=0.949}, -50, "Interface\\AddOns\\FrostSeek\\Media\\texture\\bottoni\\discord.tga")
+    CreateLinkButton(buttonsFrame, "CurseForge", "https://www.curseforge.com/wow/addons/frostseek", {r=0.937, g=0.502, b=0.196}, -90, "Interface\\AddOns\\FrostSeek\\Media\\texture\\bottoni\\forge.tga")
+    CreateLinkButton(buttonsFrame, "GitHub", "https://github.com/ayro-CMD/FrostSeek", {r=0.533, g=0.533, b=0.533}, -130, "Interface\\AddOns\\FrostSeek\\Media\\texture\\bottoni\\Kjrt.tga")
+    CreateLinkButton(buttonsFrame, "BugReport", "https://discord.gg/uvtvKXzbXW", {r=0.863, g=0.078, b=0.235}, -170, "Interface\\AddOns\\FrostSeek\\Media\\texture\\bottoni\\bug.tga")
     
     self.statusFrame = CreateFrame("Frame", nil, self.frame)
     self.statusFrame:SetSize(550, 80)
