@@ -122,10 +122,8 @@ local function GetPlayerData()
             ["WARRIOR"] = "Warrior", ["PALADIN"] = "Paladin", ["HUNTER"] = "Hunter",
             ["ROGUE"] = "Rogue", ["PRIEST"] = "Priest", ["DEATHKNIGHT"] = "Death Knight",
             ["SHAMAN"] = "Shaman", ["MAGE"] = "Mage", ["WARLOCK"] = "Warlock",
-            ["DRUID"] = "Druid",
-            --A52(ascension)
-            ["HERO"] = "Hero",
-            --CoA
+            ["DRUID"] = "Druid", ["HERO"] = "Hero",
+            -- Ascension A52 & CoA
             ["NECROMANCER"] = "Necromancer", ["PYROMANCER"] = "Pyromancer",
             ["CULTIST"] = "Cultist", ["STARCALLER"] = "Starcaller",
             ["SUNCLERIC"] = "Suncleric", ["TINKER"] = "Tinker",
@@ -628,8 +626,11 @@ local SETTINGS_CATEGORIES = {
         { type = "checkbox", id = "doNotAlertInCombat", name = "No Alerts in Combat", desc = "Don't show alerts when in combat", default = true, getter = function() return FrostSeekDB.LFG.doNotAlertInCombat end, setter = function(v) FrostSeekDB.LFG.doNotAlertInCombat = v end },
         { type = "slider", id = "frameDuration", name = "Popup Duration", desc = "How long popups stay visible (seconds)", min = 2, max = 10, step = 1, default = 5, getter = function() return FrostSeekDB.LFG.frameDuration end, setter = function(v) FrostSeekDB.LFG.frameDuration = v end },
         { type = "slider", id = "popupCooldown", name = "Popup Cooldown", desc = "Time between identical popups (seconds)", min = 60, max = 600, step = 10, default = 370, getter = function() return FrostSeekDB.LFG.popupCooldown end, setter = function(v) FrostSeekDB.LFG.popupCooldown = v end },
-        { type = "slider", id = "maxConcurrentPopups", name = "Max Popups", desc = "Maximum number of popups shown at once", min = 1, max = 5, step = 1, default = 2, getter = function() return FrostSeekDB.LFG.maxConcurrentPopups end, setter = function(v) FrostSeekDB.LFG.maxConcurrentPopups = v end }
+        { type = "slider", id = "maxConcurrentPopups", name = "Max Popups", desc = "Maximum number of popups shown at once", min = 1, max = 5, step = 1, default = 2, getter = function() return FrostSeekDB.LFG.maxConcurrentPopups end, setter = function(v) FrostSeekDB.LFG.maxConcurrentPopups = v end },
+        { type = "checkbox", id = "enableDungeonFilter", name = "Filter by Specific Dungeons", desc = "Only show alerts for dungeons you type below (leave empty = show all)", default = false, getter = function() return FrostSeekDB.LFG.enableDungeonFilter or false end, setter = function(v) FrostSeekDB.LFG.enableDungeonFilter = v end },
+        { type = "editbox", id = "dungeonFilterList", name = "Dungeon Keywords:", desc = "Comma-separated dungeon names. Examples: hoc,pos,fos,hor,icc,naxx,strat", default = "", getter = function() return FrostSeekDB.LFG.dungeonFilterList or "" end, setter = function(v) FrostSeekDB.LFG.dungeonFilterList = v end }
     }},
+
     { id = "bossannounce", name = "Boss Announce", icon = "Interface\\Icons\\INV_Misc_MonsterHead_01", settings = {
     { type = "header", id = "bossAnnounceHeader", name = "", desc = "Configure automatic boss fight announcements" },
     { type = "checkbox", id = "enabled", name = "Enable Boss Announcements", desc = "Automatically announce boss fights in chat", default = false, 
@@ -865,6 +866,30 @@ local function CreateSettingControl(parent, setting, yOffset)
         button:SetScript("OnClick", function() if setting.onClick then setting.onClick() end end)
         return controlFrame, -45, button
     
+        elseif setting.type == "editbox" then
+        local editBox = CreateCleanEditBox(parent, 350, 25)
+        editBox:SetPoint("RIGHT", controlFrame, "RIGHT", -10, 0)
+        nameLabel:SetPoint("RIGHT", editBox, "LEFT", -5, 0)
+        nameLabel:SetJustifyH("LEFT")
+
+        local function Update()
+            local v = setting.getter and setting.getter() or ""
+            editBox:SetText(v or "")
+        end
+        Update()
+
+        editBox:SetScript("OnTextChanged", function(self)
+            if setting.setter then setting.setter(self:GetText()) end
+        end)
+        editBox:SetScript("OnEscapePressed", function(self)
+            self:ClearFocus()
+        end)
+        editBox:SetScript("OnEnterPressed", function(self)
+            self:ClearFocus()
+        end)
+        editBox.UpdateFromDB = Update
+        return controlFrame, -45, editBox
+
     elseif setting.type == "header" then
         local headerFrame = CreateFrame("Frame", nil, parent)
         headerFrame:SetSize(540, 40)
