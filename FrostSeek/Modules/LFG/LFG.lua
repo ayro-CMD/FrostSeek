@@ -1,5 +1,5 @@
 -- ============================================================
--- FrostSeek - LFG Module Modern UI
+-- FrostSeek - LFG Module
 -- ============================================================
 
 local FrostSeek = _G.FrostSeek
@@ -332,7 +332,7 @@ local SPAM_WORDS = {
     "stream", "streamer", "content creator", "clip", "recording", "obs", "studio",
     "tiktok", "instagram", "twitter", "facebook", "reddit", "patreon", "paypal",
     "donate", "donation", "tip", "support me", "follow", "subscribe", "giveaway",
-    "raffle", "contest", "prize", "merch", "store", "shop", "buy now","up",
+    "raffle", "contest", "prize", "merch", "store", "shop", "buy now",
     -- Addons / UI
     "weakaura", "weakauras", "elvui", "tukui", "details", "plater", "dbm", "bigwigs",
     -- Misc spam
@@ -342,9 +342,9 @@ local SPAM_WORDS = {
     "long term", "first realm", "auto", "kick", "doing", "fuck", "tamb",
     "tSM", "mRP", "trp", "total rp",
     -- WoW guild tags in chat
-    "<Forsaken>", "Forsaken",
+    "<Forsaken>", "Forsaken","up",
     -- Scam / Gamble
-    "gamble", "bet", "wager", "jackpot", "lottery", "lucky draw", "spin the wheel","mailboxes",
+    "gamble", "bet", "wager", "jackpot", "lottery", "lucky draw", "spin the wheel",
     -- Days of week
     "raid on wednesday", "raid on thursday", "raid on friday", "raid on saturday",
     "raid on sunday", "raid on monday", "raid on tuesday",
@@ -716,8 +716,30 @@ function LFG.RecordActiveSearch(sender, message, channel)
     
     local category, dungeon, isHeroic, isMythic, isRaid, isKeystone, isPvp = LFG.ClassifyMessage(message)
 
-    if category == "MISC" then
+        if category == "MISC" then
         return
+    end
+
+    -- Dungeon-specific filter
+    if FrostSeekDB.LFG and FrostSeekDB.LFG.enableDungeonFilter and FrostSeekDB.LFG.dungeonFilterList and FrostSeekDB.LFG.dungeonFilterList ~= "" then
+        local filterLower = string.lower(FrostSeekDB.LFG.dungeonFilterList)
+        local dungeonLower = string.lower(dungeon or "")
+        local messageLower = string.lower(message or "")
+
+        local matchFound = false
+        for keyword in string.gmatch(filterLower, "[^,]+") do
+            keyword = keyword:match("^%s*(.-)%s*$") -- trim
+            if keyword ~= "" then
+                if string.find(dungeonLower, keyword, 1, true) or string.find(messageLower, keyword, 1, true) then
+                    matchFound = true
+                    break
+                end
+            end
+        end
+
+        if not matchFound then
+            return
+        end
     end
 
     local isManastorm = (category == "MANASTORM")
