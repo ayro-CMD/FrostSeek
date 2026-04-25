@@ -26,7 +26,7 @@ function Dashboard:Initialize(parentFrame)
     
     local versionText = infoFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     versionText:SetPoint("TOPRIGHT", infoFrame, "TOPRIGHT", -20, -15)
-    versionText:SetText("|cFF88CCFFv1.4|r")
+    versionText:SetText("|cFF88CCFF|r")
     
     local sep = self.frame:CreateTexture(nil, "BACKGROUND")
     sep:SetPoint("TOP", infoFrame, "BOTTOM", 0, -5)
