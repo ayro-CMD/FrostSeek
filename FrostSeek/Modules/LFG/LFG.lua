@@ -15,6 +15,11 @@ local spammerList = spammerList or {}
 local currentScrollOffset = 0
 local MAX_DISPLAY_ROWS = 11
 local lastPopupTimes = {}
+local lfgSearchText = ""
+local lfgSearchDebounce = nil
+local mutedPlayers = {}
+local popupQueue = {}
+local isProcessingQueue = false
 local sessionStartTime = GetTime()
 
 -- ==================== HELPER FUNCTIONS ====================
@@ -237,6 +242,52 @@ local function CreateModernDropdown(parent, width, height)
     end
 
     return dd
+end
+
+local function CreateModernEditBox(parent, width, height)
+    local eb = CreateFrame("EditBox", nil, parent)
+    eb:SetSize(width or 120, height or 20)
+    eb:SetAutoFocus(false)
+    eb:SetFontObject("GameFontNormalSmall")
+    eb:SetTextInsets(6, 6, 0, 0)
+
+    eb.bg = eb:CreateTexture(nil, "BACKGROUND")
+    eb.bg:SetPoint("TOPLEFT", 1, -1)
+    eb.bg:SetPoint("BOTTOMRIGHT", -1, 1)
+    eb.bg:SetColorTexture(0.08, 0.08, 0.10, 0.85)
+
+    eb.border = eb:CreateTexture(nil, "BORDER")
+    eb.border:SetPoint("TOPLEFT", 0, 0)
+    eb.border:SetPoint("BOTTOMRIGHT", 0, 0)
+    eb.border:SetColorTexture(0.25, 0.28, 0.32, 0.9)
+
+    eb.accent = eb:CreateTexture(nil, "OVERLAY")
+    eb.accent:SetPoint("BOTTOMLEFT", 2, 0)
+    eb.accent:SetPoint("BOTTOMRIGHT", -2, 0)
+    eb.accent:SetHeight(1.5)
+    eb.accent:SetColorTexture(0.3, 0.55, 0.75, 0.5)
+
+    eb:SetScript("OnEditFocusGained", function(self)
+        self.bg:SetColorTexture(0.10, 0.14, 0.20, 0.95)
+        self.border:SetColorTexture(0.35, 0.60, 0.85, 1.0)
+        self.accent:SetColorTexture(0.45, 0.70, 1.0, 0.9)
+    end)
+
+    eb:SetScript("OnEditFocusLost", function(self)
+        self.bg:SetColorTexture(0.08, 0.08, 0.10, 0.85)
+        self.border:SetColorTexture(0.25, 0.28, 0.32, 0.9)
+        self.accent:SetColorTexture(0.3, 0.55, 0.75, 0.5)
+    end)
+
+    eb:SetScript("OnEscapePressed", function(self)
+        self:ClearFocus()
+    end)
+
+    eb:SetScript("OnEnterPressed", function(self)
+        self:ClearFocus()
+    end)
+
+    return eb
 end
 
 -- ==================== KEYWORDS ====================
@@ -992,9 +1043,37 @@ function LFG.CountActivePopups()
     return count
 end
 
+function LFG.ProcessPopupQueue()
+    if #popupQueue == 0 then
+        isProcessingQueue = false
+        return
+    end
+
+    if LFG.CountActivePopups() >= (FrostSeekDB.LFG.maxConcurrentPopups or 3) then
+        C_Timer.After(1, function()
+            LFG.ProcessPopupQueue()
+        end)
+        return
+    end
+
+    local nextPopup = table.remove(popupQueue, 1)
+    isProcessingQueue = false
+
+    LFG.CreateLFGPopup(
+        nextPopup.sender,
+        nextPopup.message,
+        nextPopup.dungeon,
+        nextPopup.isHeroic,
+        nextPopup.isRaid,
+        nextPopup.isPvp,
+        nextPopup.isKeystone,
+        nextPopup.isManastorm,
+        nextPopup.category
+    )
+end
+
 function LFG.RemovePopupFrame(frame)
     if frame then
-       
         if frame.category and FrostSeek and FrostSeek.RemoveMinimapCategory then
             FrostSeek.RemoveMinimapCategory(frame.category)
         end
@@ -1007,8 +1086,14 @@ function LFG.RemovePopupFrame(frame)
                 break
             end
         end
+        LFG.RepositionPopups()
+        
+        if #popupQueue > 0 then
+            C_Timer.After(1, function()
+                LFG.ProcessPopupQueue()
+            end)
+        end
     end
-    LFG.RepositionPopups()
 end
 
 function LFG.RepositionPopups()
@@ -1031,9 +1116,27 @@ function LFG.CreateLFGPopup(sender, message, dungeon, isHeroic, isRaid, isPvp, i
     if FrostSeekDB.LFG.disableLFG then return end
     if FrostSeekDB.LFG.doNotAlertInGroup and IsInGroup() then return end
     if FrostSeekDB.LFG.doNotAlertInCombat and UnitAffectingCombat("player") then return end
+        local activePopupCount = LFG.CountActivePopups()
     
-    local activePopupCount = LFG.CountActivePopups()
-    if activePopupCount >= (FrostSeekDB.LFG.maxConcurrentPopups or 3) then return end
+        -- Controlla se il player è mutato
+    if mutedPlayers[sender] and GetTime() < mutedPlayers[sender] then
+        return
+    end
+
+        if activePopupCount >= (FrostSeekDB.LFG.maxConcurrentPopups or 3) then
+        table.insert(popupQueue, {
+            sender = sender,
+            message = message,
+            dungeon = dungeon,
+            isHeroic = isHeroic,
+            isRaid = isRaid,
+            isPvp = isPvp,
+            isKeystone = isKeystone,
+            isManastorm = isManastorm,
+            category = category,
+        })
+        return
+    end
     
     if not FrostSeekDB.LFG.popupCategories[category] and not FrostSeekDB.LFG.popupCategories["ALL"] then
         return
@@ -1202,11 +1305,22 @@ function LFG.CreateLFGPopup(sender, message, dungeon, isHeroic, isRaid, isPvp, i
     declineBtn:SetScript("OnClick", function()
         LFG.RemovePopupFrame(popup)
     end)
+
+        local muteBtn = CreateModernButton(popup, 50, btnHeight, "Mute", {0.7, 0.5, 0.1})
+    muteBtn:SetPoint("LEFT", declineBtn, "RIGHT", btnSpacing, 0)
+    muteBtn:SetScript("OnClick", function()
+        mutedPlayers[sender] = GetTime() + 1800
+        LFG.RemovePopupFrame(popup)
+        print("|cffff8800FrostSeek:|r Muted " .. sender .. " for 30 minutes")
+    end)
     
-    local duration = FrostSeekDB.LFG.frameDuration or 6
-    C_Timer.After(duration, function()
-        if popup and popup:IsShown() then
-            LFG.RemovePopupFrame(popup)
+            
+    local duration = FrostSeekDB.LFG.frameDuration or 5
+    popup.expiryTime = GetTime() + duration
+    popup:SetScript("OnUpdate", function(self, elapsed)
+        if GetTime() >= self.expiryTime then
+            self:SetScript("OnUpdate", nil)
+            LFG.RemovePopupFrame(self)
         end
     end)
     
@@ -1241,6 +1355,15 @@ function LFG.CleanupActiveSearches()
         if LFG.UpdateRecruitersList then LFG.UpdateRecruitersList() end
     end
 end
+
+C_Timer.NewTicker(300, function()
+    local now = GetTime()
+    for name, expiry in pairs(mutedPlayers) do
+        if now >= expiry then
+            mutedPlayers[name] = nil
+        end
+    end
+end)
 
 function LFG.ClearAllSearches()
     activeSearches = {}
@@ -1301,12 +1424,26 @@ function LFG.UpdateRecruitersList()
     end
     LFG.recruitersList.rows = {}
     
-    local filteredSearches = {}
+       local filteredSearches = {}
+    local searchLower = lfgSearchText and string.lower(lfgSearchText) or ""
     for _, search in ipairs(activeSearches) do
         if LFG.GroupMatchesCategory(search, LFG.CurrentCategory or "ALL") then
-            table.insert(filteredSearches, search)
+            if searchLower == "" then
+                table.insert(filteredSearches, search)
+            else
+                local msgLower = string.lower(search.message or "")
+                local playerLower = string.lower(search.player or "")
+                local dungeonLower = string.lower(search.dungeon or "")
+                local catLower = string.lower(search.category or "")
+                if string.find(msgLower, searchLower, 1, true)
+                    or string.find(playerLower, searchLower, 1, true)
+                    or string.find(dungeonLower, searchLower, 1, true)
+                    or string.find(catLower, searchLower, 1, true) then
+                    table.insert(filteredSearches, search)
+                end
+            end
         end
-    end
+    end 
     
     if LFG.lfgCountText then
         LFG.lfgCountText:SetText("Active Recruiters: " .. #filteredSearches)
@@ -1579,11 +1716,43 @@ function LFG:Initialize(parentFrame)
     self.lfgCountText:SetPoint("TOP", self.title, "BOTTOM", 0, -4)
     self.lfgCountText:SetText("Active Recruiters: 0")
     self.lfgCountText:SetTextColor(0.6, 0.8, 1)
+
+    -- ===== SEARCH BAR =====
+    self.searchFrame = CreateFrame("Frame", nil, self.mainContainer)
+    self.searchFrame:SetSize(740, 26)
+    self.searchFrame:SetPoint("TOP", self.lfgCountText, "BOTTOM", 0, -4)
+    
+    local searchLabel = self.searchFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    searchLabel:SetPoint("LEFT", self.searchFrame, "LEFT", 10, 0)
+    searchLabel:SetText("Search:")
+    searchLabel:SetTextColor(0.8, 0.8, 0.8)
+    
+    self.lfgSearchBox = CreateModernEditBox(self.searchFrame, 300, 18)
+    self.lfgSearchBox:SetPoint("LEFT", searchLabel, "RIGHT", 10, 0)
+    self.lfgSearchBox:SetText("")
+        self.lfgSearchBox:SetScript("OnTextChanged", function(self)
+        lfgSearchText = self:GetText()
+        currentScrollOffset = 0
+        if lfgSearchDebounce then lfgSearchDebounce:Cancel() end
+        lfgSearchDebounce = C_Timer.After(0.25, function()
+            LFG.UpdateRecruitersList()
+        end)
+    end)
+    
+    local clearSearchBtn = CreateModernButton(self.searchFrame, 45, 18, "Clear", {0.5, 0.5, 0.55})
+    clearSearchBtn:SetPoint("LEFT", self.lfgSearchBox, "RIGHT", 5, 0)
+        clearSearchBtn:SetScript("OnClick", function()
+        self.lfgSearchBox:SetText("")
+        lfgSearchText = ""
+        currentScrollOffset = 0
+        if lfgSearchDebounce then lfgSearchDebounce:Cancel() end
+        LFG.UpdateRecruitersList()
+    end)
     
     -- ===== RECRUITERS FRAME =====
     self.recruitersFrame = CreateFrame("Frame", nil, self.mainContainer)
     self.recruitersFrame:SetSize(740, 360)
-    self.recruitersFrame:SetPoint("TOP", self.lfgCountText, "BOTTOM", 0, -8)
+    self.recruitersFrame:SetPoint("TOP", self.searchFrame, "BOTTOM", 0, -8)
     
     local recruitersBg = self.recruitersFrame:CreateTexture(nil, "BACKGROUND")
     recruitersBg:SetAllPoints()
@@ -1702,7 +1871,7 @@ function LFG:Initialize(parentFrame)
     self.controlsFrame:SetPoint("BOTTOM", self.mainContainer, "BOTTOM", 0, 5)
     
     local refreshBtn = CreateModernButton(self.controlsFrame, 70, 22, "Refresh", {0.3, 0.55, 0.75})
-    refreshBtn:SetPoint("LEFT", self.controlsFrame, "LEFT", 10, 0)
+    refreshBtn:SetPoint("LEFT", self.controlsFrame, "LEFT", 10, -30)
     refreshBtn:SetScript("OnClick", function()
         currentScrollOffset = 0
         if LFG.UpdateRecruitersList then LFG.UpdateRecruitersList() end
@@ -1816,6 +1985,8 @@ sortKeywordsByLength(WORLD_BOSS_KEYWORDS)
 sortKeywordsByLength(PVP_KEYWORDS)
 sortKeywordsByLength(MANASTORM_KEYWORDS)
 sortKeywordsByLength(DUNGEON_KEYWORDS)
+
+
 
 -- ==================== MODULE REGISTRATION ====================
 local function RegisterLFGModule()
