@@ -1,0 +1,7 @@
+<Ui xmlns="http://www.blizzard.com/wow/ui/">
+<Script file="Compat.lua"/>
+<Script file="Core.lua"/>
+<Include file="Modules\LFG\lf.xml"/>
+<Include file="Modules\QOL\qol.xml"/>
+<Include file="Modules\Module.xml"/>
+</Ui>
