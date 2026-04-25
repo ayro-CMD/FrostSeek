@@ -1008,6 +1008,19 @@ function LFG.RemovePopupFrame(frame)
             end
         end
     end
+    LFG.RepositionPopups()
+end
+
+function LFG.RepositionPopups()
+    local activeCount = 0
+    for _, frame in ipairs(openFrames) do
+        if frame and frame:IsShown() then
+            local yOffset = 50 + (activeCount * 110)
+            frame:ClearAllPoints()
+            frame:SetPoint("TOP", UIParent, "TOP", 0, -yOffset)
+            activeCount = activeCount + 1
+        end
+    end
 end
 
 -- ==================== POPUP CREATION  ====================
