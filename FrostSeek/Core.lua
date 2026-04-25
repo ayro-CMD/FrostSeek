@@ -142,7 +142,7 @@ local MainFrame = FrostSeek.MainFrame
 MainFrame:Hide()
 
 MainFrame:SetWidth(800)
-MainFrame:SetHeight(600)
+MainFrame:SetHeight(630)
 MainFrame:SetPoint("CENTER")
 MainFrame:SetFrameStrata("HIGH")
 
