@@ -332,7 +332,7 @@ local SPAM_WORDS = {
     "stream", "streamer", "content creator", "clip", "recording", "obs", "studio",
     "tiktok", "instagram", "twitter", "facebook", "reddit", "patreon", "paypal",
     "donate", "donation", "tip", "support me", "follow", "subscribe", "giveaway",
-    "raffle", "contest", "prize", "merch", "store", "shop", "buy now",
+    "raffle", "contest", "prize", "merch", "store", "shop", "buy now","up",
     -- Addons / UI
     "weakaura", "weakauras", "elvui", "tukui", "details", "plater", "dbm", "bigwigs",
     -- Misc spam
@@ -344,7 +344,7 @@ local SPAM_WORDS = {
     -- WoW guild tags in chat
     "<Forsaken>", "Forsaken",
     -- Scam / Gamble
-    "gamble", "bet", "wager", "jackpot", "lottery", "lucky draw", "spin the wheel",
+    "gamble", "bet", "wager", "jackpot", "lottery", "lucky draw", "spin the wheel","mailboxes",
     -- Days of week
     "raid on wednesday", "raid on thursday", "raid on friday", "raid on saturday",
     "raid on sunday", "raid on monday", "raid on tuesday",
