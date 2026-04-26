@@ -1894,6 +1894,23 @@ function LFG:GetActiveRecruiterCount()
     return activeSearches and #activeSearches or 0
 end
 
+-- ==================== BLACKLIST ADDON LFG ESTERNO ====================
+
+local CHANNEL_BLACKLIST = {
+    ["LFG"] = true,
+    [" LFG"] = true,
+}
+
+local function IsAddonProtocolMessage(msg)
+    if not msg then return false end
+    
+    local _, count = string.gsub(msg, ":", "")
+    if count < 2 then return false end
+    return string.match(msg, "^[Ll][Ff][Gg]:") 
+        or string.match(msg, "^[Ll][Ff][Mm]:") 
+        or string.match(msg, "^%[[Ll][Ff][Gg]%]:")
+end
+
 -- ==================== EVENT HANDLER ====================
 local EventFrame = CreateFrame("Frame")
 EventFrame:RegisterEvent("CHAT_MSG_CHANNEL")
@@ -1906,17 +1923,42 @@ EventFrame:RegisterEvent("CHAT_MSG_RAID_LEADER")
 EventFrame:RegisterEvent("CHAT_MSG_PARTY")
 EventFrame:RegisterEvent("CHAT_MSG_PARTY_LEADER")
 
-EventFrame:SetScript("OnEvent", function(self, event, message, sender, ...)
+EventFrame:SetScript("OnEvent", function(self, event, message, sender, language, channelName, ...)
     if FrostSeekDB.LFG and FrostSeekDB.LFG.disableLFG then return end
     if not message or not sender then return end
     
     sender = string.gsub(sender, "%-[^|]+", "")
     if sender == UnitName("player") then return end
     
+    if IsAddonProtocolMessage(message) then return end
+    
     local channel = event
     if event == "CHAT_MSG_CHANNEL" then
-        local arg8 = select(8, ...)
-        channel = arg8 or "CHANNEL"
+        
+        local cleanName = channelName and string.match(channelName, "^%s*(.-)%s*$") or ""
+        if CHANNEL_BLACKLIST[cleanName] then return end
+        
+        
+        local chNum = select(9, ...)
+        if chNum then
+            local n = GetChannelName(chNum)
+            if n then
+                n = string.match(n, "^%s*(.-)%s*$") or ""
+                if CHANNEL_BLACKLIST[n] then return end
+            end
+        end
+        
+        
+        local chIdx = select(8, ...)
+        if chIdx then
+            local n = GetChannelName(chIdx)
+            if n then
+                n = string.match(n, "^%s*(.-)%s*$") or ""
+                if CHANNEL_BLACKLIST[n] then return end
+            end
+        end
+        
+        channel = cleanName or "CHANNEL"
     end
     
     if LFG.IsLFMMessage(message) then
