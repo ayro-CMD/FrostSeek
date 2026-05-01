@@ -1769,7 +1769,7 @@ function LFG:Initialize(parentFrame)
         self.lfgSearchBox:SetScript("OnTextChanged", function(self)
         lfgSearchText = self:GetText()
         currentScrollOffset = 0
-        if lfgSearchDebounce then lfgSearchDebounce:Cancel() end
+        if lfgSearchDebounce and lfgSearchDebounce.Cancel then lfgSearchDebounce:Cancel() end
         lfgSearchDebounce = C_Timer.After(0.25, function()
             LFG.UpdateRecruitersList()
         end)
@@ -1781,7 +1781,7 @@ function LFG:Initialize(parentFrame)
         self.lfgSearchBox:SetText("")
         lfgSearchText = ""
         currentScrollOffset = 0
-        if lfgSearchDebounce then lfgSearchDebounce:Cancel() end
+        if lfgSearchDebounce and lfgSearchDebounce.Cancel then lfgSearchDebounce:Cancel() end
         LFG.UpdateRecruitersList()
     end)
     
