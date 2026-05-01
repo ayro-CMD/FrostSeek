@@ -2,7 +2,7 @@
 ## Title: |cff5fa9e0F|cff88ccffr|cff99ddffo|cff00ffffs|cff30e6d4t|cffb5e61dS|cffbfff40e|cffd0e630e|cfff5fc3dk
 ## Notes: Advanced LFG/LFM Manager
 ## Author: |cff2359ffAyro
-## Version: |cffffa5c01.4.5
+## Version: |cffffa5c01.4.6
 ## SavedVariables: FrostSeekDB
 ## OptionalDeps: Arui
 ## X-Category: Interface Enhancements
