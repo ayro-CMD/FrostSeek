@@ -21,6 +21,7 @@ local lfgSearchDebounce = nil
 local mutedPlayers = {}
 local popupQueue = {}
 local isProcessingQueue = false
+local rowPool = {}
 local sessionStartTime = GetTime()
 
 -- ==================== HELPER FUNCTIONS ====================
@@ -1099,7 +1100,7 @@ function LFG.CreateLFGPopup(sender, message, dungeon, isHeroic, isRaid, isPvp, i
     if category == "MISC" then return end
     if FrostSeekDB.LFG.disablePopups then return end
     if FrostSeekDB.LFG.disableLFG then return end
-    if FrostSeekDB.LFG.doNotAlertInGroup and IsInGroup() then return end
+    if FrostSeekDB.LFG.doNotAlertInGroup and (GetNumPartyMembers() > 0 or GetNumRaidMembers() > 0) then return end
     if FrostSeekDB.LFG.doNotAlertInCombat and UnitAffectingCombat("player") then return end
         local activePopupCount = LFG.CountActivePopups()
     
@@ -1395,19 +1396,156 @@ function LFG.UpdatePlayerInfo()
         classInfo, ilvl, roleText, enchant))
 end
 
+-- ==================== ROW POOL (FIX MEMORY LEAK 3.3.5) ====================
+function LFG.InitRowPool(parent)
+    rowPool = {}
+    local rowHeight = 26
+
+    for i = 1, MAX_DISPLAY_ROWS do
+        local row = CreateFrame("Frame", nil, parent)
+        row:SetSize(740, rowHeight)
+
+        if i == 1 then
+            row:SetPoint("TOP", parent, "TOP", 0, -2)
+        else
+            row:SetPoint("TOP", rowPool[i-1].frame, "BOTTOM", 0, 0)
+        end
+
+        local bg = row:CreateTexture(nil, "BACKGROUND")
+        bg:SetPoint("TOPLEFT", 3, 0)
+        bg:SetPoint("BOTTOMRIGHT", 0, 0)
+        bg:SetColorTexture(0.08, 0.08, 0.11, 0.15)
+
+        local accentBar = row:CreateTexture(nil, "BACKGROUND")
+        accentBar:SetPoint("TOPLEFT", 0, 0)
+        accentBar:SetSize(3, rowHeight)
+        accentBar:SetColorTexture(0.5, 0.5, 0.5, 0.7)
+
+        local separator = row:CreateTexture(nil, "BACKGROUND")
+        separator:SetPoint("BOTTOMLEFT", 6, 0)
+        separator:SetPoint("BOTTOMRIGHT", -2, 0)
+        separator:SetHeight(1)
+        separator:SetColorTexture(0.2, 0.2, 0.25, 0.3)
+
+        local dot = row:CreateTexture(nil, "OVERLAY")
+        dot:SetSize(6, 6)
+        dot:SetPoint("LEFT", row, "LEFT", 12, 0)
+        dot:SetColorTexture(0.5, 0.5, 0.5, 0.9)
+
+        local nameText = row:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+        nameText:SetPoint("LEFT", dot, "RIGHT", 6, 0)
+        nameText:SetWidth(80)
+        nameText:SetJustifyH("LEFT")
+        nameText:SetText("")
+        nameText:SetTextColor(0.6, 0.8, 1)
+
+        local timeText = row:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+        timeText:SetPoint("LEFT", nameText, "RIGHT", 10, 0)
+        timeText:SetWidth(40)
+        timeText:SetJustifyH("LEFT")
+        timeText:SetText("")
+        timeText:SetTextColor(0.5, 0.5, 0.55)
+
+        local catText = row:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+        catText:SetPoint("LEFT", timeText, "RIGHT", 8, 0)
+        catText:SetWidth(30)
+        catText:SetJustifyH("LEFT")
+        catText:SetText("")
+
+        local dungeonText = row:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+        dungeonText:SetPoint("LEFT", catText, "RIGHT", 6, 0)
+        dungeonText:SetWidth(80)
+        dungeonText:SetJustifyH("LEFT")
+        dungeonText:SetText("")
+        dungeonText:SetTextColor(0.8, 0.8, 0.8)
+
+        local msgText = row:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+        msgText:SetPoint("LEFT", dungeonText, "RIGHT", 8, 0)
+        msgText:SetPoint("RIGHT", row, "RIGHT", -70, 0)
+        msgText:SetJustifyH("LEFT")
+        msgText:SetText("")
+        msgText:SetTextColor(0.95, 0.95, 0.95)
+
+        local tooltipFrame = CreateFrame("Frame", nil, row)
+        tooltipFrame:SetPoint("LEFT", dungeonText, "RIGHT", 8, 0)
+        tooltipFrame:SetPoint("RIGHT", row, "RIGHT", -70, 0)
+        tooltipFrame:SetHeight(rowHeight)
+        tooltipFrame:EnableMouse(true)
+
+        local tooltipBg = tooltipFrame:CreateTexture(nil, "BACKGROUND")
+        tooltipBg:SetAllPoints()
+        tooltipBg:SetColorTexture(0, 0, 0, 0)
+
+        local acceptBtn = CreateModernButton(row, 60, 20, "Accept", {0.25, 0.7, 0.35})
+        acceptBtn:SetPoint("RIGHT", row, "RIGHT", -8, 0)
+        acceptBtn:SetScript("OnClick", function()
+            local pr = rowPool[i]
+            if pr and pr.currentRecord then
+                local msg = LFG.CreateWhisperMessage()
+                SendChatMessage(msg, "WHISPER", nil, pr.currentRecord.player)
+                print("|cff88ccffFrostSeek LFG:|r Whisper sent to " .. pr.currentRecord.player)
+            end
+        end)
+
+        row:SetScript("OnEnter", function(self)
+            local pr = rowPool[i]
+            local accent = pr.accent
+            local ri = pr.rowIndex
+            pr.bg:SetColorTexture(0.18, 0.25, 0.35, 0.45)
+            pr.accentBar:SetColorTexture(accent[1], accent[2], accent[3], 1.0)
+            pr.dot:SetColorTexture(accent[1], accent[2], accent[3], 1.0)
+            pr.nameText:SetTextColor(0.8, 0.9, 1)
+        end)
+
+        row:SetScript("OnLeave", function(self)
+            local pr = rowPool[i]
+            local accent = pr.accent
+            local ri = pr.rowIndex
+            if ri % 2 == 0 then
+                pr.bg:SetColorTexture(0.12, 0.12, 0.15, 0.25)
+            else
+                pr.bg:SetColorTexture(0.08, 0.08, 0.11, 0.15)
+            end
+            pr.accentBar:SetColorTexture(accent[1], accent[2], accent[3], 0.7)
+            pr.dot:SetColorTexture(accent[1], accent[2], accent[3], 0.9)
+            pr.nameText:SetTextColor(0.6, 0.8, 1)
+        end)
+
+        row:Hide()
+
+        rowPool[i] = {
+            frame = row,
+            bg = bg,
+            accentBar = accentBar,
+            dot = dot,
+            nameText = nameText,
+            timeText = timeText,
+            catText = catText,
+            dungeonText = dungeonText,
+            msgText = msgText,
+            tooltipFrame = tooltipFrame,
+            accent = {0.5, 0.5, 0.5},
+            currentRecord = nil,
+            rowIndex = i,
+        }
+    end
+end
+
 function LFG.UpdateRecruitersList()
     if not LFG.recruitersList then return end
     
     if not activeSearches then activeSearches = {} end
     
-    if LFG.recruitersList.rows then
-        for i, row in ipairs(LFG.recruitersList.rows) do
-            if row and row.Hide then
-                row:Hide()
-            end
+    -- Nascondi tutte le righe del pool
+    for i = 1, MAX_DISPLAY_ROWS do
+        if rowPool[i] then
+            rowPool[i].frame:Hide()
+            rowPool[i].currentRecord = nil
         end
     end
-    LFG.recruitersList.rows = {}
+    if LFG.noRecruitersText then
+        LFG.noRecruitersText:Hide()
+    end
     
        local filteredSearches = {}
     local searchLower = lfgSearchText and string.lower(lfgSearchText) or ""
@@ -1443,168 +1581,81 @@ function LFG.UpdateRecruitersList()
     end
     
     local now = GetTime()
-    local rowHeight = 26
-    
-    for i = startIndex, endIndex do
+    -- Aggiorna righe del pool con i dati filtrati
+    for idx = 1, (endIndex - startIndex + 1) do
+        local i = startIndex + idx - 1
         local record = filteredSearches[i]
-        if record then
-            local rowIndex = i - startIndex + 1
-            local accent = CATEGORY_ACCENT[record.category] or CATEGORY_ACCENT.MISC
+        local poolRow = rowPool[idx]
 
-            local row = CreateFrame("Frame", nil, LFG.recruitersList)
-            row:SetSize(740, rowHeight)
-            
-            if rowIndex == 1 then
-                row:SetPoint("TOP", LFG.recruitersList, "TOP", 0, -2)
+        if record and poolRow then
+            poolRow.currentRecord = record
+            local accent = CATEGORY_ACCENT[record.category] or CATEGORY_ACCENT.MISC
+            poolRow.accent = accent
+            poolRow.rowIndex = idx
+
+            -- Colore sfondo alternato
+            if idx % 2 == 0 then
+                poolRow.bg:SetColorTexture(0.12, 0.12, 0.15, 0.25)
             else
-                row:SetPoint("TOP", LFG.recruitersList.rows[rowIndex-1], "BOTTOM", 0, 0)
+                poolRow.bg:SetColorTexture(0.08, 0.08, 0.11, 0.15)
             end
-            
-            -- Sfondo riga alternato
-            local bg = row:CreateTexture(nil, "BACKGROUND")
-            bg:SetPoint("TOPLEFT", 3, 0)
-            bg:SetPoint("BOTTOMRIGHT", 0, 0)
-            if rowIndex % 2 == 0 then
-                bg:SetColorTexture(0.12, 0.12, 0.15, 0.25)
-            else
-                bg:SetColorTexture(0.08, 0.08, 0.11, 0.15)
-            end
-            
-            -- Barra accento sinistra
-            local accentBar = row:CreateTexture(nil, "BACKGROUND")
-            accentBar:SetPoint("TOPLEFT", 0, 0)
-            accentBar:SetSize(3, rowHeight)
-            accentBar:SetColorTexture(accent[1], accent[2], accent[3], 0.7)
-            
-            -- Linea separatrice bassa
-            local separator = row:CreateTexture(nil, "BACKGROUND")
-            separator:SetPoint("BOTTOMLEFT", 6, 0)
-            separator:SetPoint("BOTTOMRIGHT", -2, 0)
-            separator:SetHeight(1)
-            separator:SetColorTexture(0.2, 0.2, 0.25, 0.3)
-            
-            -- Punto indicatore
-            local dot = row:CreateTexture(nil, "OVERLAY")
-            dot:SetSize(6, 6)
-            dot:SetPoint("LEFT", row, "LEFT", 12, 0)
-            dot:SetColorTexture(accent[1], accent[2], accent[3], 0.9)
-            
-            -- Nome
-            local nameText = row:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-            nameText:SetPoint("LEFT", dot, "RIGHT", 6, 0)
-            nameText:SetWidth(80)
-            nameText:SetJustifyH("LEFT")
-            nameText:SetText(record.player or "Unknown")
-            nameText:SetTextColor(0.6, 0.8, 1)
-            
-            -- Tempo
-            local timeText = row:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-            timeText:SetPoint("LEFT", nameText, "RIGHT", 10, 0)
-            timeText:SetWidth(40)
-            timeText:SetJustifyH("LEFT")
+
+            -- Colore accento
+            poolRow.accentBar:SetColorTexture(accent[1], accent[2], accent[3], 0.7)
+            poolRow.dot:SetColorTexture(accent[1], accent[2], accent[3], 0.9)
+
+            -- Testo nome
+            poolRow.nameText:SetText(record.player or "Unknown")
+
+            -- Testo tempo
             local timeSince = now - (record.lastUpdate or 0)
             if timeSince < 60 then
-                timeText:SetText(string.format("%ds", timeSince))
+                poolRow.timeText:SetText(string.format("%ds", timeSince))
             else
-                timeText:SetText(string.format("%dm", math.floor(timeSince/60)))
+                poolRow.timeText:SetText(string.format("%dm", math.floor(timeSince/60)))
             end
-            timeText:SetTextColor(0.5, 0.5, 0.55)
-            
+
             -- Badge categoria
-            local catText = row:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-            catText:SetPoint("LEFT", timeText, "RIGHT", 8, 0)
-            catText:SetWidth(30)
-            catText:SetJustifyH("LEFT")
-            catText:SetText(CATEGORY_TAG[record.category] or "|cFF00FF00D|r")
-            
+            poolRow.catText:SetText(CATEGORY_TAG[record.category] or "|cFF00FF00D|r")
+
             -- Dungeon
-            local dungeonText = row:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-            dungeonText:SetPoint("LEFT", catText, "RIGHT", 6, 0)
-            dungeonText:SetWidth(80)
-            dungeonText:SetJustifyH("LEFT")
             if record.dungeon and record.dungeon ~= "MISC" and record.dungeon ~= "KEYSTONE" and record.dungeon ~= "PVP" and record.dungeon ~= "MANASTORM" and record.dungeon ~= "WORLD_BOSS" then
-                dungeonText:SetText(record.dungeon)
+                poolRow.dungeonText:SetText(record.dungeon)
             else
-                dungeonText:SetText("")
+                poolRow.dungeonText:SetText("")
             end
-            dungeonText:SetTextColor(0.8, 0.8, 0.8)
-            
+
             -- Messaggio
-            local msgText = row:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-            msgText:SetPoint("LEFT", dungeonText, "RIGHT", 8, 0)
-            msgText:SetPoint("RIGHT", row, "RIGHT", -70, 0)
-            msgText:SetJustifyH("LEFT")
-            msgText:SetText(LFG.ShortenMessage(record.message) or "")
-            msgText:SetTextColor(0.95, 0.95, 0.95)
+            poolRow.msgText:SetText(LFG.ShortenMessage(record.message) or "")
 
-            -- Tooltip
-            local tooltipFrame = CreateFrame("Frame", nil, row)
-            tooltipFrame:SetPoint("LEFT", dungeonText, "RIGHT", 8, 0)
-            tooltipFrame:SetPoint("RIGHT", row, "RIGHT", -70, 0)
-            tooltipFrame:SetHeight(rowHeight)
-            tooltipFrame:EnableMouse(true)
-
-            local tooltipBg = tooltipFrame:CreateTexture(nil, "BACKGROUND")
-            tooltipBg:SetAllPoints()
-            tooltipBg:SetColorTexture(0, 0, 0, 0)
-
-            tooltipFrame:SetScript("OnEnter", function(self)
+            -- Tooltip (aggiornato con closure su record corrente)
+            local timeSinceForTooltip = timeSince
+            poolRow.tooltipFrame:SetScript("OnEnter", function(self)
                 GameTooltip:SetOwner(self, "ANCHOR_TOP", 0, 10)
                 GameTooltip:SetText("|cFFFFFF00" .. (record.player or "Unknown") .. "|r", 1, 1, 1)
                 GameTooltip:AddLine(" ")
                 GameTooltip:AddLine("|cFF00FF00Full Message:|r", 0, 1, 0)
                 GameTooltip:AddLine(record.message or "", 1, 1, 1, true)
                 GameTooltip:AddLine(" ")
-                GameTooltip:AddLine("|cFF88CCFFTime:|r " .. string.format("%ds ago", timeSince), 0.8, 0.8, 0.8)
+                GameTooltip:AddLine("|cFF88CCFFTime:|r " .. string.format("%ds ago", timeSinceForTooltip), 0.8, 0.8, 0.8)
                 if record.dungeon and record.dungeon ~= "MISC" then
                     GameTooltip:AddLine("|cFF88CCFFDungeon:|r " .. record.dungeon, 0.8, 0.8, 0.8)
                 end
                 GameTooltip:AddLine("|cFF88CCFFCategory:|r " .. record.category, 0.8, 0.8, 0.8)
                 GameTooltip:Show()
             end)
-
-            tooltipFrame:SetScript("OnLeave", function(self)
+            poolRow.tooltipFrame:SetScript("OnLeave", function(self)
                 GameTooltip:Hide()
             end)
-            
-            -- Bottone Accept moderno
-            local acceptBtn = CreateModernButton(row, 60, 20, "Accept", {0.25, 0.7, 0.35})
-            acceptBtn:SetPoint("RIGHT", row, "RIGHT", -8, 0)
-            acceptBtn:SetScript("OnClick", function()
-                local msg = LFG.CreateWhisperMessage()
-                SendChatMessage(msg, "WHISPER", nil, record.player)
-                print("|cff88ccffFrostSeek LFG:|r Whisper sent to " .. record.player)
-            end)
-            
-            -- Hover effects per riga
-            row:SetScript("OnEnter", function(self)
-                bg:SetColorTexture(0.18, 0.25, 0.35, 0.45)
-                accentBar:SetColorTexture(accent[1], accent[2], accent[3], 1.0)
-                dot:SetColorTexture(accent[1], accent[2], accent[3], 1.0)
-                nameText:SetTextColor(0.8, 0.9, 1)
-            end)
-            
-            row:SetScript("OnLeave", function(self)
-                if rowIndex % 2 == 0 then
-                    bg:SetColorTexture(0.12, 0.12, 0.15, 0.25)
-                else
-                    bg:SetColorTexture(0.08, 0.08, 0.11, 0.15)
-                end
-                accentBar:SetColorTexture(accent[1], accent[2], accent[3], 0.7)
-                dot:SetColorTexture(accent[1], accent[2], accent[3], 0.9)
-                nameText:SetTextColor(0.6, 0.8, 1)
-            end)
-            
-            table.insert(LFG.recruitersList.rows, row)
+
+            poolRow.frame:Show()
         end
     end
     
     if totalFiltered == 0 then
-        local noRecruitersText = LFG.recruitersList:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-        noRecruitersText:SetPoint("CENTER", LFG.recruitersList, "CENTER", 0, 0)
-        noRecruitersText:SetText("No active recruiters found")
-        noRecruitersText:SetTextColor(0.5, 0.5, 0.5)
-        table.insert(LFG.recruitersList.rows, noRecruitersText)
+        if LFG.noRecruitersText then
+            LFG.noRecruitersText:Show()
+        end
     end
 end
 
@@ -1827,6 +1878,16 @@ function LFG:Initialize(parentFrame)
     self.recruitersList:SetSize(720, 260)
     self.recruitersList:SetPoint("TOP", headerFrame, "BOTTOM", 0, -8)
     self.recruitersList.rows = {}
+
+    -- Crea testo "nessun recruiter" una volta sola
+    LFG.noRecruitersText = self.recruitersList:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    LFG.noRecruitersText:SetPoint("CENTER", self.recruitersList, "CENTER", 0, 0)
+    LFG.noRecruitersText:SetText("No active recruiters found")
+    LFG.noRecruitersText:SetTextColor(0.5, 0.5, 0.5)
+    LFG.noRecruitersText:Hide()
+
+    -- Inizializza pool di righe riutilizzabili
+    LFG.InitRowPool(self.recruitersList)
     
     -- ===== SCROLL BUTTONS MODERNI =====
     local scrollFrame = CreateFrame("Frame", nil, self.recruitersFrame)
