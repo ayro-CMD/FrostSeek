@@ -15,27 +15,13 @@ Full LFM interface with auto-spam, customizable timers, activity dropdown, real-
 📊 Dashboard
 Real-time player stats, average ilvl, role info, and module status overview.
 
-🐉 Boss Announce
-Automatic boss start/kill announcements with sound alerts and health tracking.
-
-⚡ QOL
-Fast item deletion, friend online/offline notifications, chat spam filter, interupt tool.
 
 ⚙️ Settings
-8 categories: General, LFG, Popups, Word Filter, Custom Messages, Boss Alerts, UI, Advanced. Minimap button, position saving, UI scale, debug mode.
-
-💬 Chat Commands
-
-- `/fs` `/frostseek` — Open / close main window
-- `/fslfg` — Open LFG tab
-- `/fslfm` — Open LFM tab
-- `/fsoptions` — Open settings
-- `/fsdebug` — Show debug info
-- `/fsopen` — Open dashboard
+7 categories: General, LFG, Popups, Word Filter, Custom Messages, UI, Advanced. Minimap button, position saving, UI scale, debug mode.
 
 📥 Installation
 
-1. Download the latest [Release](../../releases)
+1. Download the latest Release
 2. Extract the `.zip` file
 3. Place the `FrostSeek` folder inside `Interface/AddOns/`
 4. Restart the game and enjoy
@@ -50,5 +36,5 @@ The addon automatically detects the client and adapts. No manual configuration n
 
 📜 License
 
-All Rights Reserved — See [License](License) file for more info.
+All Rights Reserved — See license file for more info.
 ````
