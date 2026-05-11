@@ -145,6 +145,148 @@ FrostSeekCompat = FrostSeekCompat or {}
 FrostSeekCompat.hasBackdropTemplate = false
 
 
+-- ==================== ASCENSION REALM DATABASE ====================
+local ASCENSION_REALMS = {
+    -- Classless realms
+    ["area 52"]       = "classless",
+    ["area52"]        = "classless",
+    ["a52"]           = "classless",
+    ["andorhal"]      = "classless",
+    ["naladu"]        = "classless",
+    ["thrall"]        = "classless",
+
+    -- Seasonal classless
+    ["elune"]         = "seasonal",
+
+    -- Classic+ realm 
+    ["bronzebeard"]   = "bronzebeard",
+
+    -- Conquest of Azeroth
+    ["conquest of azeroth"] = "coa",
+    ["conquest"]      = "coa",
+    ["coa"]           = "coa",
+}
+
+do
+    local realmName = GetRealmName and GetRealmName() or ""
+    local realmLower = string.lower(realmName)
+
+    local detectedType = "vanilla"
+    local isAsc = false
+    local ascMode = nil
+
+    -- Try exact match first
+    if ASCENSION_REALMS[realmLower] then
+        isAsc = true
+        ascMode = ASCENSION_REALMS[realmLower]
+    else
+        -- Try partial match (realm name contains a known key)
+        for key, mode in pairs(ASCENSION_REALMS) do
+            if string.find(realmLower, key, 1, true) then
+                isAsc = true
+                ascMode = mode
+                break
+            end
+        end
+    end
+
+    if not isAsc and _G.MysticEnchantUtil then
+        isAsc = true
+        ascMode = "classless"   -- Mystic Enchants = classless-type realm
+    end
+
+    -- Finalize
+    if isAsc then
+        detectedType = "ascension"
+    end
+
+    FrostSeekCompat.serverType     = detectedType
+    FrostSeekCompat.isAscension    = isAsc
+    FrostSeekCompat.realmName      = realmName
+    FrostSeekCompat.ascensionMode  = ascMode
+end
+
+-- ==================== Server Type Utility API ====================
+
+--- Returns the raw realm name from GetRealmName().
+function FrostSeekCompat.GetRealmName()
+    return FrostSeekCompat.realmName or ""
+end
+
+--- Returns "ascension" or "vanilla".
+function FrostSeekCompat.GetServerType()
+    return FrostSeekCompat.serverType or "vanilla"
+end
+
+--- Returns true if running on any Ascension server.
+function FrostSeekCompat.IsAscension()
+    return FrostSeekCompat.isAscension == true
+end
+
+--- Returns true if running on a Vanilla server.
+function FrostSeekCompat.IsVanilla()
+    return not FrostSeekCompat.IsAscension()
+end
+
+--- Returns the Ascension realm type.
+-- "classless"     = Free-pick abilities, HERO class, Mystic Enchants
+-- "bronzebeard"   = Original 9 Classes + Classic+ content + Mystic Enchants
+-- "coa"           = Conquest of Azeroth, custom classes, NO Mystic Enchants
+-- "seasonal"      = Seasonal classless (draft/random abilities)
+-- nil             = Not Ascension or unknown mode
+function FrostSeekCompat.GetAscensionMode()
+    return FrostSeekCompat.ascensionMode
+end
+
+--- Returns true if the server has Mystic Enchants (classless/bronzebeard).
+function FrostSeekCompat.HasMysticEnchants()
+    local mode = FrostSeekCompat.ascensionMode
+    return mode == "classless" or mode == "bronzebeard" or mode == "seasonal"
+end
+
+--- Returns true if the server uses custom CoA classes.
+function FrostSeekCompat.IsConquestOfAzeroth()
+    return FrostSeekCompat.ascensionMode == "coa"
+end
+
+--- Returns a human-readable label for display.
+function FrostSeekCompat.GetServerTypeLabel()
+    if FrostSeekCompat.IsAscension() then
+        local mode = FrostSeekCompat.GetAscensionMode()
+        local realm = FrostSeekCompat.GetRealmName()
+        if mode == "classless" then
+            return "Ascension (" .. realm .. " - Classless)"
+        elseif mode == "bronzebeard" then
+            return "Ascension (Bronzebeard - Classic+)"
+        elseif mode == "coa" then
+            return "Ascension (CoA)"
+        elseif mode == "seasonal" then
+            return "Ascension (" .. realm .. " - Seasonal)"
+        else
+            return "Ascension (" .. realm .. ")"
+        end
+    else
+        return "Vanilla"
+    end
+end
+
+--- Returns a color {r,g,b} for the server type (UI display).
+function FrostSeekCompat.GetServerTypeColor()
+    if FrostSeekCompat.IsAscension() then
+        local mode = FrostSeekCompat.ascensionMode
+        if mode == "coa" then
+            return {0.85, 0.45, 0.15}   -- Orange for CoA
+        elseif mode == "bronzebeard" then
+            return {0.6, 0.5, 0.3}      -- Bronze for Bronzebeard
+        else
+            return {0.6, 0.3, 0.85}     -- Purple for classless/seasonal
+        end
+    else
+        return {0.2, 0.75, 0.2}         -- Green for Vanilla
+    end
+end
+
+
 do
     local testOk, testErr = pcall(function()
         local testFrame = CreateFrame("Frame", "FrostSeek_CompatTest", UIParent, "BackdropTemplate")
@@ -164,17 +306,26 @@ function FrostSeekCompat.GetBackdropTemplateStr()
     return ""
 end
 
--- Print compatibility
+-- Print compatibility & server type
 local compatFrame = CreateFrame("Frame")
 compatFrame:RegisterEvent("ADDON_LOADED")
 compatFrame:SetScript("OnEvent", function(self, event, addonName)
     if addonName ~= "FrostSeek" then return end
     self:UnregisterEvent("ADDON_LOADED")
 
+    local serverLabel = FrostSeekCompat.GetServerTypeLabel()
+    local serverColor = FrostSeekCompat.GetServerTypeColor()
+    local serverHex = string.format("|cff%02x%02x%02x",
+        math.floor(serverColor[1] * 255),
+        math.floor(serverColor[2] * 255),
+        math.floor(serverColor[3] * 255))
+
     print("|cff88ccffFrostSeek Compat:|r " ..
         (FrostSeekCompat.hasBackdropTemplate and "|cff00ff00BackdropTemplate: YES|r" or "|cffff8800BackdropTemplate: NO (native fallback)|r") ..
         " | " ..
         (C_Timer and "|cff00ff00C_Timer: OK|r" or "|cffff0000C_Timer: MISSING|r") ..
+        " | " ..
+        serverHex .. "Server: " .. serverLabel .. "|r" ..
         " | " ..
         "|cff00ff00Compat layer loaded|r"
     )
