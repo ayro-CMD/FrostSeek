@@ -151,9 +151,6 @@ local ASCENSION_REALMS = {
     ["area 52"]       = "classless",
     ["area52"]        = "classless",
     ["a52"]           = "classless",
-    ["andorhal"]      = "classless",
-    ["naladu"]        = "classless",
-    ["thrall"]        = "classless",
 
     -- Seasonal classless
     ["elune"]         = "seasonal",
@@ -180,7 +177,7 @@ do
         isAsc = true
         ascMode = ASCENSION_REALMS[realmLower]
     else
-        -- Try partial match (realm name contains a known key)
+        -- Try partial match
         for key, mode in pairs(ASCENSION_REALMS) do
             if string.find(realmLower, key, 1, true) then
                 isAsc = true
@@ -192,7 +189,7 @@ do
 
     if not isAsc and _G.MysticEnchantUtil then
         isAsc = true
-        ascMode = "classless"   -- Mystic Enchants = classless-type realm
+        ascMode = "classless" 
     end
 
     -- Finalize
@@ -228,17 +225,11 @@ function FrostSeekCompat.IsVanilla()
     return not FrostSeekCompat.IsAscension()
 end
 
---- Returns the Ascension realm type.
--- "classless"     = Free-pick abilities, HERO class, Mystic Enchants
--- "bronzebeard"   = Original 9 Classes + Classic+ content + Mystic Enchants
--- "coa"           = Conquest of Azeroth, custom classes, NO Mystic Enchants
--- "seasonal"      = Seasonal classless (draft/random abilities)
--- nil             = Not Ascension or unknown mode
 function FrostSeekCompat.GetAscensionMode()
     return FrostSeekCompat.ascensionMode
 end
 
---- Returns true if the server has Mystic Enchants (classless/bronzebeard).
+--- Returns true if the server has Mystic Enchants
 function FrostSeekCompat.HasMysticEnchants()
     local mode = FrostSeekCompat.ascensionMode
     return mode == "classless" or mode == "bronzebeard" or mode == "seasonal"
@@ -270,7 +261,6 @@ function FrostSeekCompat.GetServerTypeLabel()
     end
 end
 
---- Returns a color {r,g,b} for the server type (UI display).
 function FrostSeekCompat.GetServerTypeColor()
     if FrostSeekCompat.IsAscension() then
         local mode = FrostSeekCompat.ascensionMode
