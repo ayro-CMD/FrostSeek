@@ -1,0 +1,14 @@
+## Interface: 30300
+## Title: |cff5fa9e0F|cff88ccffr|cff99ddffo|cff00ffffs|cff30e6d4t|cffb5e61dS|cffbfff40e|cffd0e630e|cfff5fc3dk
+## Notes: Advanced LFG/LFM Manager
+## Author: Ayro
+## Version: 1.6.3
+## SavedVariables: FrostSeekDB
+## OptionalDeps: Arui
+## X-Category: Interface Enhancements
+## X-Website:
+## X-Copyright: (c) 2026 Ayro
+## X-License: All Rights Reserved - More info in License file
+## X-Curse-Project-ID: 1460315
+
+loader.xml
