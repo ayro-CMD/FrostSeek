@@ -1,5 +1,0 @@
-<Ui xmlns="http://www.blizzard.com/wow/UI/">
-<Script file="Dashboard.lua"/>
-<Script file="Options.lua"/>
-<Include file="Tooltip\tooltip.xml"/>
-</Ui>
