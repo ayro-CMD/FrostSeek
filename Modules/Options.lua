@@ -12,7 +12,7 @@ local function _tc(token)
 end
 
 local settingsWindow = nil
-local categoryFrames = {}
+local categoryFrames = {} 
 local currentCategory = "general"
 local previewEventFrame = nil
 local keystoneUpdateTicker = nil
@@ -128,7 +128,6 @@ local function GetPlayerData()
             ["FELSWORN"] = "Felsworn", ["BARBARIAN"] = "Barbarian",
             ["WITCH_DOCTOR"] = "Witch Doctor", ["WITCH_HUNTER"] = "Witch Hunter",
             ["KNIGHT_OF_XOROTH"] = "Knight of Xoroth", ["TEMPLAR"] = "Templar",
-            ["RANGED"] = "Ranged",
             ["RANGER"] = "Ranger"
         }
         classInfo = classMap[classFile] or classFile
@@ -381,6 +380,8 @@ local function UpdateCustomPreview(previewText)
         message = string.gsub(message, "{gs}", (customMessages.showGs ~= false) and tostring(gs or 0) or "")
         message = string.gsub(message, "{ench}", (customMessages.showEnchant ~= false) and enchant or "")
         message = string.gsub(message, "{role}", (customMessages.showRole ~= false) and roleText or "")
+        local playerLevel = UnitLevel("player") or 0
+        message = string.gsub(message, "{level}", (customMessages.showLevel ~= false) and tostring(playerLevel) or "")
         
         if customMessages.showKeystone then
             local keystoneLink = FindKeystoneInBags()
@@ -494,7 +495,7 @@ local function CreateCustomMessageTab(parent, scrollContent)
     varsLabel:SetTextColor(unpack(_tc("textMuted")))
     yOffset = yOffset - 25
     
-    local variables = { { name = "class", display = "{class}" }, { name = "ilvl", display = "{ilvl}" }, { name = "gs", display = "{gs}" }, { name = "ench", display = "{ench}" }, { name = "role", display = "{role}" }, { name = "keystone", display = "{keystone}" } }
+    local variables = { { name = "class", display = "{class}" }, { name = "ilvl", display = "{ilvl}" }, { name = "gs", display = "{gs}" }, { name = "ench", display = "{ench}" }, { name = "role", display = "{role}" }, { name = "level", display = "{level}" }, { name = "keystone", display = "{keystone}" } }
     
     for i, var in ipairs(variables) do
         local btn = CreateStyledButton(frame, var.display, 20 + ((i-1) * 80), yOffset, 75, 22)
@@ -536,7 +537,8 @@ local function CreateCustomMessageTab(parent, scrollContent)
         { id = "showGs", name = "GearScore", x = 270, y = yOffset },
         { id = "showEnchant", name = "Enchant", x = 30, y = yOffset - 30 },
         { id = "showRole", name = "Role", x = 150, y = yOffset - 30 },
-        { id = "showKeystone", name = "Keystone (auto)", x = 270, y = yOffset - 30 }
+        { id = "showLevel", name = "Level", x = 270, y = yOffset - 30 },
+        { id = "showKeystone", name = "Keystone (auto)", x = 30, y = yOffset - 60 }
     }
 
     for _, cfg in ipairs(checkboxConfigs) do
@@ -579,7 +581,7 @@ local function CreateCustomMessageTab(parent, scrollContent)
         FrostSeekDB.LFG.customMessages.template = "inv {role} {class} {ench} {ilvl} ilvl {gs}gs"
         templateBox:SetText(FrostSeekDB.LFG.customMessages.template)
         
-        local defaults = { showClass = true, showIlvl = true, showGs = true, showEnchant = true, showRole = true, showKeystone = false }
+        local defaults = { showClass = true, showIlvl = true, showGs = true, showEnchant = true, showRole = true, showLevel = true, showKeystone = false }
         for id, val in pairs(defaults) do
             FrostSeekDB.LFG.customMessages[id] = val
             if checkboxes[id] then
@@ -1508,7 +1510,7 @@ StaticPopupDialogs["FROSTSEEK_CONFIRM_CLEAR_DATA"] = {
     OnAccept = function()
         FrostSeekDB = {
             Settings = { uiScale = 1.0, windowPosition = nil, minimapButton = true, debugMode = false, savePosition = true, autoOpen = false },
-            LFG = { myRole = "", silentNotifications = false, frameDuration = 5, disablePopups = false, disableLFG = false, maxMessageLength = 90, popupCooldown = 370, maxConcurrentPopups = 2, doNotAlertInGroup = true, doNotAlertInCombat = true, popupCategories = { ALL = true, DUNGEON = true, RAID = true, WORLD_BOSS = true, PVP = true, MANASTORM = true, KEYSTONE = true }, customFilterWords = "", showActiveRecruitersWindow = false, customMessages = { enabled = false, template = "hello {class} {ilvl} {gs}gs {ench} dps or healer {keystone}", showClass = true, showIlvl = true, showGs = true, showEnchant = true, showRole = true, showKeystone = false, keystoneLink = "" } },
+            LFG = { myRole = "", silentNotifications = false, frameDuration = 5, disablePopups = false, disableLFG = false, maxMessageLength = 90, popupCooldown = 370, maxConcurrentPopups = 2, doNotAlertInGroup = true, doNotAlertInCombat = true, popupCategories = { ALL = true, DUNGEON = true, RAID = true, WORLD_BOSS = true, PVP = true, MANASTORM = true, KEYSTONE = true }, customFilterWords = "", showActiveRecruitersWindow = false, customMessages = { enabled = false, template = "hello {class} {ilvl} {gs}gs {ench} dps or healer {keystone}", showClass = true, showIlvl = true, showGs = true, showEnchant = true, showRole = true, showLevel = true, showKeystone = false, keystoneLink = "" } },
             LFM = { lastMessages = {}, favoriteTemplates = {}, channelPresets = {}, autoUpdateInterval = 60 },
             MPlusScores = {},
         }
