@@ -11,6 +11,7 @@ end
 
 local currentCategory = "RAIDS"
 local selectedRoles = { Tank = false, Healer = false, DPS = false, BC = false }
+local needCount = { Tank = 1, Healer = 1, DPS = 1 }
 local selectedDifficulty = "Normal"
 local searchText = ""
 local currentKeystone = nil
@@ -18,8 +19,10 @@ local keystoneUpdateTicker = nil
 local autoSpamTicker = nil
 local autoSpamActive = false
 local customMessage = FrostSeekDB.LFM.customMessage or ""
+local userEditedMessage = false
 local autoInviteEnabled = false
 local autoInviteMinIlvl = 0
+local autoInviteMinLevel = 60
 local recentInvites = {}
 local spamChannels = {}
 local activeEditBox = nil
@@ -260,9 +263,18 @@ end
 
 local function GenerateRolesText()
     local roles = {}
-    if selectedRoles.Tank then table.insert(roles, "Tank") end
-    if selectedRoles.Healer then table.insert(roles, "Healer") end
-    if selectedRoles.DPS then table.insert(roles, "DPS") end
+    if selectedRoles.Tank then
+        local n = needCount.Tank or 1
+        table.insert(roles, n > 1 and (n .. " Tank") or "Tank")
+    end
+    if selectedRoles.Healer then
+        local n = needCount.Healer or 1
+        table.insert(roles, n > 1 and (n .. " Healer") or "Healer")
+    end
+    if selectedRoles.DPS then
+        local n = needCount.DPS or 1
+        table.insert(roles, n > 1 and (n .. " DPS") or "DPS")
+    end
     if selectedRoles.BC then table.insert(roles, "BC") end
     if #roles == 0 then return "All Roles" end
     return table.concat(roles, " ")
@@ -526,7 +538,9 @@ whisperHandler:SetScript("OnEvent", function(self, event, msg, sender, ...)
         end
     end
 
-    if ilvl and ilvl >= autoInviteMinIlvl and roleMatch then
+    local playerLevel = UnitLevel(senderName) or 0
+
+    if ilvl and ilvl >= autoInviteMinIlvl and roleMatch and playerLevel >= autoInviteMinLevel then
         InviteUnit(senderName)
         recentInvites[senderName] = now
 
@@ -534,7 +548,7 @@ whisperHandler:SetScript("OnEvent", function(self, event, msg, sender, ...)
         if detectedRole then
             roleInfo = " Role: " .. detectedRole .. " |"
         end
-        print("|cff88ccffFrostSeek Auto-Invite:|r Invited " .. senderName .. " (iLvl: " .. ilvl .. roleInfo .. ")")
+        print("|cff88ccffFrostSeek Auto-Invite:|r Invited " .. senderName .. " (iLvl: " .. ilvl .. " | Lvl: " .. playerLevel .. roleInfo .. ")")
 
         C_Timer.After(1, function()
             local replyMsg = "Auto-invited! Welcome to the group."
@@ -542,6 +556,11 @@ whisperHandler:SetScript("OnEvent", function(self, event, msg, sender, ...)
                 replyMsg = replyMsg .. " (" .. detectedRole .. ")"
             end
             SendChatMessage(replyMsg, "WHISPER", nil, senderName)
+        end)
+    elseif ilvl and ilvl >= autoInviteMinIlvl and playerLevel < autoInviteMinLevel then
+        print("|cffffaa00FrostSeek Auto-Invite:|r Rejected " .. senderName .. " - Level too low (need: " .. autoInviteMinLevel .. ", got: " .. playerLevel .. ")")
+        C_Timer.After(1, function()
+            SendChatMessage("Sorry, minimum level required is " .. autoInviteMinLevel .. ". You are level " .. playerLevel .. ".", "WHISPER", nil, senderName)
         end)
     elseif ilvl and ilvl >= autoInviteMinIlvl and not roleMatch then
         print("|cffffaa00FrostSeek Auto-Invite:|r Rejected " .. senderName .. " - Role mismatch (need: " .. neededRolesStr .. ", got: " .. (detectedRole or "none") .. ")")
@@ -604,12 +623,18 @@ function UpdateMessagePreview(template, activity)
     if template then
         local processed = ProcessTemplate(template, activity)
         if not LFM.messageEditBox:HasFocus() then
+            if userEditedMessage then
+                return
+            end
             customMessage = processed
             FrostSeekDB.LFM.customMessage = customMessage
             LFM.messageEditBox:SetText(processed)
         end
     else
         if not LFM.messageEditBox:HasFocus() then
+            if userEditedMessage then
+                return
+            end
             customMessage = ""
             FrostSeekDB.LFM.customMessage = ""
             LFM.messageEditBox:SetText("")
@@ -726,6 +751,7 @@ function UpdateActivityList()
         end)
 
         btn:SetScript("OnClick", function()
+            userEditedMessage = false
             UpdateMessagePreview(activity.template, activity)
         end)
 
@@ -1175,9 +1201,10 @@ function LFM:Initialize(parentFrame)
         BC = {1, 0.8, 0.1},
     }
     local roleLabels = {Tank = "Tank", Healer = "Healer", DPS = "DPS", BC = "BC"}
+    local xOffset = 20
     for i, role in ipairs(roleTypes) do
         local checkbox = CreateFrame("CheckButton", "FrostSeekLFM_Role_" .. role, self.rolesFrame, "UICheckButtonTemplate")
-        checkbox:SetPoint("LEFT", rolesLabel, "RIGHT", 20 + (i-1) * 60, 0)
+        checkbox:SetPoint("LEFT", rolesLabel, "RIGHT", xOffset, 0)
         checkbox:SetSize(18, 18)
         local text = _G[checkbox:GetName() .. "Text"]
         if text then
@@ -1191,6 +1218,30 @@ function LFM:Initialize(parentFrame)
             UpdateMessagePreview()
         end)
         self.roleCheckboxes[role] = checkbox
+
+        -- Aggiungi input box per il numero (solo Tank, Healer, DPS)
+        if role ~= "BC" then
+            local countBox = CreateModernEditBox(self.rolesFrame, 26, 18)
+            -- Ancora la box a destra del testo del checkbox, non del checkbox stesso
+            if text then
+                countBox:SetPoint("LEFT", text, "RIGHT", 4, 0)
+            else
+                countBox:SetPoint("LEFT", checkbox, "RIGHT", 40, 0)
+            end
+            countBox:SetText(tostring(needCount[role] or 1))
+            countBox:SetMaxLetters(2)
+            countBox:SetNumeric(true)
+            countBox:SetScript("OnTextChanged", function(self)
+                local val = tonumber(self:GetText()) or 1
+                if val < 1 then val = 1 end
+                needCount[role] = val
+                UpdateMessagePreview()
+            end)
+            self.roleCheckboxes[role .. "Count"] = countBox
+            xOffset = xOffset + 100
+        else
+            xOffset = xOffset + 55
+        end
     end
 
     local difficultyLabel = self.rolesFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
@@ -1325,8 +1376,12 @@ function LFM:Initialize(parentFrame)
     self.messageEditBox:SetText(customMessage)
     self.messageEditBox:SetMaxLetters(255)
     self.messageEditBox:SetScript("OnTextChanged", function(self)
-        customMessage = self:GetText()
+        local text = self:GetText()
+        customMessage = text
         FrostSeekDB.LFM.customMessage = customMessage
+        if LFM.messageEditBox:HasFocus() then
+            userEditedMessage = true
+        end
     end)
 
     self.spamFrame = CreateFrame("Frame", nil, self.mainContainer)
@@ -1407,7 +1462,7 @@ function LFM:Initialize(parentFrame)
             autoInviteEnabled = active
             FrostSeekDB.LFM.autoInviteEnabled = active
             if active then
-                print("|cff88ccffFrostSeek LFM:|r Auto-Invite enabled (min iLvl: " .. autoInviteMinIlvl .. ")")
+                print("|cff88ccffFrostSeek LFM:|r Auto-Invite enabled (min iLvl: " .. autoInviteMinIlvl .. ", min Lvl: " .. autoInviteMinLevel .. ")")
             else
                 print("|cff88ccffFrostSeek LFM:|r Auto-Invite disabled")
             end
@@ -1444,9 +1499,27 @@ function LFM:Initialize(parentFrame)
         FrostSeekDB.LFM.autoInviteMinIlvl = val
     end)
 
+    local minLevelLabel = self.autoInviteFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    minLevelLabel:SetPoint("LEFT", plusLabel, "RIGHT", 15, 0)
+    minLevelLabel:SetText("Min Lvl:")
+    minLevelLabel:SetTextColor(unpack(_tc("textMuted")))
+
+    self.minLevelBox = CreateModernEditBox(self.autoInviteFrame, 40, 18)
+    self.minLevelBox:SetPoint("LEFT", minLevelLabel, "RIGHT", 5, 0)
+    self.minLevelBox:SetText(tostring(FrostSeekDB.LFM.autoInviteMinLevel or 60))
+    self.minLevelBox:SetMaxLetters(3)
+    self.minLevelBox:SetNumeric(true)
+    autoInviteMinLevel = FrostSeekDB.LFM.autoInviteMinLevel or 60
+
+    self.minLevelBox:SetScript("OnTextChanged", function(self)
+        local val = tonumber(self:GetText()) or 0
+        autoInviteMinLevel = val
+        FrostSeekDB.LFM.autoInviteMinLevel = val
+    end)
+
     local aiDesc = self.autoInviteFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-    aiDesc:SetPoint("LEFT", plusLabel, "RIGHT", 8, 0)
-    aiDesc:SetText("(invites on whisper if iLvl >= threshold)")
+    aiDesc:SetPoint("LEFT", self.minLevelBox, "RIGHT", 8, 0)
+    aiDesc:SetText("(invites on whisper if iLvl/lvl >= threshold)")
     aiDesc:SetTextColor(unpack(_tc("textDim")))
 
     self.controlsFrame = CreateFrame("Frame", nil, self.mainContainer)
@@ -1527,6 +1600,7 @@ local function InitializeLFMSystem()
         spamChannels = {},
         autoInviteEnabled = false,
         autoInviteMinIlvl = 150,
+        autoInviteMinLevel = 60,
     }
 
     if not FrostSeekDB.LFM.spamChannels then
@@ -1534,6 +1608,9 @@ local function InitializeLFMSystem()
     end
     if FrostSeekDB.LFM.autoInviteMinIlvl == nil then
         FrostSeekDB.LFM.autoInviteMinIlvl = 150
+    end
+    if FrostSeekDB.LFM.autoInviteMinLevel == nil then
+        FrostSeekDB.LFM.autoInviteMinLevel = 60
     end
 
     if not LFM_ACTIVITIES.KEYSTONE then
