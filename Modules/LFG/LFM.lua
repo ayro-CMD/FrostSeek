@@ -110,7 +110,7 @@ local LFM_ACTIVITIES = {
         { name = "GlitterMurk Mines", template = "Glittermurk Mines {difficulty} {roles}", keywords = {"glittermurk"}},
         { name = "Blackrock Cavern", template = "LFM BRC {difficulty} {roles}", keywords = {"brc", "blackrock cavern"} },
         { name = "Tor'Watha", template = "LFM Tor'Watha {difficulty} {roles}", keywords = {"Tor'Watha", "tw"} },
-        { name = "Bardid Hold", templete = "LFM Bardid Hold {roles}", keywords = {"Bardid Hold", "BH"} },
+        { name = "Bardid Hold", template = "LFM Bardid Hold {roles}", keywords = {"Bardid Hold", "BH"} },
         { name = "Vault of the Inquisition", template = "LFM Vault {difficulty} {roles}", keywords = {"vault", "inquisition"} },
         { name = "Road to De' Other Side", template = "LFM Other Side {difficulty} {roles}", keywords = {"Road to De' Other Side"} },
     },
@@ -698,7 +698,7 @@ function UpdateActivityList()
 
         local templateText = btn:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
         templateText:SetPoint("RIGHT", btn, "RIGHT", -10, 0)
-        local shortTemplate = activity.template
+        local shortTemplate = activity.template or ""
         if #shortTemplate > 40 then
             shortTemplate = string.sub(shortTemplate, 1, 37) .. "..."
         end
