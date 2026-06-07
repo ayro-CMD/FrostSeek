@@ -889,6 +889,7 @@ function LFG.CreateWhisperMessage()
     local classInfo, ilvl, enchant = LFG.GetFullPlayerInfo()
     local gs = LFG.GetGearScore()
     local roleText = FrostSeekDB.LFG.myRole ~= "" and FrostSeekDB.LFG.myRole or ""
+    local playerLevel = UnitLevel("player") or 0
     
     if FrostSeekDB.LFG.customMessages and FrostSeekDB.LFG.customMessages.enabled then
         local template = FrostSeekDB.LFG.customMessages.template or "inv {role} {class} {ench} {ilvl} ilvl {gs}gs"
@@ -924,6 +925,12 @@ function LFG.CreateWhisperMessage()
             message = string.gsub(message, "{role}", "")
         end
         
+        if FrostSeekDB.LFG.customMessages.showLevel then
+            message = string.gsub(message, "{level}", tostring(playerLevel))
+        else
+            message = string.gsub(message, "{level}", "")
+        end
+        
         if FrostSeekDB.LFG.customMessages.showAchievement and FrostSeekDB.LFG.customMessages.achievementLink ~= "" then
             message = string.gsub(message, "{achievement}", FrostSeekDB.LFG.customMessages.achievementLink)
         else
@@ -947,11 +954,12 @@ function LFG.CreateWhisperMessage()
     else
         local enchantText = enchant ~= "" and (" " .. enchant) or ""
         local rolePrefix = roleText ~= "" and (roleText .. " ") or ""
+        local levelText = " lv" .. playerLevel
         
         if classInfo == "Hero" then
-            return "inv " .. rolePrefix .. ilvl .. " ilvl " .. gs .. "gs" .. enchantText
+            return "inv " .. rolePrefix .. ilvl .. " ilvl " .. gs .. "gs" .. levelText .. enchantText
         else
-            return "inv " .. rolePrefix .. classInfo .. enchantText .. " " .. ilvl .. " ilvl " .. gs .. "gs"
+            return "inv " .. rolePrefix .. classInfo .. enchantText .. " " .. ilvl .. " ilvl " .. gs .. "gs" .. levelText
         end
     end
 end
