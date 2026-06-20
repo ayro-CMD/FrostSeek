@@ -2,7 +2,7 @@
 
 ⚡ FrostSeek
 
-Advanced LFG/LFM Manager for WoW Ascension & 3.3.5
+Advanced LFG/LFM Manager
 
 ✨ Features
 
@@ -17,7 +17,6 @@ Real-time player stats, average ilvl, role info, and module status overview.
 
 
 ⚙️ Settings
-7 categories: General, LFG, Popups, Word Filter, Custom Messages, UI, Advanced. Minimap button, position saving, UI scale, debug mode.
 
 📥 Installation
 
@@ -31,6 +30,7 @@ Real-time player stats, average ilvl, role info, and module status overview.
 
 - ✅ WoW Ascension (Project Ascension)
 - ✅ 3.3.5 Vanilla Servers
+- ✅ Vanilla Classic, TBC Classic,Wotlk Classic, Cata Classic, Cata PS e Mists Classic
 
 The addon automatically detects the client and adapts. No manual configuration needed.
 
