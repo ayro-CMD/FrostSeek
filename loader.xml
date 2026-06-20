@@ -2,6 +2,7 @@
 <Script file="Modules\Compat.lua"/>
 <Script file="Modules\UI\Theme.lua"/>
 <Script file="Modules\UI\UIUtils.lua"/>
+<Script file="Modules\Shared.lua"/>
 <Script file="Core.lua"/>
 <Include file="Modules\Network\network.xml"/>
 <Include file="Modules\Presence\presence.xml"/>
