@@ -2,7 +2,7 @@
 
 ⚡ FrostSeek
 
-Advanced LFG/LFM Manager
+Advanced LFG/LFM Manager for WoW Ascension & 3.3.5
 
 ✨ Features
 
@@ -17,6 +17,7 @@ Real-time player stats, average ilvl, role info, and module status overview.
 
 
 ⚙️ Settings
+7 categories: General, LFG, Popups, Word Filter, Custom Messages, UI, Advanced. Minimap button, position saving, UI scale, debug mode.
 
 📥 Installation
 
