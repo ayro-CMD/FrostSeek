@@ -33,7 +33,7 @@ function FrostSeek._v.g(name)
     return FrostSeek._v.w[name]
 end
 
-FrostSeek.VERSION = "1.9.4"
+FrostSeek.VERSION = "2.0.0"
 
 FrostSeekDB = FrostSeekDB or {}
 
@@ -139,6 +139,7 @@ if not FrostSeekDB.Settings then
         savePosition = true,
         theme = "ShadowS",
         frostnetEnabled = true,
+        applyWhisper = false,
     }
 end
 
@@ -151,7 +152,7 @@ local function EnsureSettingsIntegrity()
     if FrostSeekDB.Settings.showWelcome == nil then FrostSeekDB.Settings.showWelcome = true end
     if FrostSeekDB.Settings.theme == nil then FrostSeekDB.Settings.theme = "Frost" end
     if FrostSeekDB.Settings.frostnetEnabled == nil then FrostSeekDB.Settings.frostnetEnabled = true end
-
+    if FrostSeekDB.Settings.applyWhisper == nil then FrostSeekDB.Settings.applyWhisper = false end
     if FrostSeekDB.LFG and FrostSeekDB.LFG.popupCategories then
         if FrostSeekDB.LFG.popupCategories.WORLD_BOSS == nil then
             FrostSeekDB.LFG.popupCategories.WORLD_BOSS = true
@@ -690,6 +691,17 @@ SlashCmdList["FSDEBUG"] = function()
         print("  Channel: " .. tostring(Network.channelName))
         print("  Connected: " .. tostring(Network.isConnected))
         print("  ChannelId: " .. tostring(Network.channelId))
+        print("  Queue length: " .. tostring(Network._queue and #Network._queue or 0))
+        if Network._queue and #Network._queue > 0 then
+            for i, m in ipairs(Network._queue) do
+                if i <= 5 then
+                    print("    [" .. i .. "] " .. tostring(string.sub(m, 1, 60)))
+                end
+            end
+            if #Network._queue > 5 then
+                print("    ... and " .. (#Network._queue - 5) .. " more")
+            end
+        end
     end
     local Presence = FrostSeek.Presence
     if Presence then
@@ -704,6 +716,82 @@ SlashCmdList["FSOPEN"] = function()
     MainFrame:Show()
     FrostSeek:SwitchTab("dashboard")
     print("|cff88ccffFrostSeek:|r Welcome, adventurer!")
+end
+
+SLASH_FSNET1 = "/fsnet"
+SlashCmdList["FSNET"] = function()
+    print("|cff88ccff========== FROSTNET STATUS ==========|r")
+    local Network = FrostSeek.Network
+    if not Network then
+        print("|cffff5555Network module not loaded!|r")
+        return
+    end
+    print("Channel name      : " .. tostring(Network.channelName))
+    print("Connected         : " .. tostring(Network.isConnected))
+    print("ChannelId         : " .. tostring(Network.channelId))
+    print("Queue length      : " .. tostring(Network._queue and #Network._queue or 0))
+    print("WasConnected ever : " .. tostring(Network.wasConnected))
+    print("Join attempts     : " .. tostring(Network.joinAttempts) .. "/" .. tostring(Network.maxJoinAttempts))
+
+    -- Try to list what WoW thinks the channels are. This will show whether
+    -- the player is actually IN the FSK channel from the client's point of view.
+    print("|cff88ccff--- Channels seen by WoW client ---|r")
+    if GetNumDisplayChannels then
+        local count = GetNumDisplayChannels() or 0
+        if count == 0 then
+            print("  (no channels — player may not be in any custom channel)")
+        end
+        for i = 1, count do
+            local ok, name, _, _, channelNumber = pcall(function()
+                return GetChannelDisplayInfo(i)
+            end)
+            if ok and name then
+                local marker = (string.lower(tostring(name)) == "fsk") and "  <== FSK" or ""
+                print("  " .. tostring(i) .. ". " .. tostring(name) .. " (num=" .. tostring(channelNumber) .. ")" .. marker)
+            end
+        end
+    else
+        print("  GetNumDisplayChannels not available on this client")
+    end
+
+    print("|cff88ccff--- My listing ---|r")
+    local Listings = FrostSeek.Listings
+    if Listings then
+        if Listings.myListing then
+            local ml = Listings.myListing
+            print("  id       : " .. tostring(ml.id))
+            print("  activity : " .. tostring(ml.activity))
+            print("  type     : " .. tostring(ml.type))
+            print("  leader   : " .. tostring(ml.leader))
+            print("  members  : " .. tostring(ml.members) .. "/" .. tostring(ml.maxMembers))
+        else
+            print("  (no active listing)")
+        end
+        print("  Total listings in cache: " .. tostring(Listings.listings and (function() local n=0; for _ in pairs(Listings.listings) do n=n+1 end; return n end)() or 0))
+    end
+
+    print("|cff88ccff--- Online users ---|r")
+    local Presence = FrostSeek.Presence
+    if Presence and Presence.GetOnlineCount then
+        print("  Online count: " .. tostring(Presence:GetOnlineCount()))
+        if Presence.onlineUsers then
+            local n = 0
+            for name, _ in pairs(Presence.onlineUsers) do
+                n = n + 1
+                if n <= 10 then
+                    print("  - " .. tostring(name))
+                end
+            end
+            if n > 10 then
+                print("  ... and " .. (n - 10) .. " more")
+            end
+        end
+    end
+
+    print("|cff88ccff====================================|r")
+    print("|cff888888Tip: ask your friends to run /fsnet too and compare ChannelId.|r")
+    print("|cff888888If your ChannelId is nil while 'Connected: true', there's a sync bug.|r")
+    print("|cff888888If your friends show 0 online users, the FSK channel is realm-locked or faction-locked.|r")
 end
 
 local _tk = FrostSeek._v.a("core", FrostSeek)

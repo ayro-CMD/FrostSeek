@@ -18,7 +18,8 @@ Listings.myApplications = {}
 
 local MAX_LISTINGS = Shared and Shared.MAX_LISTINGS or 200
 local MAX_BROWSE_ROWS = 10
-local LISTING_EXPIRE = 900
+local LISTING_EXPIRE = 300
+local APP_PENDING_EXPIRE = 300
 local browseScrollFrame = nil
 
 local ACTIVITY_TYPES = {"Dungeon", "Raid", "World Boss", "Key", "Event", "PvP", "Manastorm"}
@@ -161,12 +162,9 @@ local function playerName()
 end
 
 local function memberCount()
-    if GetNumPartyMembers then
-        return (GetNumPartyMembers() or 0) + (GetNumRaidMembers and GetNumRaidMembers() or 0) + 1
-    elseif GetNumGroupMembers then
-        return (GetNumGroupMembers() or 0) + 1
-    end
-    return 1
+    local raid = GetNumRaidMembers and GetNumRaidMembers() or 0
+    if raid and raid > 0 then return raid end
+    return (GetNumPartyMembers and GetNumPartyMembers() or 0) + 1
 end
 
 local function ageText(ts)
@@ -247,6 +245,7 @@ function Listings:HandleIncomingListing(listing)
     end
 
     if isNew and self:PassFilter(listing) and listing.leader ~= playerName() then
+        print("|cff88ccffFrostNet:|r New group from |cffffffff" .. tostring(listing.leader) .. "|r — " .. tostring(listing.activity or "?") .. (listing.difficulty and listing.difficulty ~= "" and (" (" .. listing.difficulty .. ")") or ""))
         if Shared and Shared.PlaySound then
             Shared.PlaySound("listing")
         end
@@ -425,7 +424,11 @@ function Listings:Apply()
         Network:SendApplicant(id, app)
     end
 
-    SendChatMessage("[FrostSeek] I applied for: " .. tostring(listing.activity), "WHISPER", nil, listing.leader)
+    if FrostSeekDB and FrostSeekDB.Settings and FrostSeekDB.Settings.applyWhisper then
+        pcall(function()
+            SendChatMessage("[FrostSeek] I applied for: " .. tostring(listing.activity), "WHISPER", nil, listing.leader)
+        end)
+    end
     print("|cff88ccffFrostNet:|r Application sent for " .. tostring(listing.activity))
 
     self.myApplications[id] = {
@@ -1079,6 +1082,8 @@ function Listings:RefreshApplications()
                 row.status:SetText("|cffff5555Declined|r")
             elseif statusText == "withdrawn" then
                 row.status:SetText("|cff888888Withdrawn|r")
+            elseif statusText == "expired" then
+                row.status:SetText("|cffff8800Expired|r")
             else
                 row.status:SetText(tostring(statusText))
             end
@@ -1617,7 +1622,7 @@ function Listings:Hide()
     if self.frame then self.frame:Hide() end
 end
 
-C_Timer.NewTicker(10, function()
+C_Timer.NewTicker(20, function()
     if not FrostSeek or not FrostSeek._v or not FrostSeek._v.c(_tk) then return end
     if Listings.myListing then
         Listings:CheckAutoClose()
@@ -1627,6 +1632,29 @@ C_Timer.NewTicker(10, function()
         if l.seen and now() - l.seen > LISTING_EXPIRE then
             Listings.listings[id] = nil
         end
+    end
+    local expired = false
+    for id, app in pairs(Listings.myApplications) do
+        if app.status == "pending" and app.appliedAt and (now() - app.appliedAt) > APP_PENDING_EXPIRE then
+            app.status = "expired"
+            app.decidedAt = time()
+            expired = true
+        end
+    end
+    if expired and Listings.frame and Listings.frame:IsShown() then
+        Listings:RefreshApplications()
+    end
+end)
+
+local rosterFrame = CreateFrame("Frame")
+rosterFrame:RegisterEvent("GROUP_ROSTER_UPDATE")
+rosterFrame:RegisterEvent("PARTY_MEMBERS_CHANGED")
+rosterFrame:RegisterEvent("RAID_ROSTER_UPDATE")
+rosterFrame:SetScript("OnEvent", function()
+    if not FrostSeek or not FrostSeek._v or not FrostSeek._v.c(_tk) then return end
+    if Listings.myListing then
+        Listings:CheckAutoClose()
+        Listings:BroadcastMyListing()
     end
 end)
 

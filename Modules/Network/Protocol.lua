@@ -18,6 +18,7 @@ Protocol.MSG_TYPES = {
 Protocol._dedupCache = {}
 Protocol._dedupMaxAge = 120
 Protocol._lastCleanup = 0
+Protocol.MAX_WIRE = 250
 
 local function clean(s)
     s = tostring(s or "")
@@ -28,15 +29,23 @@ local function clean(s)
     s = string.gsub(s, "|r", "")
     s = string.gsub(s, "|H[^|]+|h", "")
     s = string.gsub(s, "|h", "")
-    return string.sub(s, 1, 240)
+    return s
 end
 
 local function split(str)
-    local parts = {}
-    for part in string.gmatch(str, "[^" .. SEP .. "]+") do
-        table.insert(parts, part)
+    local t = {}
+    str = tostring(str or "")
+    local start = 1
+    while true do
+        local pos = string.find(str, SEP, start, true)
+        if not pos then
+            table.insert(t, string.sub(str, start))
+            break
+        end
+        table.insert(t, string.sub(str, start, pos - 1))
+        start = pos + 1
     end
-    return parts
+    return t
 end
 
 local function now()
@@ -62,6 +71,10 @@ local function DedupKey(raw)
     local stripped = raw
     if string.sub(stripped, 1, string.len(PREFIX)) == PREFIX then
         stripped = string.sub(stripped, string.len(PREFIX) + 1)
+    end
+    local parts = split(stripped)
+    if parts and parts[2] == Protocol.MSG_TYPES.LIST and #parts >= 11 then
+        return parts[2] .. SEP .. (parts[3] or "") .. SEP .. (parts[11] or "")
     end
     return string.sub(stripped, 1, 80)
 end
@@ -99,7 +112,8 @@ end
 
 function Protocol.SerializeListing(l)
     if not l or not l.id then return nil end
-    return table.concat({
+
+    local header = {
         PREFIX,
         Protocol.MSG_TYPES.LIST,
         clean(l.id),
@@ -113,11 +127,33 @@ function Protocol.SerializeListing(l)
         clean(l.members or "1"),
         clean(l.voice or "None"),
         clean(l.loot or "Group Loot"),
-        clean(l.note or ""),
+    }
+    local trailer = {
         clean(l.key or ""),
         tostring(l.created or now()),
         tostring(l.seen or now()),
-    }, SEP)
+    }
+
+    local noteStr = clean(l.note or "")
+
+    local function buildMsg(note)
+        local parts = {}
+        for i = 1, #header do parts[#parts + 1] = header[i] end
+        parts[#parts + 1] = note
+        for i = 1, #trailer do parts[#parts + 1] = trailer[i] end
+        return table.concat(parts, SEP)
+    end
+
+    local msg = buildMsg(noteStr)
+    while #msg > Protocol.MAX_WIRE and #noteStr > 0 do
+        noteStr = string.sub(noteStr, 1, #noteStr - 1)
+        msg = buildMsg(noteStr)
+    end
+
+    if #msg > Protocol.MAX_WIRE then
+        msg = string.sub(msg, 1, Protocol.MAX_WIRE)
+    end
+    return msg
 end
 
 function Protocol.ParseListing(p)
@@ -282,7 +318,15 @@ function Protocol.IsValidApplicant(a)
 end
 
 function Protocol.GenerateId()
-    return "fsk_" .. tostring(math.random(100000, 999999)) .. "_" .. tostring(now())
+    if not Protocol._seeded then
+        Protocol._seeded = true
+        pcall(function()
+            math.randomseed(time() + math.floor(GetTime() * 1000))
+            for _ = 1, 3 do math.random() end
+        end)
+    end
+    local pn = (UnitName and UnitName("player")) or "x"
+    return "fsk_" .. tostring(pn) .. "_" .. tostring(math.random(100000, 999999)) .. "_" .. tostring(now()) .. "_" .. tostring(math.floor((GetTime and GetTime() or 0) * 1000) % 100000)
 end
 
 Protocol.PREFIX = PREFIX

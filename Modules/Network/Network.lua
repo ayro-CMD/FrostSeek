@@ -17,6 +17,25 @@ Network.maxJoinAttempts = 10
 Network.lastJoinAttempt = 0
 Network.lastSendTime = 0
 
+Network._queue = {}
+Network._queueMax = 50
+
+local RATE_LIMITS = {
+    LIST = 0.2,
+    APP = 0.3,
+    REMOVE = 0.3,
+    DECISION = 0.3,
+    PING = 1.0,
+    PONG = 1.0,
+}
+
+local function debugLog(msg)
+    if FrostSeekDB and FrostSeekDB.Settings and FrostSeekDB.Settings.debugMode then
+        print("|cffffcc00[FSK-DBG]|r " .. tostring(msg))
+    end
+end
+Network._debug = debugLog
+
 local function getChannelId(channelName)
     if not channelName then return nil end
     local ok, id = pcall(function()
@@ -78,6 +97,7 @@ function Network:JoinChannel()
     C_Timer.After(3, function()
         self.channelId = getChannelId(CHANNEL)
         if self.channelId then
+            local wasConn = self.isConnected
             self.isConnected = true
             self.joinAttempts = 0
             if not self.wasConnected then
@@ -85,6 +105,7 @@ function Network:JoinChannel()
                 if Shared then Shared.PlaySound("connect") end
                 print("|cff88ccffFrostNet:|r Connected to channel |cffffffff" .. CHANNEL .. "|r")
             end
+            if not wasConn then self:ScheduleRebroadcast() end
         else
             self.isConnected = false
             if self.joinAttempts < self.maxJoinAttempts then
@@ -126,40 +147,146 @@ function Network:RefreshChannel()
     end
 end
 
+local function detectMsgType(message)
+    if not message then return nil end
+    local sep = string.find(message, "~", 1, true)
+    if not sep then return nil end
+    local after = string.sub(message, sep + 1)
+    local sep2 = string.find(after, "~", 1, true)
+    if sep2 then return string.sub(after, 1, sep2 - 1) end
+    return after
+end
+
 function Network:Send(message)
     if not message or message == "" then return false end
     if not PROTOCOL then
         PROTOCOL = FrostSeek and FrostSeek.Protocol
         if not PROTOCOL then return false end
     end
-    if PROTOCOL.IsAddonSpam and PROTOCOL:IsAddonSpam(message) then return false end
-    if #message > (Shared and Shared.MAX_MESSAGE_LENGTH or 240) then
-        message = string.sub(message, 1, Shared and Shared.MAX_MESSAGE_LENGTH or 240)
+    if PROTOCOL.IsAddonSpam and PROTOCOL:IsAddonSpam(message) then
+        debugLog("Send dropped (spam filter): " .. tostring(string.sub(message, 1, 40)))
+        return false
     end
-    local rateLimit = Shared and Shared.MAX_SEND_RATE or 1.0
+
+    local maxWire = (PROTOCOL and PROTOCOL.MAX_WIRE) or (Shared and Shared.MAX_MESSAGE_LENGTH) or 240
+    if #message > maxWire then
+        message = string.sub(message, 1, maxWire)
+    end
+
+    local msgType = detectMsgType(message)
+    local rateLimit = (msgType and RATE_LIMITS[msgType]) or (Shared and Shared.MAX_SEND_RATE) or 1.0
     local now = GetTime()
-    if (now - self.lastSendTime) < rateLimit then return false end
-    PROTOCOL:MarkProcessed(message)
-    self.lastSendTime = now
-    local sent = false
-    if self.isConnected and self.channelId then
-        local ok = pcall(function() SendChatMessage(message, "CHANNEL", nil, self.channelId) end)
-        sent = ok
-    else
-        self:RefreshChannel()
-        if self.channelId then
-            local ok = pcall(function() SendChatMessage(message, "CHANNEL", nil, self.channelId) end)
-            sent = ok
+    local tooSoon = (now - self.lastSendTime) < rateLimit
+
+    local function actuallySend()
+        if not self.channelId then
+            self:RefreshChannel()
+        end
+        if not self.channelId then
+            return false, "no_channel"
+        end
+        local ok, err = pcall(function()
+            SendChatMessage(message, "CHANNEL", nil, self.channelId)
+        end)
+        if not ok then
+            debugLog("SendChatMessage error: " .. tostring(err))
+            return false, "send_error"
+        end
+        return true
+    end
+
+    if tooSoon then
+        debugLog("Send deferred by rate-limit (" .. tostring(msgType) .. "), queuing")
+        self:_Enqueue(message)
+        return false
+    end
+
+    local ok, why = actuallySend()
+    if ok then
+        PROTOCOL:MarkProcessed(message)
+        self.lastSendTime = GetTime()
+        debugLog("Send OK (" .. tostring(msgType) .. ") len=" .. tostring(#message))
+        return true
+    end
+
+    debugLog("Send failed (" .. tostring(why) .. "), queuing for retry")
+    self:_Enqueue(message)
+    return false
+end
+
+function Network:_Enqueue(message)
+    if not message then return end
+    for _, m in ipairs(self._queue) do
+        if m == message then return end
+    end
+    table.insert(self._queue, message)
+    while #self._queue > self._queueMax do
+        table.remove(self._queue, 1)
+    end
+end
+
+function Network:_FlushQueue()
+    if not self._queue or #self._queue == 0 then return end
+    if not self.channelId then self:RefreshChannel() end
+    if not self.channelId then
+        if #self._queue >= 5 and not self._queueWarned then
+            self._queueWarned = true
+            print("|cffff5555FrostNet:|r Cannot reach channel |cffffffffFSK|r — " .. tostring(#self._queue) .. " messages queued. Run /fsdebug to check channel status.")
+        end
+        return
+    end
+    self._queueWarned = false
+
+    local snapshot = self._queue
+    self._queue = {}
+
+    for i, message in ipairs(snapshot) do
+        local msgType = detectMsgType(message)
+        local rateLimit = (msgType and RATE_LIMITS[msgType]) or 1.0
+        local now = GetTime()
+        if (now - self.lastSendTime) < rateLimit then
+            self:_Enqueue(message)
+        else
+            local ok = pcall(function()
+                SendChatMessage(message, "CHANNEL", nil, self.channelId)
+            end)
+            if ok then
+                if PROTOCOL and PROTOCOL.MarkProcessed then
+                    PROTOCOL:MarkProcessed(message)
+                end
+                self.lastSendTime = GetTime()
+                debugLog("Queue flush OK (" .. tostring(msgType) .. ")")
+            else
+                self:_Enqueue(message)
+            end
         end
     end
-    return sent
 end
 
 function Network:SendListing(listing)
     if not PROTOCOL then return false end
     local msg = PROTOCOL.SerializeListing(listing)
     if not msg then return false end
-    return self:Send(msg)
+    local ok = self:Send(msg)
+    if ok then
+        print("|cff88ccffFrostNet:|r Group published to channel |cffffffffFSK|r (" .. tostring(listing.activity or "?") .. ") |cff888888[id=" .. tostring(self.channelId) .. " len=" .. tostring(#msg) .. "]|r")
+        self._lastSentListingId = listing.id
+        self._lastSentEchoTime = GetTime()
+        self._echoReceived = false
+        local sentId = listing.id
+        C_Timer.After(2, function()
+            if Network._lastSentListingId == sentId and not Network._echoReceived then
+                print("|cffff8800FrostNet:|r No loopback echo from server within 2s — the server may be dropping your messages. Try /fstest to verify.")
+            end
+        end)
+    else
+        if not self.channelId then
+            print("|cffff8800FrostNet:|r Channel not connected yet — your group is queued and will be published automatically when FSK reconnects.")
+        else
+            print("|cffff8800FrostNet:|r Group publish deferred (rate-limit), will retry in ~2s.")
+        end
+    end
+    return ok
 end
 
 function Network:SendApplicant(listingId, applicant)
@@ -201,12 +328,36 @@ C_Timer.NewTicker(10, function()
     Network:RefreshChannel()
 end)
 
+C_Timer.NewTicker(2, function()
+    if not FrostSeek or not FrostSeek._v or not FrostSeek._v.c(_tk) then return end
+    Network:_FlushQueue()
+end)
+
 C_Timer.NewTicker(60, function()
     if not Network.isConnected then
         Network.joinAttempts = 0
         Network:JoinChannel()
     end
 end)
+
+Network._rebroadcastPending = false
+function Network:ScheduleRebroadcast()
+    if self._rebroadcastPending then return end
+    self._rebroadcastPending = true
+    C_Timer.After(3, function()
+        self._rebroadcastPending = false
+        if not FrostSeek or not FrostSeek.Listings then return end
+        local Listings = FrostSeek.Listings
+        if Listings.myListing then
+            debugLog("Channel (re)connected: re-broadcasting my listing")
+            if Listings.BroadcastMyListing then
+                Listings:BroadcastMyListing()
+            elseif self and self.SendListing then
+                self:SendListing(Listings.myListing)
+            end
+        end
+    end)
+end
 
 local eventFrame = CreateFrame("Frame")
 eventFrame:RegisterEvent("PLAYER_LOGIN")
@@ -227,9 +378,14 @@ eventFrame:SetScript("OnEvent", function(_, event, ...)
                 if cnLower == string.lower(CHANNEL) then
                     local newId = getChannelId(CHANNEL)
                     if newId then
+                        local wasConnected = Network.isConnected
                         Network.channelId = newId
                         Network.isConnected = true
                         Network.joinAttempts = 0
+                        if not wasConnected then
+                            debugLog("FSK channel joined (id=" .. tostring(newId) .. ")")
+                            Network:ScheduleRebroadcast()
+                        end
                     end
                 end
             end
@@ -267,9 +423,30 @@ function Network:HandleMessage(raw, author)
         PROTOCOL = FrostSeek and FrostSeek.Protocol
         if not PROTOCOL then return end
     end
-    if PROTOCOL.IsDuplicate and PROTOCOL:IsDuplicate(raw) then return end
+    if self._lastSentListingId and raw and author then
+        local pn = UnitName("player") or ""
+        local authorClean = tostring(author)
+        if string.find(authorClean, "-", 1, true) then
+            authorClean = string.sub(authorClean, 1, string.find(authorClean, "-", 1, true) - 1)
+        end
+        if authorClean == pn then
+            local sentId = self._lastSentListingId
+            if string.find(raw, sentId, 1, true) then
+                self._echoReceived = true
+                debugLog("Loopback echo received for listing " .. tostring(sentId) .. " (channel is healthy)")
+            end
+        end
+    end
+
+    if PROTOCOL.IsDuplicate and PROTOCOL:IsDuplicate(raw) then
+        debugLog("RX dropped (dup): " .. tostring(string.sub(raw, 1, 40)))
+        return
+    end
     local msgType, parts = PROTOCOL.Parse(raw)
-    if not msgType or not parts then return end
+    if not msgType or not parts then
+        debugLog("RX dropped (unparseable): " .. tostring(string.sub(raw or "", 1, 60)))
+        return
+    end
     if PROTOCOL.MarkProcessed then
         PROTOCOL:MarkProcessed(raw)
     end
@@ -279,6 +456,8 @@ function Network:HandleMessage(raw, author)
         authorClean = string.sub(authorClean, 1, string.find(authorClean, "-", 1, true) - 1)
     end
     if authorClean == pn then return end
+
+    debugLog("RX " .. tostring(msgType) .. " from " .. tostring(authorClean) .. " (parts=" .. tostring(#parts) .. ")")
 
     if msgType == PROTOCOL.MSG_TYPES.PING then
         local user = PROTOCOL.ParsePresence(parts)
@@ -306,6 +485,8 @@ function Network:HandleMessage(raw, author)
             if FrostSeek.LFG and FrostSeek.LFG.RecordFromListing then
                 FrostSeek.LFG:RecordFromListing(listing)
             end
+        else
+            debugLog("RX LIST invalid (parts=" .. tostring(#parts) .. ") raw=" .. tostring(string.sub(raw, 1, 80)))
         end
 
     elseif msgType == PROTOCOL.MSG_TYPES.APP then
@@ -339,6 +520,7 @@ function Network:GetStatus()
         connected = self.isConnected,
         channelId = self.channelId,
         channel = self.channelName,
+        queueLen = self._queue and #self._queue or 0,
     }
 end
 
