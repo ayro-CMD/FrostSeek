@@ -33,7 +33,7 @@ function FrostSeek._v.g(name)
     return FrostSeek._v.w[name]
 end
 
-FrostSeek.VERSION = "2.0.0"
+FrostSeek.VERSION = "2.0.1"
 
 FrostSeekDB = FrostSeekDB or {}
 
@@ -463,7 +463,7 @@ miniButton:SetFrameLevel(100)
 local minimapPosition = FrostSeekDB.MinimapButtonPosition or 45
 miniButton:SetPoint("CENTER", Minimap, "CENTER", minimapPosition, minimapPosition - 80)
 
-local ICON_BASE = "Interface\\AddOns\\FrostSeek\\Media\\texture\\icon\\"
+local ICON_BASE = "Interface\\AddOns\\FrostSeek\\Media\\texture\\icon\\map\\"
 
 miniButton:SetNormalTexture(ICON_BASE .. "multi.tga")
 miniButton:SetHighlightTexture("Interface\\Minimap\\UI-Minimap-ZoomButton-Highlight")

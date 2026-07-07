@@ -321,6 +321,7 @@ function LFG.PassesActivityFilter(category, dungeon)
 end
 
 local SPAM_WORDS = {
+    "pocket", "sadgirl", "speed", "some", "silver", "put",
     "guild", "community", "recruit", "recruiting", "recru", "roster", "lf members", "lf guild",
     "guild lf", "new guild", "gm is", "leader is", "we are", "our guild", "us on",
     "application", "roster spot", "core group", "core team", "ru",
@@ -331,8 +332,8 @@ local SPAM_WORDS = {
     "boost", "wts", "wtb", "sell", "selling", "buy", "gdkp", "carry service",
     "boosting service", "pilot", "piloted", "price", "cheap", "offer",
     "service", "cache", "nuked", "ksh", "keystone master", "wts %d",
-    "learning run", "fun run", "train", "mythic%+",
-    "pushing", "mdi", "speedrun", "server first", "top guild", "best guild",
+    "learning run", "fun run", "train", "mythic%+", "pick", "able", "something", "you", "you're",
+    "pushing", "mdi", "speedrun", "server first", "top guild", "best guild", "cant", "found",
     "world first", "qualif", "naxxramas progress", "icc progress", "progression",
     "awakening", "twisting", "raid night", "raid schedule", "raid times", "raid day",
     "transfer", "transfers", "realm transfer", "server transfer", "move to", "come join",
@@ -349,7 +350,7 @@ local SPAM_WORDS = {
     "account", "heirloom", "spoils", "reins", "meta", "wtt",
     "glyph", "opposition", "warhorn", "farmers", "dedicated",
     "long term", "first realm",
-    "tSM", "mRP", "trp", "total rp",
+    "tSM", "mRP", "trp", "total rp", "help",
     "<Forsaken>", "Forsaken","<Seventy Saints>","Seventy Saints",
     "gamble", "bet", "wager", "jackpot", "lottery", "lucky draw", "spin the wheel",
     "raid on wednesday", "raid on thursday", "raid on friday", "raid on saturday",

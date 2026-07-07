@@ -79,13 +79,13 @@ local ACTIVITY_DB = {
 }
 
 local TYPE_ICONS = {
-    Dungeon = "Interface\\Icons\\Ability_DualWield",
-    Raid = "Interface\\Icons\\Achievement_Boss_Ragnaros",
-    ["World Boss"] = "Interface\\Icons\\Achievement_Boss_CThun",
-    Key = "Interface\\Icons\\INV_Misc_Key_03",
-    Event = "Interface\\Icons\\INV_Misc_Ticket_Tarot_Madness",
-    Manastorm = "Interface\\Icons\\Spell_Arcane_Arcane04",
-    PvP = "Interface\\Icons\\Ability_DualWieldSpecialization",
+    Dungeon = "Interface\\AddOns\\FrostSeek\\Media\\texture\\icon\\custom\\cata.tga",
+    Raid = "Interface\\AddOns\\FrostSeek\\Media\\texture\\icon\\custom\\raid.tga",
+    ["World Boss"] = "Interface\\AddOns\\FrostSeek\\Media\\texture\\icon\\custom\\customwc.tga",
+    Key = "Interface\\AddOns\\FrostSeek\\Media\\texture\\icon\\custom\\keystone.tga",
+    Event = "Interface\\AddOns\\FrostSeek\\Media\\texture\\icon\\custom\\custom.tga",
+    Manastorm = "Interface\\AddOns\\FrostSeek\\Media\\texture\\icon\\custom\\alva.tga",
+    PvP = "Interface\\AddOns\\FrostSeek\\Media\\texture\\icon\\custom\\pandino.tga",
 }
 
 local TYPE_COLORS = {
