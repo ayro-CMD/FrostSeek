@@ -45,6 +45,150 @@ function Shared.GetClassHex(classFile)
     return string.format("|cFF%02X%02X%02X", math.floor(c[1] * 255 + 0.5), math.floor(c[2] * 255 + 0.5), math.floor(c[3] * 255 + 0.5))
 end
 
+local CLASS_ICON_BASE = "Interface\\AddOns\\FrostSeek\\Media\\texture\\icon\\class\\"
+Shared.CLASS_ICON_DEFAULT = "Interface\\AddOns\\FrostSeek\\Media\\texture\\icon\\custom\\custom.tga"
+
+local CLASSIC_ICONS = {
+    WARRIOR        = CLASS_ICON_BASE .. "classic\\warrior.tga",
+    PALADIN        = CLASS_ICON_BASE .. "classic\\paladino.tga",
+    HUNTER         = CLASS_ICON_BASE .. "classic\\hunter.tga",
+    ROGUE          = CLASS_ICON_BASE .. "classic\\rogue.tga",
+    PRIEST         = CLASS_ICON_BASE .. "classic\\prete.tga",
+    DEATHKNIGHT    = CLASS_ICON_BASE .. "classic\\dk.tga",
+    SHAMAN         = CLASS_ICON_BASE .. "classic\\shaman.tga",
+    MAGE           = CLASS_ICON_BASE .. "classic\\mago.tga",
+    WARLOCK        = CLASS_ICON_BASE .. "classic\\warlock.tga",
+    DRUID          = CLASS_ICON_BASE .. "classic\\druido.tga",
+    MONK           = CLASS_ICON_BASE .. "classic\\monk.tga",
+    DEMONHUNTER    = CLASS_ICON_BASE .. "classic\\demonhuntervoid.tga",
+    EVOKER         = CLASS_ICON_BASE .. "classic\\evoker.tga",
+    HERO           = CLASS_ICON_BASE .. "hero\\hero.tga",
+}
+
+local COA_ICONS = {
+    REAPER              = CLASS_ICON_BASE .. "coa\\reaper.tga",
+    TEMPLAR             = CLASS_ICON_BASE .. "coa\\templar.tga",
+    TINKER              = CLASS_ICON_BASE .. "coa\\tinker.tga",
+    SUNCLERIC           = CLASS_ICON_BASE .. "coa\\suncleric.tga",
+    STARCALLER          = CLASS_ICON_BASE .. "coa\\starcaller.tga",
+    NECROMANCER         = CLASS_ICON_BASE .. "coa\\necromanger.tga",
+    PYROMANCER          = CLASS_ICON_BASE .. "coa\\pyromancer.tga",
+    BARBARIAN           = CLASS_ICON_BASE .. "coa\\barbarian.tga",
+    STORMBRINGER        = CLASS_ICON_BASE .. "coa\\stormbringer.tga",
+    GUARDIAN            = CLASS_ICON_BASE .. "coa\\guardian.tga",
+    CULTIST             = CLASS_ICON_BASE .. "coa\\cultist.tga",
+    CHRONOMANCER        = CLASS_ICON_BASE .. "coa\\chronomancer.tga",
+    ["WITCH DOCTOR"]    = CLASS_ICON_BASE .. "coa\\witchdoctor.tga",
+    ["WITCH HUNTER"]    = CLASS_ICON_BASE .. "coa\\witchhunter.tga",
+    WILDWALKER          = CLASS_ICON_BASE .. "coa\\wildwalker.tga",
+    RANGER              = CLASS_ICON_BASE .. "coa\\ranger.tga",
+    VENOMANCER          = CLASS_ICON_BASE .. "coa\\insetto.tga",
+    RUNEMASTER          = CLASS_ICON_BASE .. "coa\\piritmage.tga",
+    FELSWORN            = CLASS_ICON_BASE .. "coa\\demonhunter.tga",
+    ["KNIGHT OF XOROTH"]= CLASS_ICON_BASE .. "coa\\evokerfiamma.tga",
+    BLOODMAGE           = CLASS_ICON_BASE .. "coa\\sonofarugal.tga",
+}
+
+local COA_CLASSFILE_ALIASES = {
+    ["FLESHWARDEN"]  = "KNIGHT OF XOROTH",
+    ["FLASHWARDEN"]  = "KNIGHT OF XOROTH",
+    ["SPIRITMAGE"]   = "RUNEMASTER",
+    ["PROFET"]       = "VENOMANCER",
+    ["PROPHET"]      = "VENOMANCER",
+}
+
+function Shared.NormalizeCoAClassToken(classFile)
+    if not classFile or classFile == "" then return classFile end
+    local upper = string.upper(tostring(classFile))
+    if COA_CLASSFILE_ALIASES[upper] then
+        return COA_CLASSFILE_ALIASES[upper]
+    end
+    return classFile
+end
+
+function Shared.GetClassIcon(classFile)
+    if not classFile or classFile == "" then
+        return Shared.CLASS_ICON_DEFAULT
+    end
+    classFile = Shared.NormalizeCoAClassToken(classFile)
+    local key = string.upper(tostring(classFile))
+    local norm = string.gsub(key, "[_%-]", " ")
+
+    local isCoA = false
+    if _G.FrostSeekCompat then
+        if _G.FrostSeekCompat.IsConquestOfAzeroth and _G.FrostSeekCompat.IsConquestOfAzeroth() then
+            isCoA = true
+        elseif _G.FrostSeekCompat.IsAscension and _G.FrostSeekCompat.IsAscension()
+           and _G.FrostSeekCompat.GetAscensionMode and _G.FrostSeekCompat.GetAscensionMode() == "coa" then
+            isCoA = true
+        end
+    end
+
+    if isCoA then
+        if COA_ICONS[key] then return COA_ICONS[key] end
+        if COA_ICONS[norm] then return COA_ICONS[norm] end
+    end
+
+    if CLASSIC_ICONS[key] then return CLASSIC_ICONS[key] end
+    if CLASSIC_ICONS[norm] then return CLASSIC_ICONS[norm] end
+    return Shared.CLASS_ICON_DEFAULT
+end
+
+function Shared._IsCoARealm()
+    if not _G.FrostSeekCompat then return false end
+    if _G.FrostSeekCompat.IsConquestOfAzeroth and _G.FrostSeekCompat.IsConquestOfAzeroth() then
+        return true
+    end
+    if _G.FrostSeekCompat.IsAscension and _G.FrostSeekCompat.IsAscension()
+       and _G.FrostSeekCompat.GetAscensionMode and _G.FrostSeekCompat.GetAscensionMode() == "coa" then
+        return true
+    end
+    return false
+end
+
+Shared._cachedPlayerClass = nil
+Shared._cachedPlayerClassTime = 0
+local CACHE_TTL = 10
+
+function Shared.GetPlayerClassFile()
+    if FrostSeekDB and FrostSeekDB.Settings and FrostSeekDB.Settings.manualClass
+       and FrostSeekDB.Settings.manualClass ~= "" then
+        return string.upper(FrostSeekDB.Settings.manualClass)
+    end
+
+    local now = GetTime and GetTime() or 0
+    if Shared._cachedPlayerClass and (now - Shared._cachedPlayerClassTime) < CACHE_TTL then
+        return Shared._cachedPlayerClass
+    end
+
+    local className, classFile = UnitClass("player")
+    if not classFile then return "WARRIOR" end
+
+    local result = classFile
+
+    if Shared._IsCoARealm() then
+        if className and className ~= "" then
+            result = string.upper(className)
+        end
+    end
+
+    Shared._cachedPlayerClass = result
+    Shared._cachedPlayerClassTime = now
+    return result
+end
+
+function Shared.GetPlayerClass()
+    local className, classFile = UnitClass("player")
+    local resolved = Shared.GetPlayerClassFile()
+    if resolved ~= classFile then
+        className = string.gsub(string.lower(resolved), "(%a)([%w ']*)", function(first, rest)
+            return string.upper(first) .. rest
+        end)
+        className = string.gsub(className, "Of", "of")
+    end
+    return className, resolved
+end
+
 Shared.ROLE_COLORS = {
     Tank = {0.29, 0.64, 1.00},
     Healer = {0.27, 1.00, 0.40},

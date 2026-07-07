@@ -38,6 +38,7 @@ end
 
 local GetClassColor = Shared and Shared.GetClassColor or function(cf) return {0.7,0.7,0.7} end
 local GetClassHex = Shared and Shared.GetClassHex or function(cf) return "|cFF888888" end
+local GetClassIcon = Shared and Shared.GetClassIcon or function(cf) return "Interface\\Icons\\INV_Misc_QuestionMark" end
 
 function Presence:SendPing()
     local Network = FrostSeek and FrostSeek.Network
@@ -122,7 +123,12 @@ end
 function Presence:GetOnlineUsers()
     self:PruneUsers()
     local rows = {}
-    local _, classFile = UnitClass("player")
+    local classFile
+    if Shared and Shared.GetPlayerClassFile then
+        classFile = Shared.GetPlayerClassFile()
+    else
+        _, classFile = UnitClass("player")
+    end
     local profile = FrostSeekDB and FrostSeekDB.Profile or {}
     table.insert(rows, {
         name = UnitName("player") or "",
@@ -361,7 +367,7 @@ function Presence:BuildPanel(parent)
     headerAccent:SetHeight(1)
     headerAccent:SetColorTexture(accentC[1], accentC[2], accentC[3], 0.3)
 
-    local hLabels = {{"Status", 6}, {"Player", 22}, {"Lvl", 125}, {"Role", 155}, {"Zone", 200}, {"Guild", 300}, {"Seen", 390}}
+    local hLabels = {{"Status", 6}, {"Player", 36}, {"Lvl", 125}, {"Role", 155}, {"Zone", 200}, {"Guild", 300}, {"Seen", 390}}
     for _, lbl in ipairs(hLabels) do
         local t = header:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
         t:SetPoint("LEFT", header, "LEFT", lbl[2], 0)
@@ -385,9 +391,15 @@ function Presence:BuildPanel(parent)
         r.statusDot:SetPoint("LEFT", r, "LEFT", 8, 0)
         r.statusDot:SetColorTexture(unpack(_tc("success")))
 
+        r.classIcon = r:CreateTexture(nil, "ARTWORK")
+        r.classIcon:SetSize(14, 14)
+        r.classIcon:SetPoint("LEFT", r, "LEFT", 18, 0)
+        r.classIcon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
+        r.classIcon:Hide()
+
         r.name = r:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-        r.name:SetPoint("LEFT", r, "LEFT", 22, 0)
-        r.name:SetWidth(101)
+        r.name:SetPoint("LEFT", r, "LEFT", 36, 0)
+        r.name:SetWidth(87)
         r.name:SetJustifyH("LEFT")
 
         r.level = r:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
@@ -588,6 +600,16 @@ function Presence:RefreshPanel()
                 row.name:SetText(nameColor .. tostring(u.name or "?") .. "|r")
             end
 
+            if row.classIcon then
+                local cf = u.classFile
+                if cf and cf ~= "" then
+                    row.classIcon:SetTexture(GetClassIcon(cf))
+                    row.classIcon:Show()
+                else
+                    row.classIcon:Hide()
+                end
+            end
+
             row.level:SetText(_hex("textDim") .. tostring(u.level or "") .. "|r")
 
             local roleColor = "|cff888888"
@@ -624,6 +646,7 @@ function Presence:RefreshPanel()
         else
             row:Hide()
             row.userData = nil
+            if row.classIcon then row.classIcon:Hide() end
         end
     end
 end
@@ -661,6 +684,21 @@ end
 C_Timer.NewTicker(PING_INTERVAL, function()
     if not FrostSeek or not FrostSeek._v or not FrostSeek._v.c(_tk) then return end
     if FrostSeekDB and FrostSeekDB.Settings and FrostSeekDB.Settings.frostnetEnabled ~= false then
+        if Shared and Shared._cachedPlayerClass then
+            Shared._cachedPlayerClass = nil
+        end
+        if Presence.onlineUsers then
+            local pn = UnitName("player") or ""
+            if Presence.onlineUsers[pn] then
+                local cf
+                if Shared and Shared.GetPlayerClassFile then
+                    cf = Shared.GetPlayerClassFile()
+                else
+                    _, cf = UnitClass("player")
+                end
+                Presence.onlineUsers[pn].classFile = cf or ""
+            end
+        end
         Presence:SendPing()
     end
 end)

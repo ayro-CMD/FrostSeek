@@ -83,7 +83,13 @@ end
 
 function Profile:GetProfileForApp()
     local p = self:GetProfile()
-    local _, classFile = UnitClass("player")
+    local Shared = _G.FrostSeekShared
+    local classFile
+    if Shared and Shared.GetPlayerClassFile then
+        classFile = Shared.GetPlayerClassFile()
+    else
+        _, classFile = UnitClass("player")
+    end
 
     return {
         name = UnitName("player") or "",
@@ -394,7 +400,13 @@ end
 function Profile:UpdateAutoInfo()
     if not self.autoInfo then return end
     local ilvl, gs = self:AutoFill()
-    local _, classFile = UnitClass("player")
+    local Shared = _G.FrostSeekShared
+    local classFile
+    if Shared and Shared.GetPlayerClassFile then
+        classFile = Shared.GetPlayerClassFile()
+    else
+        _, classFile = UnitClass("player")
+    end
     local p = EnsureProfileDB()
     local roleName = p.role or "No Role"
     local roleColors = { ["No Role"] = "|cff888888", Tank = "|cff4aa3ff", Healer = "|cff44ff66", DPS = "|cffff5555" }

@@ -58,8 +58,15 @@ local function playerName()
 end
 
 local function playerClass()
-    local _, classFile = UnitClass("player")
-    return classFile or "WARRIOR", classFile or "WARRIOR"
+    local Shared = _G.FrostSeekShared
+    local classFile
+    if Shared and Shared.GetPlayerClassFile then
+        classFile = Shared.GetPlayerClassFile()
+    else
+        _, classFile = UnitClass("player")
+    end
+    classFile = classFile or "WARRIOR"
+    return classFile, classFile
 end
 
 local function playerLevel()

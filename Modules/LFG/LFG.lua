@@ -586,40 +586,34 @@ function LFG.GetFullPlayerInfo()
 end
 
 function LFG.GetClassInfo()
-    local className, classFile = UnitClass("player")
+    local Shared = _G.FrostSeekShared
+    local className, classFile
+    if Shared and Shared.GetPlayerClass then
+        className, classFile = Shared.GetPlayerClass()
+    else
+        className, classFile = UnitClass("player")
+    end
     local classMap = {
-        ["WARRIOR"] = "Warrior",
-        ["PALADIN"] = "Paladin",
-        ["HUNTER"] = "Hunter",
-        ["ROGUE"] = "Rogue",
-        ["PRIEST"] = "Priest",
-        ["DEATHKNIGHT"] = "Death Knight",
-        ["SHAMAN"] = "Shaman",
-        ["MAGE"] = "Mage",
-        ["WARLOCK"] = "Warlock",
+        ["WARRIOR"] = "Warrior", ["PALADIN"] = "Paladin", ["HUNTER"] = "Hunter",
+        ["ROGUE"] = "Rogue", ["PRIEST"] = "Priest", ["DEATHKNIGHT"] = "Death Knight",
+        ["SHAMAN"] = "Shaman", ["MAGE"] = "Mage", ["WARLOCK"] = "Warlock",
         ["DRUID"] = "Druid",
         ["HERO"] = "Hero",
-        ["NECROMANCER"] = "Necromancer",
-        ["PYROMANCER"] = "Pyromancer",
-        ["CULTIST"] = "Cultist",
-        ["STARCALLER"] = "Starcaller",
-        ["SUNCLERIC"] = "Suncleric",
-        ["TINKER"] = "Tinker",
-        ["RUNEMASTER"] = "Runemaster",
-        ["PRIMAALIST"] = "Primaalist",
-        ["REAPER"] = "Reaper",
-        ["VENOMANCER"] = "Venomancer",
-        ["CHRONOMANCER"] = "Chronomancer",
-        ["BLOODMAGE"] = "Bloodmage",
-        ["GUARDIAN"] = "Guardian",
-        ["STORMBRINGER"] = "Stormbringer",
-        ["FELSWORN"] = "Felsworn",
-        ["BARBARIAN"] = "Barbarian",
-        ["WITCH_DOCTOR"] = "Witch Doctor",
-        ["WITCH_HUNTER"] = "Witch Hunter",
-        ["KNIGHT_OF_XOROTH"] = "Knight of Xoroth",
-        ["TEMPLAR"] = "Templar",
-        ["RANGED"] = "Ranged"
+        ["NECROMANCER"] = "Necromancer", ["PYROMANCER"] = "Pyromancer",
+        ["CULTIST"] = "Cultist", ["STARCALLER"] = "Starcaller",
+        ["SUNCLERIC"] = "Suncleric", ["TINKER"] = "Tinker",
+        ["RUNEMASTER"] = "Runemaster", ["PRIMAALIST"] = "Primaalist",
+        ["REAPER"] = "Reaper", ["VENOMANCER"] = "Venomancer",
+        ["CHRONOMANCER"] = "Chronomancer", ["BLOODMAGE"] = "Bloodmage",
+        ["GUARDIAN"] = "Guardian", ["STORMBRINGER"] = "Stormbringer",
+        ["FELSWORN"] = "Felsworn", ["BARBARIAN"] = "Barbarian",
+        ["WITCH DOCTOR"] = "Witch Doctor", ["WITCH HUNTER"] = "Witch Hunter",
+        ["KNIGHT OF XOROTH"] = "Knight of Xoroth",
+        ["TEMPLAR"] = "Templar", ["RANGER"] = "Ranger",
+        ["WILDWALKER"] = "Wildwalker",
+        ["SON OF ARUGAL"] = "Son of Arugal",
+        ["INSETTO"] = "Insetto", ["PIRITMAGE"] = "Piritmage",
+        ["DEMON HUNTER"] = "Demon Hunter", ["DEMONHUNTER"] = "Demon Hunter",
     }
     return classMap[classFile] or className or "Unknown"
 end
@@ -1179,9 +1173,28 @@ function LFG.CreateLFGPopup(sender, message, dungeon, isHeroic, isRaid, isPvp, i
     popup.borderRight:SetPoint("BOTTOMRIGHT", 0, 0)
     popup.borderRight:SetWidth(bw)
     popup.borderRight:SetColorTexture(br, bg2, bb, 0.9)
+
+    popup.classIcon = popup:CreateTexture(nil, "ARTWORK")
+    popup.classIcon:SetSize(18, 18)
+    popup.classIcon:SetPoint("TOPLEFT", popup, "TOPLEFT", 10, -11)
+    popup.classIcon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
+    do
+        local cf = nil
+        if sender and FrostSeek and FrostSeek.Presence and FrostSeek.Presence.onlineUsers then
+            local u = FrostSeek.Presence.onlineUsers[sender]
+            if u and u.classFile and u.classFile ~= "" then cf = u.classFile end
+        end
+        if cf and Shared and Shared.GetClassIcon then
+            popup.classIcon:SetTexture(Shared.GetClassIcon(cf))
+            popup.classIcon:Show()
+        else
+            popup.classIcon:Hide()
+        end
+    end
+
     local nameText = popup:CreateFontString(nil, "OVERLAY")
     nameText:SetFont("Fonts\\FRIZQT__.TTF", 14, "OUTLINE")
-    nameText:SetPoint("TOPLEFT", popup, "TOPLEFT", 14, -12)
+    nameText:SetPoint("TOPLEFT", popup, "TOPLEFT", 34, -12)
     nameText:SetText(string.format("|cffffffff%s|r", sender or "Unknown"))
     local catColors = {
         KEYSTONE = "|cFFFF88FF[KS]|r",

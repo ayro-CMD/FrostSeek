@@ -115,7 +115,13 @@ local function GetPlayerData()
     local enchant = ""
     local roleText = ""
 
-    local _, classFile = UnitClass("player")
+    local Shared = _G.FrostSeekShared
+    local classFile
+    if Shared and Shared.GetPlayerClassFile then
+        classFile = Shared.GetPlayerClassFile()
+    else
+        _, classFile = UnitClass("player")
+    end
     if classFile then
         local classMap = {
             ["WARRIOR"] = "Warrior", ["PALADIN"] = "Paladin", ["HUNTER"] = "Hunter",
@@ -131,9 +137,10 @@ local function GetPlayerData()
             ["CHRONOMANCER"] = "Chronomancer", ["BLOODMAGE"] = "Bloodmage",
             ["GUARDIAN"] = "Guardian", ["STORMBRINGER"] = "Stormbringer",
             ["FELSWORN"] = "Felsworn", ["BARBARIAN"] = "Barbarian",
-            ["WITCH_DOCTOR"] = "Witch Doctor", ["WITCH_HUNTER"] = "Witch Hunter",
-            ["KNIGHT_OF_XOROTH"] = "Knight of Xoroth", ["TEMPLAR"] = "Templar",
-            ["RANGER"] = "Ranger"
+            ["WITCH DOCTOR"] = "Witch Doctor", ["WITCH HUNTER"] = "Witch Hunter",
+            ["KNIGHT OF XOROTH"] = "Knight of Xoroth", ["TEMPLAR"] = "Templar",
+            ["RANGER"] = "Ranger", ["WILDWALKER"] = "Wildwalker",
+            ["SON OF ARUGAL"] = "Son of Arugal",
         }
         classInfo = classMap[classFile] or classFile
     end

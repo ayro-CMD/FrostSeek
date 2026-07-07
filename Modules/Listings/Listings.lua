@@ -184,18 +184,10 @@ local function roleText(role)
 end
 
 local function classIcon(classFile)
-    local icons = {
-        PALADIN = "Interface\\Icons\\Spell_Holy_HolyBolt",
-        WARRIOR = "Interface\\Icons\\INV_Sword_27",
-        PRIEST = "Interface\\Icons\\Spell_Holy_Renew",
-        MAGE = "Interface\\Icons\\Spell_Frost_FrostBolt02",
-        ROGUE = "Interface\\Icons\\Ability_BackStab",
-        DRUID = "Interface\\Icons\\Ability_Druid_Maul",
-        HUNTER = "Interface\\Icons\\INV_Weapon_Bow_07",
-        SHAMAN = "Interface\\Icons\\Spell_Nature_BloodLust",
-        WARLOCK = "Interface\\Icons\\Spell_Shadow_CurseOfTounges",
-    }
-    return icons[(classFile or ""):upper()] or "Interface\\Icons\\INV_Misc_QuestionMark"
+    if Shared and Shared.GetClassIcon then
+        return Shared.GetClassIcon(classFile)
+    end
+    return "Interface\\Icons\\INV_Misc_QuestionMark"
 end
 
 local function classColorText(name, classFile)
@@ -715,9 +707,15 @@ function Listings:BuildBrowseFrame()
         r.title:SetWidth(180)
         r.title:SetJustifyH("LEFT")
 
+        r.leaderIcon = r:CreateTexture(nil, "ARTWORK")
+        r.leaderIcon:SetSize(16, 16)
+        r.leaderIcon:SetPoint("LEFT", r, "LEFT", 212, 0)
+        r.leaderIcon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
+        r.leaderIcon:Hide()
+
         r.leader = r:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-        r.leader:SetPoint("LEFT", r, "LEFT", 212, 0)
-        r.leader:SetWidth(90)
+        r.leader:SetPoint("LEFT", r, "LEFT", 232, 0)
+        r.leader:SetWidth(70)
 
         r.diff = r:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
         r.diff:SetPoint("LEFT", r, "LEFT", 305, 0)
@@ -865,6 +863,24 @@ function Listings:RefreshBrowse()
             local icon = TYPE_ICONS[l.type] or TYPE_ICONS.Dungeon
             row.icon:SetTexture(icon)
             row.title:SetText((TYPE_COLORS[l.type] or "|cffffffff") .. (l.activity or "?") .. "|r")
+
+            if row.leaderIcon then
+                local leaderName = tostring(l.leader or "")
+                local cf = nil
+                if leaderName ~= "" and FrostSeek.Presence and FrostSeek.Presence.onlineUsers then
+                    local u = FrostSeek.Presence.onlineUsers[leaderName]
+                    if u and u.classFile and u.classFile ~= "" then
+                        cf = u.classFile
+                    end
+                end
+                if cf then
+                    row.leaderIcon:SetTexture(classIcon(cf))
+                    row.leaderIcon:Show()
+                else
+                    row.leaderIcon:Hide()
+                end
+            end
+
             row.leader:SetText(tostring(l.leader or ""))
             row.diff:SetText(tostring(l.difficulty or ""))
             row.ilvl:SetText((l.minItemLevel and l.minItemLevel ~= "") and (l.minItemLevel .. "+") or "--")
@@ -882,6 +898,7 @@ function Listings:RefreshBrowse()
         else
             row:Hide()
             row.listingId = nil
+            if row.leaderIcon then row.leaderIcon:Hide() end
         end
     end
 

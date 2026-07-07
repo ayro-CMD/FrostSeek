@@ -3,6 +3,9 @@ local FrostSeek = _G.FrostSeek
 local Dashboard = {}
 local _tk = FrostSeek and FrostSeek._v and FrostSeek._v.a("dashboard", Dashboard)
 
+local Shared = _G.FrostSeekShared
+local GetClassIcon = Shared and Shared.GetClassIcon or function(cf) return "Interface\\Icons\\INV_Misc_QuestionMark" end
+
 local cachedIlvl = 0
 local cachedGS = 0
 local sessionStartTime = GetTime()
@@ -66,12 +69,23 @@ function Dashboard:Initialize(parentFrame)
 
     local playerName, playerRealm = UnitName("player")
     if not playerRealm or playerRealm == "" then playerRealm = GetRealmName() or "" end
-    local _, classFile = UnitClass("player")
-    local cc = RAID_CLASS_COLORS and RAID_CLASS_COLORS[classFile]
+    local _, rawClassFile = UnitClass("player")
+    local cc = RAID_CLASS_COLORS and RAID_CLASS_COLORS[rawClassFile]
     local nameHex = cc and string.format("FF%02X%02X%02X", cc.r * 255, cc.g * 255, cc.b * 255) or "FF88CCFF"
 
+    local iconClassFile = rawClassFile
+    if Shared and Shared.GetPlayerClassFile then
+        iconClassFile = Shared.GetPlayerClassFile()
+    end
+
+    self.heroClassIcon = hero:CreateTexture(nil, "ARTWORK")
+    self.heroClassIcon:SetSize(22, 22)
+    self.heroClassIcon:SetPoint("LEFT", hero, "LEFT", pad, 3)
+    self.heroClassIcon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
+    self.heroClassIcon:SetTexture(GetClassIcon(iconClassFile))
+
     self.heroName = hero:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
-    self.heroName:SetPoint("LEFT", hero, "LEFT", pad, 3)
+    self.heroName:SetPoint("LEFT", self.heroClassIcon, "RIGHT", 8, 0)
     self.heroName:SetText("|c" .. nameHex .. (playerName or "Unknown") .. "|r")
 
     local faction = UnitFactionGroup("player") or ""
@@ -661,10 +675,17 @@ function Dashboard:ApplyTheme()
     if not self.frame then return end
     self:UpdateAll()
     if self.heroName then
-        local _, classFile = UnitClass("player")
-        local cc = RAID_CLASS_COLORS and RAID_CLASS_COLORS[classFile]
+        local _, rawClassFile = UnitClass("player")
+        local cc = RAID_CLASS_COLORS and RAID_CLASS_COLORS[rawClassFile]
         local nameHex = cc and string.format("FF%02X%02X%02X", cc.r * 255, cc.g * 255, cc.b * 255) or string.format("FF%02X%02X%02X", _tc("accent")[1] * 255, _tc("accent")[2] * 255, _tc("accent")[3] * 255)
         self.heroName:SetText("|c" .. nameHex .. (UnitName("player") or "Unknown") .. "|r")
+        if self.heroClassIcon then
+            local iconClassFile = rawClassFile
+            if Shared and Shared.GetPlayerClassFile then
+                iconClassFile = Shared.GetPlayerClassFile()
+            end
+            self.heroClassIcon:SetTexture(GetClassIcon(iconClassFile))
+        end
     end
     if self.footer then
         self.footer:SetText(" MADE with |cffff6666LOVE|r by |cff88ccffAYRO|r  ")
