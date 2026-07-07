@@ -33,7 +33,7 @@ function FrostSeek._v.g(name)
     return FrostSeek._v.w[name]
 end
 
-FrostSeek.VERSION = "2.0.1"
+FrostSeek.VERSION = "2.0.8"
 
 FrostSeekDB = FrostSeekDB or {}
 
@@ -733,8 +733,7 @@ SlashCmdList["FSNET"] = function()
     print("WasConnected ever : " .. tostring(Network.wasConnected))
     print("Join attempts     : " .. tostring(Network.joinAttempts) .. "/" .. tostring(Network.maxJoinAttempts))
 
-    -- Try to list what WoW thinks the channels are. This will show whether
-    -- the player is actually IN the FSK channel from the client's point of view.
+   
     print("|cff88ccff--- Channels seen by WoW client ---|r")
     if GetNumDisplayChannels then
         local count = GetNumDisplayChannels() or 0
@@ -792,6 +791,88 @@ SlashCmdList["FSNET"] = function()
     print("|cff888888Tip: ask your friends to run /fsnet too and compare ChannelId.|r")
     print("|cff888888If your ChannelId is nil while 'Connected: true', there's a sync bug.|r")
     print("|cff888888If your friends show 0 online users, the FSK channel is realm-locked or faction-locked.|r")
+end
+
+SLASH_FSCLASS1 = "/fsclass"
+SlashCmdList["FSCLASS"] = function(msg)
+    local Shared = _G.FrostSeekShared
+    if not Shared then
+        print("|cffff5555FrostSeek:|r Shared module not loaded!")
+        return
+    end
+
+    msg = msg or ""
+    local cmd, arg = string.match(msg, "^(%S+)%s*(.*)$")
+    cmd = cmd and string.lower(cmd) or ""
+
+    if cmd == "set" and arg and arg ~= "" then
+        if not FrostSeekDB.Settings then FrostSeekDB.Settings = {} end
+        FrostSeekDB.Settings.manualClass = arg
+        Shared._cachedPlayerClass = nil
+        print("|cff88ccffFrostSeek:|r Manual class override set to |cffffffff" .. arg .. "|r")
+        print("|cff888888Type /fsclass reset to remove the override.|r")
+        return
+    end
+
+    if cmd == "reset" then
+        if FrostSeekDB and FrostSeekDB.Settings then
+            FrostSeekDB.Settings.manualClass = nil
+        end
+        Shared._cachedPlayerClass = nil
+        print("|cff88ccffFrostSeek:|r Manual class override cleared. Using auto-detection.")
+        return
+    end
+
+    print("|cff88ccff========== CLASS DETECTION DEBUG ==========|r")
+
+    local manual = FrostSeekDB and FrostSeekDB.Settings and FrostSeekDB.Settings.manualClass
+    print("1. Manual override : " .. (manual and manual ~= "" and "|cff44ff44" .. manual .. "|r" or "|cff666666(none)|r"))
+
+    local className, classFile = UnitClass("player")
+    print("2. UnitClass        : " .. tostring(className) .. " / " .. tostring(classFile))
+
+    local isCoA = Shared._IsCoARealm and Shared._IsCoARealm() or false
+    local Compat = _G.FrostSeekCompat
+    local realmName = Compat and Compat.GetRealmName and Compat.GetRealmName() or GetRealmName() or "?"
+    local ascMode = Compat and Compat.GetAscensionMode and Compat.GetAscensionMode() or "?"
+    local serverType = Compat and Compat.GetServerType and Compat.GetServerType() or "?"
+    print("3. Realm            : " .. tostring(realmName))
+    print("   Server type      : " .. tostring(serverType))
+    print("   Ascension mode   : " .. tostring(ascMode))
+    print("   IsCoA            : " .. tostring(isCoA))
+
+    print("4. Talent tabs      :")
+    if GetTalentTabInfo then
+        for i = 1, 5 do
+            local ok, name = pcall(function() return GetTalentTabInfo(i) end)
+            if ok and name and name ~= "" then
+                print("   Tab " .. i .. ": " .. tostring(name))
+            end
+        end
+    else
+        print("   |cffff5555GetTalentTabInfo not available|r")
+    end
+
+    local resolved = Shared.GetPlayerClassFile and Shared.GetPlayerClassFile() or classFile or "?"
+    print("5. Resolved class   : |cff44ff44" .. tostring(resolved) .. "|r")
+
+    local iconPath = Shared.GetClassIcon and Shared.GetClassIcon(resolved) or "?"
+    print("6. Icon path        : " .. tostring(iconPath))
+
+    local Presence = FrostSeek.Presence
+    if Presence and Presence.onlineUsers then
+        local pn = UnitName("player") or ""
+        local me = Presence.onlineUsers[pn]
+        if me then
+            print("7. Broadcast class  : " .. tostring(me.classFile))
+        else
+            print("7. Broadcast class  : " .. tostring(resolved) .. " |cff888888(not yet pinged)|r")
+        end
+    end
+
+    print("|cff88ccff====================================|r")
+    print("|cff888888To override: /fsclass set Templar|r")
+    print("|cff888888To reset:    /fsclass reset|r")
 end
 
 local _tk = FrostSeek._v.a("core", FrostSeek)
