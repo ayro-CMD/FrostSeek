@@ -334,7 +334,7 @@ local SPAM_WORDS = {
     "wts", "wtb", "sell", "selling", "buy", "gdkp", "carry service","anybody","lockboxes",
     "boosting service", "pilot", "piloted", "price", "cheap", "offer",
     "service", "cache", "nuked", "ksh", "keystone master","florida","grass",
-    "mdi", "server first", "top guild", "best guild","gf",
+    "mdi", "server first", "top guild", "best guild","gf","which","every",
     "world first", "qualif","girl","small","boy","goth","gnome",
     "awakening", "twisting",
     "transfer", "transfers", "realm transfer", "server transfer", "move to", "come join",
