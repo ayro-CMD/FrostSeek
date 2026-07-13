@@ -349,7 +349,7 @@ local SPAM_WORDS = {
     "weakaura", "weakauras", "elvui", "tukui", "plater", "dbm", "bigwigs",
     "https", "discord.gg", "twitch.tv", "youtube",
     "account", "heirloom",
-    "wtt",
+    "wtt","how","do","pets",
     "farmers",
     "tSM", "mRP", "trp", "total rp",
     "gamble", "bet", "wager", "jackpot", "lottery", "lucky draw", "spin the wheel",
