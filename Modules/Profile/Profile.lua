@@ -20,6 +20,7 @@ local function EnsureProfileDB()
             autoFill = true,
             autoIlvl = 0,
             autoGs = 0,
+            status = "Online",
         }
     end
 
@@ -31,6 +32,7 @@ local function EnsureProfileDB()
     if p.autoFill == nil then p.autoFill = true end
     if p.autoIlvl == nil then p.autoIlvl = 0 end
     if p.autoGs == nil then p.autoGs = 0 end
+    if p.status == nil or p.status == "" then p.status = "Online" end
     return p
 end
 
@@ -101,6 +103,7 @@ function Profile:GetProfileForApp()
         gearScore = tostring(p.autoGs or 0),
         roleType = p.spec or "",
         discord = p.discord and "Yes" or "No",
+        status = p.status or "Online",
         note = p.note or "",
         applied = time(),
     }

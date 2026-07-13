@@ -262,6 +262,180 @@ function Listings:HandleIncomingListing(listing)
     self:RefreshBrowse()
 end
 
+local appPopups = {}
+local APP_POPUP_W = 240
+local APP_POPUP_H = 82
+local APP_POPUP_GAP = 6
+local APP_POPUP_MAX = 4
+local APP_POPUP_X = 20
+local APP_POPUP_Y = -60
+
+local function RepositionAppPopups()
+    for i, popup in ipairs(appPopups) do
+        popup:ClearAllPoints()
+        popup:SetPoint("TOPLEFT", UIParent, "TOPLEFT", APP_POPUP_X, APP_POPUP_Y - ((i - 1) * (APP_POPUP_H + APP_POPUP_GAP)))
+    end
+end
+
+local function RemoveAppPopup(popup)
+    if not popup then return end
+    popup:SetScript("OnUpdate", nil)
+    if UIFrameFadeOut then
+        UIFrameFadeOut(popup, 0.15, popup:GetAlpha() or 1, 0)
+        C_Timer.After(0.2, function()
+            if popup then popup:Hide() end
+        end)
+    else
+        popup:Hide()
+    end
+    for i = #appPopups, 1, -1 do
+        if appPopups[i] == popup then
+            table.remove(appPopups, i)
+            break
+        end
+    end
+    C_Timer.After(0.05, RepositionAppPopups)
+end
+
+function Listings:ShowApplicantPopup(applicant)
+    if not applicant or not applicant.name then return end
+    if FrostSeekDB.Listings and FrostSeekDB.Listings.disableAppPopups then return end
+    if #appPopups >= APP_POPUP_MAX then
+        RemoveAppPopup(appPopups[1])
+    end
+
+    local roleColorMap = {
+        Tank = "|cff4aa3ff", Healer = "|cff44ff66", DPS = "|cffff5555",
+        tank = "|cff4aa3ff", healer = "|cff44ff66", dps = "|cffff5555",
+    }
+    local roleDisplay = applicant.role or "DPS"
+    local roleColor = roleColorMap[roleDisplay] or "|cffffffff"
+    local activity = self.myListing and self.myListing.activity or "Unknown"
+    local listingType = self.myListing and self.myListing.type or "Dungeon"
+    local typeColor = TYPE_COLORS[listingType] or "|cff88ccff"
+
+    local popup = CreateFrame("Frame", nil, UIParent)
+    popup:SetSize(APP_POPUP_W, APP_POPUP_H)
+    popup:SetFrameStrata("DIALOG")
+    popup:SetAlpha(0)
+    if UIFrameFadeIn then
+        UIFrameFadeIn(popup, 0.15, 0, 1)
+    else
+        popup:SetAlpha(1)
+    end
+    popup.applicantName = applicant.name
+
+    local frostBlue = {0.35, 0.65, 0.95}
+    local frostBorder = {0.25, 0.55, 0.85}
+
+    popup.bg = popup:CreateTexture(nil, "BACKGROUND")
+    popup.bg:SetAllPoints()
+    popup.bg:SetColorTexture(unpack(_tc("bgMenuBg")))
+
+    local glowTop = popup:CreateTexture(nil, "BORDER")
+    glowTop:SetPoint("TOPLEFT", 0, 0)
+    glowTop:SetPoint("TOPRIGHT", 0, 0)
+    glowTop:SetHeight(2)
+    glowTop:SetColorTexture(frostBlue[1], frostBlue[2], frostBlue[3], 0.9)
+
+    local glowBot = popup:CreateTexture(nil, "BORDER")
+    glowBot:SetPoint("BOTTOMLEFT", 0, 0)
+    glowBot:SetPoint("BOTTOMRIGHT", 0, 0)
+    glowBot:SetHeight(1)
+    glowBot:SetColorTexture(frostBorder[1], frostBorder[2], frostBorder[3], 0.4)
+
+    local glowLeft = popup:CreateTexture(nil, "BORDER")
+    glowLeft:SetPoint("TOPLEFT", 0, 0)
+    glowLeft:SetPoint("BOTTOMLEFT", 0, 0)
+    glowLeft:SetWidth(1)
+    glowLeft:SetColorTexture(frostBorder[1], frostBorder[2], frostBorder[3], 0.4)
+
+    local glowRight = popup:CreateTexture(nil, "BORDER")
+    glowRight:SetPoint("TOPRIGHT", 0, 0)
+    glowRight:SetPoint("BOTTOMRIGHT", 0, 0)
+    glowRight:SetWidth(1)
+    glowRight:SetColorTexture(frostBorder[1], frostBorder[2], frostBorder[3], 0.4)
+
+    local dot = popup:CreateTexture(nil, "ARTWORK")
+    dot:SetSize(8, 8)
+    dot:SetPoint("TOPLEFT", popup, "TOPLEFT", 8, -9)
+    dot:SetColorTexture(0.35, 0.85, 1, 1)
+
+    local headerText = popup:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    headerText:SetPoint("TOPLEFT", popup, "TOPLEFT", 20, -10)
+    headerText:SetPoint("RIGHT", popup, "RIGHT", -8, 0)
+    headerText:SetJustifyH("LEFT")
+    headerText:SetText("|cff88ccffNew |r" .. roleColor .. roleDisplay .. "|r |cff88ccffapplied|r")
+
+    popup.classIcon = popup:CreateTexture(nil, "ARTWORK")
+    popup.classIcon:SetSize(16, 16)
+    popup.classIcon:SetPoint("TOPLEFT", popup, "TOPLEFT", 8, -24)
+    popup.classIcon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
+    do
+        local cf = applicant.classFile
+        if cf and Shared and Shared.GetClassIcon then
+            popup.classIcon:SetTexture(Shared.GetClassIcon(cf))
+            popup.classIcon:Show()
+        else
+            popup.classIcon:Hide()
+        end
+    end
+
+    local nameStr = classColorText(applicant.name, applicant.classFile)
+    local nameText = popup:CreateFontString(nil, "OVERLAY")
+    nameText:SetFont("Fonts\\FRIZQT__.TTF", 11, "OUTLINE")
+    nameText:SetPoint("TOPLEFT", popup, "TOPLEFT", 28, -27)
+    nameText:SetText(nameStr)
+
+    local infoText = popup:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    infoText:SetPoint("TOPLEFT", popup, "TOPLEFT", 28, -40)
+    infoText:SetPoint("RIGHT", popup, "RIGHT", -8, 0)
+    infoText:SetJustifyH("LEFT")
+    local lvl = applicant.level or "?"
+    local ilvl = applicant.itemLevel or "?"
+    local gs = applicant.gearScore or "?"
+    infoText:SetText("|cff888888Lv|r " .. lvl .. "  |cff88ccffiLvl:|r |cff44ff44" .. ilvl .. "|r  |cff88ccffGS:|r |cffffcc00" .. gs .. "|r  |cff888888Group:|r " .. typeColor .. activity .. "|r")
+
+    local btnW, btnH, btnGap = 70, 20, 6
+    local totalBtnW = (btnW * 2) + btnGap
+    local btnStartX = (popup:GetWidth() - totalBtnW) / 2
+
+    local acceptBtn = UI and UI.CreateModernButton and UI.CreateModernButton(popup, btnW, btnH, "Accept", {0.15, 0.5, 0.25})
+    if not acceptBtn then
+        acceptBtn = CreateFrame("Button", nil, popup)
+        acceptBtn:SetSize(btnW, btnH)
+        acceptBtn:SetText("Accept")
+    end
+    acceptBtn:SetPoint("BOTTOMLEFT", popup, "BOTTOMLEFT", btnStartX, 6)
+    acceptBtn:SetScript("OnClick", function()
+        Listings:AcceptApplicant(applicant.name)
+        RemoveAppPopup(popup)
+    end)
+
+    local declineBtn = UI and UI.CreateModernButton and UI.CreateModernButton(popup, btnW, btnH, "Decline", {0.5, 0.15, 0.15})
+    if not declineBtn then
+        declineBtn = CreateFrame("Button", nil, popup)
+        declineBtn:SetSize(btnW, btnH)
+        declineBtn:SetText("Decline")
+    end
+    declineBtn:SetPoint("LEFT", acceptBtn, "RIGHT", btnGap, 0)
+    declineBtn:SetScript("OnClick", function()
+        Listings:DeclineApplicant(applicant.name)
+        RemoveAppPopup(popup)
+    end)
+
+    popup:SetScript("OnUpdate", function(self, elapsed)
+        if GetTime() >= self.expiryTime then
+            self:SetScript("OnUpdate", nil)
+            RemoveAppPopup(self)
+        end
+    end)
+    popup.expiryTime = GetTime() + 12
+
+    table.insert(appPopups, popup)
+    RepositionAppPopups()
+end
+
 function Listings:HandleIncomingApplicant(applicant)
     if not applicant or not applicant.name then return end
     if not self.myListing or applicant.listingId ~= self.myListing.id then return end
@@ -280,6 +454,7 @@ function Listings:HandleIncomingApplicant(applicant)
         end)
     end
 
+    self:ShowApplicantPopup(applicant)
     self:RefreshApplicants()
 end
 

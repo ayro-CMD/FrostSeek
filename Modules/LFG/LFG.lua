@@ -81,6 +81,7 @@ local DUNGEON_KEYWORDS = {
     "strat", "scholo", "lbrs", "ubrs", "ramps", "bf", "sp", "ub", "mt", "ac", "sh",
     "ohf", "mecha", "bm", "mgt", "shh", "bota", "sl", "sv", "arca", "uk", "up","kcm",
     "nexus", "oculus", "ak", "dtk", "vh", "gun", "hos", "hol", "cos", "fos", "pos", "hor", "vault", "roads", "brc", "kc", "graveyard", "scarlet monastery","",
+    "spam", "dg", "aura", "rdf",
     "ragefire chasm", "deadmines", "wailing caverns", "shadowfang keep",
     "blackfathom deeps", "gnomeregan", "razorfen kraul", "razorfen downs",
     "scarlet monastery", "uldaman", "zul'farrak", "maraudon",
@@ -321,24 +322,24 @@ function LFG.PassesActivityFilter(category, dungeon)
 end
 
 local SPAM_WORDS = {
-    "pocket", "sadgirl", "speed", "some", "silver", "put",
-    "guild", "community", "recruit", "recruiting", "recru", "roster", "lf members", "lf guild",
+    "pocket", "sadgirl","issue","when","enchanter","israel","nazi","mejor","feminista","braincells","breastfeed","bbw","comunista","cocaine","why",
+    "drugs","fascista","fascist","vox","mundial","spain","anyone","know","you","staff","ticket","golf","player","players","worldforged","certain",
+    "guild", "community", "recruit", "recruiting", "recru", "roster", "lf members", "lf guild","what","is","this","high","do",
     "guild lf", "new guild", "gm is", "leader is", "we are", "our guild", "us on",
-    "application", "roster spot", "core group", "core team", "ru",
+    "application", "roster spot", "core group", "core team","we","layers","have",
     "hardcore guild", "casual guild", "semi-hardcore", "mythic raiding", "raid team", "static group",
     "looking for members", "looking for guild", "looking for a guild", "guild is looking", "we are looking",
     "active members", "mature players", "friendly guild", "pve guild", "pvp guild", "leveling guild",
     "social guild", "g looking", "is looking for", "guild event", "community night",
     "boost", "wts", "wtb", "sell", "selling", "buy", "gdkp", "carry service",
     "boosting service", "pilot", "piloted", "price", "cheap", "offer",
-    "service", "cache", "nuked", "ksh", "keystone master", "wts %d",
-    "learning run", "fun run", "train", "mythic%+", "pick", "able", "something", "you", "you're",
-    "pushing", "mdi", "speedrun", "server first", "top guild", "best guild", "cant", "found",
-    "world first", "qualif", "naxxramas progress", "icc progress", "progression",
-    "awakening", "twisting", "raid night", "raid schedule", "raid times", "raid day",
+    "service", "cache", "nuked", "ksh", "keystone master",
+    "mdi", "server first", "top guild", "best guild",
+    "world first", "qualif",
+    "awakening", "twisting",
     "transfer", "transfers", "realm transfer", "server transfer", "move to", "come join",
-    "invite link", "discord link", "discord server", "info and", "for more",
-    "contact", "website", "armory", "raider.io", "rio", "wowprogress", "wcl", "warcraftlogs",
+    "invite link", "discord link", "discord server",
+    "website", "armory", "raider.io", "rio", "wowprogress", "wcl", "warcraftlogs",
     "check our", "check my", "for info", "apply in", "apply on", "apply at",
     "register", "enroll",
     "stream", "streamer", "content creator", "clip", "recording", "obs", "studio",
@@ -346,22 +347,21 @@ local SPAM_WORDS = {
     "donate", "donation", "support me", "follow", "subscribe", "giveaway",
     "raffle", "contest", "prize", "merch", "store", "shop", "buy now",
     "weakaura", "weakauras", "elvui", "tukui", "plater", "dbm", "bigwigs",
-    "https", "discord.gg", "twitch.tv", "youtube", "sfoglia", "scene", "dude",
-    "account", "heirloom", "spoils", "reins", "meta", "wtt",
-    "glyph", "opposition", "warhorn", "farmers", "dedicated",
-    "long term", "first realm",
-    "tSM", "mRP", "trp", "total rp", "help",
-    "<Forsaken>", "Forsaken","<Seventy Saints>","Seventy Saints",
+    "https", "discord.gg", "twitch.tv", "youtube",
+    "account", "heirloom",
+    "wtt",
+    "farmers",
+    "tSM", "mRP", "trp", "total rp",
     "gamble", "bet", "wager", "jackpot", "lottery", "lucky draw", "spin the wheel",
+    "selling.*run", "gold.*run",
     "raid on wednesday", "raid on thursday", "raid on friday", "raid on saturday",
     "raid on sunday", "raid on monday", "raid on tuesday",
 }
 
 local SPAM_PHRASES = {
-    "lfm guild", "lfm raid", "lfmg", "LFguild", "lf guild", "lf gm",
-    "looking for more", "need more", "filling last", "filling roster",
-    "any class", "all classes", "all roles", "seeking",
-    "anyone want", "anyone interested", "who wants", "interested in",
+    "lfmg", "LFguild", "lf guild", "lf gm",
+    "filling roster",
+    "seeking",
     "hit me up", "shoot me", "hmu", "dm me", "poke me", "ping me", "msg me",
     "whisper me for", "pm for", "whisper any",
     "trade chat", "world chat", "global chat",
@@ -466,6 +466,12 @@ function LFG.IsLFMMessage(msg)
     if string.match(lowerMsg, "lf%d") then return true end
     if string.find(lowerMsg, " lf ") or string.find(lowerMsg, "^lf ") then return true end
     if string.match(lowerMsg, "last%s*spot") or string.match(lowerMsg, "need%s+%d") then return true end
+    if string.match(lowerMsg, "inv") and (string.find(lowerMsg, "whisper") or string.find(lowerMsg, "wisp") or string.find(lowerMsg, "pm")) then return true end
+    if string.match(lowerMsg, "g2g") then return true end
+    if string.match(lowerMsg, "^%d+/%d+%s") or string.match(lowerMsg, "%s%d+/%d+%s") or string.match(lowerMsg, "%s%d+/%d+$") then return true end
+    if string.match(lowerMsg, "tank/heal") or string.match(lowerMsg, "heal/tank") or string.match(lowerMsg, "tank%/heal") then return true end
+    if string.match(lowerMsg, "^%d+%s+[thd][%s%p]?") or string.match(lowerMsg, "^%d+%s+tank") or string.match(lowerMsg, "^%d+%s+heal") or string.match(lowerMsg, "^%d+%s+dps") then return true end
+    if string.match(lowerMsg, "lf.*dg") or string.match(lowerMsg, "lf.*rdf") or string.match(lowerMsg, "need.*dg") then return true end
     return false
 end
 
@@ -735,14 +741,15 @@ function LFG.RecordActiveSearch(sender, message, channel)
     if IsSpamMessage(message) then
         return
     end
-    if not activeSearches then activeSearches = {} end
     local category, dungeon, isHeroic, isMythic, isRaid, isKeystone, isPvp = LFG.ClassifyMessage(message)
-    if category == "MISC" then
-        return
-    end
     if not LFG.PassesActivityFilter(category, dungeon) then
         return
     end
+    if category == "MISC" then
+        category = "DUNGEON"
+        dungeon = "MISC"
+    end
+    if not activeSearches then activeSearches = {} end
     local isManastorm = (category == "MANASTORM")
     local isWorldBoss = (category == "WORLD_BOSS")
     local isCustom = (category == "CUSTOM")
@@ -2223,15 +2230,34 @@ local CHANNEL_BLACKLIST = {
     ["LFG"] = true,
     [" LFG"] = true,
     ["FSK"] = true,
+    ["BLFG"] = true,
+    ["BBLC25C"] = true,
 }
 
 local function IsAddonProtocolMessage(msg)
-    if not msg then return false end
+    if not msg or type(msg) ~= "string" then return true end
     if string.match(msg, "^FSK%d~") then
         return true
     end
-    local _, count = string.gsub(msg, ":", "")
-    if count < 2 then return false end
+    if string.match(msg, "^BLFG%d~") then
+        return true
+    end
+    if string.match(msg, "^LC[123]") then
+        return true
+    end
+    if string.match(msg, "^[A-Z][A-Z]%d+[~:]") then
+        return true
+    end
+    local sepCount = 0
+    for _ in string.gmatch(msg, "~") do sepCount = sepCount + 1 end
+    if sepCount >= 3 then
+        return true
+    end
+    if not string.find(msg, " ", 1, true) and string.len(msg) > 40 then
+        return true
+    end
+    local _, colonCount = string.gsub(msg, ":", "")
+    if colonCount < 2 then return false end
     return string.match(msg, "^[Ll][Ff][Gg]:")
         or string.match(msg, "^[Ll][Ff][Mm]:")
         or string.match(msg, "^%[[Ll][Ff][Gg]%]:")

@@ -224,6 +224,10 @@ function Protocol.SerializePresence(version, role, spec)
     local _, classFile = playerClass()
     local guildName = GetGuildInfo("player") or ""
     local zone = GetRealZoneText() or ""
+    local status = "Online"
+    if FrostSeekDB and FrostSeekDB.Profile and FrostSeekDB.Profile.status then
+        status = FrostSeekDB.Profile.status
+    end
     return table.concat({
         PREFIX,
         Protocol.MSG_TYPES.PING,
@@ -236,6 +240,7 @@ function Protocol.SerializePresence(version, role, spec)
         clean(guildName),
         tostring(now()),
         clean(spec or ""),
+        clean(status),
     }, SEP)
 end
 
@@ -251,6 +256,7 @@ function Protocol.ParsePresence(p)
         guild = p[9] or "",
         seen = tonumber(p[10]) or now(),
         spec = p[11] or "",
+        status = p[12] or "Online",
     }
 end
 

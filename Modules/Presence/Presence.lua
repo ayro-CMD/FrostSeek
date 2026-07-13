@@ -139,6 +139,7 @@ function Presence:GetOnlineUsers()
         spec = profile.spec or "",
         zone = GetRealZoneText() or "",
         guild = GetGuildInfo("player") or "",
+        status = profile.status or "Free",
         seen = time(),
         isSelf = true,
         isFriend = false,
@@ -207,14 +208,14 @@ function Presence:PrintOnlineUsers()
     end
 end
 
-local MAX_ROWS = 12
+local MAX_ROWS = 50
 
 function Presence:BuildPanel(parent)
     if self.panel then return self.panel end
 
     local f = CreateFrame("Frame", "FrostSeekPresencePanel", parent or UIParent)
     self.panel = f
-    f:SetWidth(440)
+    f:SetWidth(520)
     f:SetHeight(520)
     f:SetPoint("TOPRIGHT", parent or UIParent, "TOPRIGHT", -5, -50)
     f:SetFrameStrata("HIGH")
@@ -251,13 +252,123 @@ function Presence:BuildPanel(parent)
     headerFrame.title:SetText("|cff88ccffFrost|r|cffffffffNet|r")
     f.onlineBadge = headerFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     f.onlineBadge:SetPoint("LEFT", headerFrame.title, "RIGHT", 10, 0)
-    f.statusDot = headerFrame:CreateTexture(nil, "ARTWORK")
+
+    local statusBtn = CreateFrame("Button", nil, headerFrame)
+    statusBtn:SetSize(120, 20)
+    statusBtn:SetPoint("RIGHT", headerFrame, "RIGHT", -40, 2)
+    statusBtn:RegisterForClicks("LeftButtonUp")
+
+    f.statusDot = statusBtn:CreateTexture(nil, "ARTWORK")
     f.statusDot:SetSize(8, 8)
-    f.statusDot:SetPoint("RIGHT", headerFrame, "RIGHT", -36, 2)
+    f.statusDot:SetPoint("RIGHT", statusBtn, "RIGHT", -4, 0)
     f.statusDot:SetColorTexture(unpack(_tc("success")))
-    f.statusText = headerFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+
+    f.statusText = statusBtn:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     f.statusText:SetPoint("RIGHT", f.statusDot, "LEFT", -4, 0)
-    f.statusText:SetText("Online")
+    f.statusText:SetText("Free")
+
+    
+    local STATUS_OPTIONS = {
+        { id = "Free",   label = "Free",   color = {0.2, 0.9, 0.4},  hex = "|cff44ff44" },
+        { id = "Busy",   label = "Busy",   color = {1.0, 0.75, 0.2},  hex = "|cffffcc00" },
+        { id = "AFK",    label = "AFK",    color = {0.95, 0.3, 0.3},  hex = "|cffff5555" },
+        { id = "Bored",  label = "Bored",  color = {0.7, 0.3, 0.9},  hex = "|cffb34dff" },
+    }
+
+    f.STATUS_OPTIONS = STATUS_OPTIONS
+    f.statusMenuOpen = false
+
+    local statusDrop = CreateFrame("Frame", "FrostSeekStatusDrop", UIParent)
+    statusDrop:SetSize(100, #STATUS_OPTIONS * 24 + 4)
+    statusDrop:SetFrameStrata("DIALOG")
+    statusDrop:SetToplevel(true)
+    statusDrop:EnableMouse(true)
+    statusDrop:SetBackdrop({
+        bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background",
+        edgeFile = "Interface\\DialogFrame\\UI-DialogBox-Border",
+        tile = true, tileSize = 16, edgeSize = 12,
+        insets = { left = 3, right = 3, top = 3, bottom = 3 }
+    })
+    statusDrop:SetBackdropColor(0.08, 0.08, 0.12, 0.95)
+    statusDrop:Hide()
+    f.statusDrop = statusDrop
+
+    for idx, opt in ipairs(STATUS_OPTIONS) do
+        local btn = CreateFrame("Button", nil, statusDrop)
+        btn:SetSize(94, 22)
+        btn:SetPoint("TOPLEFT", statusDrop, "TOPLEFT", 3, -2 - ((idx - 1) * 24))
+
+        btn.bg = btn:CreateTexture(nil, "BACKGROUND")
+        btn.bg:SetAllPoints()
+        btn.bg:SetColorTexture(opt.color[1], opt.color[2], opt.color[3], 0.12)
+
+        btn.dot = btn:CreateTexture(nil, "ARTWORK")
+        btn.dot:SetSize(8, 8)
+        btn.dot:SetPoint("LEFT", btn, "LEFT", 8, 0)
+        btn.dot:SetColorTexture(opt.color[1], opt.color[2], opt.color[3], 1)
+
+        btn.label = btn:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+        btn.label:SetPoint("LEFT", btn.dot, "RIGHT", 6, 0)
+        btn.label:SetText(opt.hex .. opt.label .. "|r")
+
+        btn.check = btn:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+        btn.check:SetPoint("RIGHT", btn, "RIGHT", -6, 0)
+        btn.check:SetText("")
+
+        btn:SetScript("OnClick", function()
+            if not FrostSeekDB then FrostSeekDB = {} end
+            if not FrostSeekDB.Profile then FrostSeekDB.Profile = {} end
+            FrostSeekDB.Profile.status = opt.id
+            Presence:SendPing()
+            Presence:RefreshPanel()
+            statusDrop:Hide()
+            f.statusMenuOpen = false
+        end)
+        btn:SetScript("OnEnter", function(self)
+            self.bg:SetColorTexture(opt.color[1], opt.color[2], opt.color[3], 0.35)
+        end)
+        btn:SetScript("OnLeave", function(self)
+            self.bg:SetColorTexture(opt.color[1], opt.color[2], opt.color[3], 0.12)
+        end)
+    end
+
+    
+    statusDrop:SetScript("OnHide", function()
+        f.statusMenuOpen = false
+    end)
+
+    statusBtn:SetScript("OnClick", function()
+        if f.statusMenuOpen then
+            statusDrop:Hide()
+            f.statusMenuOpen = false
+            return
+        end
+        
+        statusDrop:ClearAllPoints()
+        statusDrop:SetPoint("TOPRIGHT", statusBtn, "BOTTOMRIGHT", 0, -4)
+        statusDrop:Show()
+        f.statusMenuOpen = true
+
+        
+        local curStatus = FrostSeekDB and FrostSeekDB.Profile and FrostSeekDB.Profile.status or "Free"
+        for idx2, opt2 in ipairs(STATUS_OPTIONS) do
+            local child = select(idx2, statusDrop:GetChildren())
+            if child and child.check then
+                if opt2.id == curStatus then
+                    child.check:SetText("|cff88ccff>>|r")
+                else
+                    child.check:SetText("")
+                end
+            end
+        end
+    end)
+
+    statusBtn:SetScript("OnEnter", function(self)
+        f.statusText:SetFont("Fonts\\FRIZQT__.TTF", 11, "OUTLINE")
+    end)
+    statusBtn:SetScript("OnLeave", function(self)
+        f.statusText:SetFont("Fonts\\FRIZQT__.TTF", 10, "")
+    end)
 
     local headerLine = headerFrame:CreateTexture(nil, "ARTWORK")
     headerLine:SetPoint("BOTTOMLEFT", headerFrame, "BOTTOMLEFT", 0, 0)
@@ -354,7 +465,7 @@ function Presence:BuildPanel(parent)
 
     local colY = statsY - statsH - 6
     local header = CreateFrame("Frame", nil, f)
-    header:SetWidth(416)
+    header:SetWidth(496)
     header:SetHeight(22)
     header:SetPoint("TOPLEFT", f, "TOPLEFT", 10, colY)
     local headerBgTex = header:CreateTexture(nil, "BACKGROUND")
@@ -367,20 +478,38 @@ function Presence:BuildPanel(parent)
     headerAccent:SetHeight(1)
     headerAccent:SetColorTexture(accentC[1], accentC[2], accentC[3], 0.3)
 
-    local hLabels = {{"Status", 6}, {"Player", 36}, {"Lvl", 125}, {"Role", 155}, {"Zone", 200}, {"Guild", 300}, {"Seen", 390}}
+    local hLabels = {{"Status", 6}, {"Player", 36}, {"Lvl", 130}, {"Role", 165}, {"Zone", 215}, {"Guild", 320}, {"Seen", 435}}
     for _, lbl in ipairs(hLabels) do
         local t = header:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
         t:SetPoint("LEFT", header, "LEFT", lbl[2], 0)
         t:SetText(_hex("textDim") .. lbl[1] .. "|r")
     end
 
+    
+    local footerY = 8
+    local listTop = colY - 24
+    local listBottom = footerY + 32
+    local listFrame = CreateFrame("Frame", nil, f)
+    listFrame:SetPoint("TOPLEFT", f, "TOPLEFT", 10, listTop)
+    listFrame:SetPoint("BOTTOMRIGHT", f, "BOTTOMRIGHT", -6, listBottom)
+
+    local scrollFrame = CreateFrame("ScrollFrame", "FrostSeekPresenceScroll", listFrame, "UIPanelScrollFrameTemplate")
+    scrollFrame:SetPoint("TOPLEFT", listFrame, "TOPLEFT", 0, 0)
+    scrollFrame:SetPoint("BOTTOMRIGHT", listFrame, "BOTTOMRIGHT", -18, 0)
+
+    local scrollChild = CreateFrame("Frame", nil, scrollFrame)
+    scrollChild:SetSize(478, 200)
+    scrollFrame:SetScrollChild(scrollChild)
+    self.presenceScrollFrame = scrollFrame
+    self.presenceScrollChild = scrollChild
+
     self.rows = {}
-    local rowStartY = colY - 24
+    local rowStartY = 0
     for i = 1, MAX_ROWS do
-        local r = CreateFrame("Button", nil, f)
-        r:SetWidth(416)
+        local r = CreateFrame("Button", nil, scrollChild)
+        r:SetWidth(478)
         r:SetHeight(24)
-        r:SetPoint("TOPLEFT", f, "TOPLEFT", 10, rowStartY - ((i - 1) * 26))
+        r:SetPoint("TOPLEFT", scrollChild, "TOPLEFT", 0, rowStartY - ((i - 1) * 26))
 
         r.bg = r:CreateTexture(nil, "BACKGROUND")
         r.bg:SetAllPoints()
@@ -403,25 +532,25 @@ function Presence:BuildPanel(parent)
         r.name:SetJustifyH("LEFT")
 
         r.level = r:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-        r.level:SetPoint("LEFT", r, "LEFT", 125, 0)
-        r.level:SetWidth(28)
+        r.level:SetPoint("LEFT", r, "LEFT", 130, 0)
+        r.level:SetWidth(30)
 
         r.role = r:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-        r.role:SetPoint("LEFT", r, "LEFT", 155, 0)
-        r.role:SetWidth(42)
+        r.role:SetPoint("LEFT", r, "LEFT", 165, 0)
+        r.role:SetWidth(48)
 
         r.zone = r:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-        r.zone:SetPoint("LEFT", r, "LEFT", 200, 0)
-        r.zone:SetWidth(98)
+        r.zone:SetPoint("LEFT", r, "LEFT", 215, 0)
+        r.zone:SetWidth(103)
         r.zone:SetJustifyH("LEFT")
 
         r.guild = r:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-        r.guild:SetPoint("LEFT", r, "LEFT", 300, 0)
-        r.guild:SetWidth(88)
+        r.guild:SetPoint("LEFT", r, "LEFT", 320, 0)
+        r.guild:SetWidth(110)
         r.guild:SetJustifyH("LEFT")
 
         r.seen = r:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-        r.seen:SetPoint("LEFT", r, "LEFT", 390, 0)
+        r.seen:SetPoint("LEFT", r, "LEFT", 435, 0)
         r.seen:SetWidth(38)
 
         r.highlight = r:CreateTexture(nil, "HIGHLIGHT")
@@ -493,7 +622,18 @@ function Presence:BuildPanel(parent)
         r:Hide()
     end
 
-    local footerY = 8
+    
+    scrollFrame:EnableMouseWheel(true)
+    scrollFrame:SetScript("OnMouseWheel", function(self, delta)
+        local range = scrollChild:GetHeight() - scrollFrame:GetHeight()
+        if range <= 0 then return end
+        local cur = scrollFrame:GetVerticalScroll()
+        if delta > 0 then
+            scrollFrame:SetVerticalScroll(math.max(0, cur - 40))
+        else
+            scrollFrame:SetVerticalScroll(math.min(range, cur + 40))
+        end
+    end)
 
     if FrostSeek and FrostSeek.UI and FrostSeek.UI.CreateModernButton then
         f.refreshBtn = FrostSeek.UI.CreateModernButton(f, 120, 24, "Refresh Ping")
@@ -569,15 +709,31 @@ function Presence:RefreshPanel()
         f.dpsCount:SetTextColor(unpack(stats.dps > 0 and _tc("textNorm") or _tc("textDim")))
     end
 
-    if f.statusDot then
+    
+    if f.statusDot and f.statusText then
         local Network = FrostSeek.Network
+        local myStatus = FrostSeekDB and FrostSeekDB.Profile and FrostSeekDB.Profile.status or "Free"
+        local statusOpts = f.STATUS_OPTIONS or {}
+        local statusInfo = nil
+        for _, opt in ipairs(statusOpts) do
+            if opt.id == myStatus then statusInfo = opt break end
+        end
+        if not statusInfo then statusInfo = { id = "Free", color = {0.2, 0.9, 0.4}, hex = "|cff44ff44" } end
+
         if Network and Network.isConnected then
-            f.statusDot:SetColorTexture(unpack(_tc("success")))
-            if f.statusText then f.statusText:SetText("|cff44ff44Online|r") end
+            f.statusDot:SetColorTexture(statusInfo.color[1], statusInfo.color[2], statusInfo.color[3], 1.0)
+            f.statusText:SetText(statusInfo.hex .. myStatus .. "|r")
         else
             f.statusDot:SetColorTexture(unpack(_tc("danger")))
-            if f.statusText then f.statusText:SetText("|cffff5555Offline|r") end
+            f.statusText:SetText("|cffff5555Offline|r")
         end
+    end
+
+    
+    if self.presenceScrollChild then
+        local totalUsers = #rows
+        local neededH = math.max(200, totalUsers * 26 + 4)
+        self.presenceScrollChild:SetHeight(neededH)
     end
 
     for i, row in ipairs(self.rows) do
@@ -630,18 +786,28 @@ function Presence:RefreshPanel()
             row.guild:SetText(_hex("textDim") .. guildStr .. "|r")
 
             local age = time() - (u.seen or time())
+            local userStatus = u.status or "Free"
+            
+            local statusColor = {0.2, 0.9, 0.4}
+            local statusOpts = f.STATUS_OPTIONS or {}
+            for _, opt in ipairs(statusOpts) do
+                if opt.id == userStatus then statusColor = opt.color break end
+            end
+            
+            if userStatus == "Online" then statusColor = {0.2, 0.9, 0.4} end
+
             if u.isSelf then
                 row.seen:SetText("|cff44ff44now|r")
-                row.statusDot:SetColorTexture(0.2, 0.9, 0.4, 1.0)
+                row.statusDot:SetColorTexture(statusColor[1], statusColor[2], statusColor[3], 1.0)
             elseif age < 60 then
                 row.seen:SetText("|cff44ff44" .. tostring(age) .. "s|r")
-                row.statusDot:SetColorTexture(0.2, 0.9, 0.4, 1.0)
+                row.statusDot:SetColorTexture(statusColor[1], statusColor[2], statusColor[3], 1.0)
             elseif age < 300 then
                 row.seen:SetText("|cffffcc00" .. tostring(math.floor(age / 60)) .. "m|r")
-                row.statusDot:SetColorTexture(1.0, 0.75, 0.2, 0.9)
+                row.statusDot:SetColorTexture(statusColor[1], statusColor[2], statusColor[3], 0.7)
             else
                 row.seen:SetText("|cffff5555" .. tostring(math.floor(age / 60)) .. "m|r")
-                row.statusDot:SetColorTexture(0.95, 0.3, 0.3, 0.7)
+                row.statusDot:SetColorTexture(0.5, 0.5, 0.5, 0.5)
             end
         else
             row:Hide()
