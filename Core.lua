@@ -33,7 +33,7 @@ function FrostSeek._v.g(name)
     return FrostSeek._v.w[name]
 end
 
-FrostSeek.VERSION = "2.1.0"
+FrostSeek.VERSION = "2.1.1"
 
 FrostSeekDB = FrostSeekDB or {}
 
@@ -59,7 +59,7 @@ if not FrostSeekDB.LFG then
             PVP = false,
             MANASTORM = true,
             KEYSTONE = true,
-            CUSTOM = true
+            MISC = false
         },
         customFilterWords = "",
         showActiveRecruitersWindow = false,
@@ -85,7 +85,7 @@ if not FrostSeekDB.LFG then
             PVP = "",
             MANASTORM = "",
             KEYSTONE = "",
-            CUSTOM = ""
+            MISC = ""
         }
     }
 end
@@ -157,19 +157,13 @@ local function EnsureSettingsIntegrity()
         if FrostSeekDB.LFG.popupCategories.WORLD_BOSS == nil then
             FrostSeekDB.LFG.popupCategories.WORLD_BOSS = true
         end
-        if FrostSeekDB.LFG.popupCategories.CUSTOM == nil then
-            FrostSeekDB.LFG.popupCategories.CUSTOM = true
-        end
     end
 
     if FrostSeekDB.LFG and not FrostSeekDB.LFG.customKeywords then
         FrostSeekDB.LFG.customKeywords = {
             DUNGEON = "", RAID = "", WORLD_BOSS = "",
-            PVP = "", MANASTORM = "", KEYSTONE = "", CUSTOM = ""
+            PVP = "", MANASTORM = "", KEYSTONE = ""
         }
-    end
-    if FrostSeekDB.LFG and FrostSeekDB.LFG.customKeywords and FrostSeekDB.LFG.customKeywords.CUSTOM == nil then
-        FrostSeekDB.LFG.customKeywords.CUSTOM = ""
     end
 
     if FrostSeekDB.LFG and FrostSeekDB.LFG.customMessages then
@@ -533,13 +527,12 @@ local CATEGORY_ICONS = {
     PVP         = ICON_BASE .. "red.tga",
     WORLD_BOSS  = ICON_BASE .. "giallo.tga",
     MANASTORM   = ICON_BASE .. "viola.tga",
-    CUSTOM      = ICON_BASE .. "giallo.tga",
     DUNGEON     = ICON_BASE .. "verde.tga",
 }
 
 local ICON_PRIORITY = {
     KEYSTONE = 6, RAID = 5, PVP = 4,
-    WORLD_BOSS = 3, MANASTORM = 2, DUNGEON = 1, CUSTOM = 0,
+    WORLD_BOSS = 3, MANASTORM = 2, DUNGEON = 1,
 }
 
 local DEFAULT_ICON = ICON_BASE .. "multi.tga"
@@ -934,7 +927,7 @@ local function InitializeFrostSeek()
     end
 
     if FrostSeekDB.Settings.showWelcome then
-        print("|cff88ccffFrostSeek v" .. FrostSeek.VERSION .. " loaded!|r  |cff666666-- the snow never stops|r")
+        print("|cff88ccffFrostSeek v" .. FrostSeek.VERSION .. " loaded!|r  |cff666666-- AYRO|r")
     end
 end
 

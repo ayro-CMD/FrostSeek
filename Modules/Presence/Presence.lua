@@ -3,6 +3,7 @@ local FrostSeek = _G.FrostSeek
 local Presence = {}
 local _tk = FrostSeek and FrostSeek._v and FrostSeek._v.a("presence", Presence)
 
+local L = FrostSeek.L
 local Shared = _G.FrostSeekShared
 local _tc = Shared and Shared._tc or function(t) return {0.5,0.5,0.5} end
 local _hex = Shared and Shared._hex or function(t) return "|cFF888888" end
@@ -47,7 +48,7 @@ function Presence:SendPing()
     local profile = FrostSeekDB and FrostSeekDB.Profile or {}
     local lfgRole = FrostSeekDB and FrostSeekDB.LFG and FrostSeekDB.LFG.myRole or ""
     local role = profile.role or lfgRole or ""
-    if role == "" then role = "No Role" end
+    if role == "" then role = L["none"] end
     if profile.role ~= role then profile.role = role end
 
     Network:SendPresence(
@@ -135,11 +136,11 @@ function Presence:GetOnlineUsers()
         version = FrostSeek.VERSION or "",
         level = tostring(UnitLevel("player") or 60),
         classFile = classFile or "",
-        role = profile.role or "No Role",
+        role = profile.role or L["none"],
         spec = profile.spec or "",
         zone = GetRealZoneText() or "",
         guild = GetGuildInfo("player") or "",
-        status = profile.status or "Free",
+        status = profile.status or L["status_free"],
         seen = time(),
         isSelf = true,
         isFriend = false,
@@ -265,14 +266,14 @@ function Presence:BuildPanel(parent)
 
     f.statusText = statusBtn:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     f.statusText:SetPoint("RIGHT", f.statusDot, "LEFT", -4, 0)
-    f.statusText:SetText("Free")
+    f.statusText:SetText(L["status_free"])
 
     
     local STATUS_OPTIONS = {
-        { id = "Free",   label = "Free",   color = {0.2, 0.9, 0.4},  hex = "|cff44ff44" },
-        { id = "Busy",   label = "Busy",   color = {1.0, 0.75, 0.2},  hex = "|cffffcc00" },
-        { id = "AFK",    label = "AFK",    color = {0.95, 0.3, 0.3},  hex = "|cffff5555" },
-        { id = "Bored",  label = "Bored",  color = {0.7, 0.3, 0.9},  hex = "|cffb34dff" },
+        { id = L["status_free"],   label = L["status_free"],   color = {0.2, 0.9, 0.4},  hex = "|cff44ff44" },
+        { id = L["status_busy"],   label = L["status_busy"],   color = {1.0, 0.75, 0.2},  hex = "|cffffcc00" },
+        { id = L["status_afk"],    label = L["status_afk"],    color = {0.95, 0.3, 0.3},  hex = "|cffff5555" },
+        { id = L["status_bored"],  label = L["status_bored"],  color = {0.7, 0.3, 0.9},  hex = "|cffb34dff" },
     }
 
     f.STATUS_OPTIONS = STATUS_OPTIONS
@@ -350,7 +351,7 @@ function Presence:BuildPanel(parent)
         f.statusMenuOpen = true
 
         
-        local curStatus = FrostSeekDB and FrostSeekDB.Profile and FrostSeekDB.Profile.status or "Free"
+        local curStatus = FrostSeekDB and FrostSeekDB.Profile and FrostSeekDB.Profile.status or L["status_free"]
         for idx2, opt2 in ipairs(STATUS_OPTIONS) do
             local child = select(idx2, statusDrop:GetChildren())
             if child and child.check then
@@ -572,19 +573,19 @@ function Presence:BuildPanel(parent)
                     GameTooltip:AddLine("Zone: " .. self.userData.zone, 0.9, 0.9, 0.9)
                 end
                 if self.userData.level and self.userData.level ~= "" then
-                    GameTooltip:AddLine("Level: " .. tostring(self.userData.level), 0.9, 0.9, 0.9)
+                    GameTooltip:AddLine(L["level"] .. ": " .. tostring(self.userData.level), 0.9, 0.9, 0.9)
                 end
                 if self.userData.role and self.userData.role ~= "" then
                     local rc = self.userData.role == "Tank" and {0.29, 0.64, 1.0} or
                                self.userData.role == "Healer" and {0.27, 1.0, 0.40} or
                                self.userData.role == "DPS" and {1.0, 0.33, 0.33} or {1, 1, 1}
-                    GameTooltip:AddLine("Role: " .. self.userData.role, rc[1], rc[2], rc[3])
+                    GameTooltip:AddLine(L["lfg_role"] .. ": " .. self.userData.role, rc[1], rc[2], rc[3])
                 end
                 if self.userData.spec and self.userData.spec ~= "" then
                     GameTooltip:AddLine("Spec: " .. self.userData.spec, 1, 1, 1)
                 end
                 if self.userData.classFile and self.userData.classFile ~= "" then
-                    GameTooltip:AddLine("Class: " .. self.userData.classFile, classColor[1], classColor[2], classColor[3])
+                    GameTooltip:AddLine(L["class"] .. ": " .. self.userData.classFile, classColor[1], classColor[2], classColor[3])
                 end
                 if self.userData.version and self.userData.version ~= "" then
                     if self.userData.outdated then
@@ -636,11 +637,11 @@ function Presence:BuildPanel(parent)
     end)
 
     if FrostSeek and FrostSeek.UI and FrostSeek.UI.CreateModernButton then
-        f.refreshBtn = FrostSeek.UI.CreateModernButton(f, 120, 24, "Refresh Ping")
+        f.refreshBtn = FrostSeek.UI.CreateModernButton(f, 120, 24, L["presence_refresh_ping"])
     else
         f.refreshBtn = CreateFrame("Button", nil, f, "UIPanelButtonTemplate")
         f.refreshBtn:SetSize(120, 24)
-        f.refreshBtn:SetText("Refresh Ping")
+        f.refreshBtn:SetText(L["presence_refresh_ping"])
     end
     f.refreshBtn:SetPoint("BOTTOMLEFT", f, "BOTTOMLEFT", 14, footerY)
     f.refreshBtn:SetScript("OnClick", function()
@@ -650,11 +651,11 @@ function Presence:BuildPanel(parent)
     end)
 
     if FrostSeek and FrostSeek.UI and FrostSeek.UI.CreateModernButton then
-        f.whoBtn = FrostSeek.UI.CreateModernButton(f, 100, 24, "Who List")
+        f.whoBtn = FrostSeek.UI.CreateModernButton(f, 100, 24, L["presence_who_list"])
     else
         f.whoBtn = CreateFrame("Button", nil, f, "UIPanelButtonTemplate")
         f.whoBtn:SetSize(100, 24)
-        f.whoBtn:SetText("Who List")
+        f.whoBtn:SetText(L["presence_who_list"])
     end
     f.whoBtn:SetPoint("BOTTOMRIGHT", f, "BOTTOMRIGHT", -14, footerY)
     f.whoBtn:SetScript("OnClick", function()
@@ -712,13 +713,13 @@ function Presence:RefreshPanel()
     
     if f.statusDot and f.statusText then
         local Network = FrostSeek.Network
-        local myStatus = FrostSeekDB and FrostSeekDB.Profile and FrostSeekDB.Profile.status or "Free"
+        local myStatus = FrostSeekDB and FrostSeekDB.Profile and FrostSeekDB.Profile.status or L["status_free"]
         local statusOpts = f.STATUS_OPTIONS or {}
         local statusInfo = nil
         for _, opt in ipairs(statusOpts) do
             if opt.id == myStatus then statusInfo = opt break end
         end
-        if not statusInfo then statusInfo = { id = "Free", color = {0.2, 0.9, 0.4}, hex = "|cff44ff44" } end
+        if not statusInfo then statusInfo = { id = L["status_free"], color = {0.2, 0.9, 0.4}, hex = "|cff44ff44" } end
 
         if Network and Network.isConnected then
             f.statusDot:SetColorTexture(statusInfo.color[1], statusInfo.color[2], statusInfo.color[3], 1.0)
@@ -769,11 +770,11 @@ function Presence:RefreshPanel()
             row.level:SetText(_hex("textDim") .. tostring(u.level or "") .. "|r")
 
             local roleColor = "|cff888888"
-            local displayRole = (u.role and u.role ~= "") and u.role or "No Role"
+            local displayRole = (u.role and u.role ~= "") and u.role or L["none"]
             if u.role == "Tank" then roleColor = "|cff4aa3ff"
             elseif u.role == "Healer" then roleColor = "|cff44ff66"
             elseif u.role == "DPS" then roleColor = "|cffff5555"
-            elseif u.role == "No Role" or u.role == "" or not u.role then roleColor = "|cff888888"
+            elseif u.role == L["none"] or u.role == "" or not u.role then roleColor = "|cff888888"
             end
             row.role:SetText(roleColor .. displayRole .. "|r")
 
@@ -786,7 +787,7 @@ function Presence:RefreshPanel()
             row.guild:SetText(_hex("textDim") .. guildStr .. "|r")
 
             local age = time() - (u.seen or time())
-            local userStatus = u.status or "Free"
+            local userStatus = u.status or L["status_free"]
             
             local statusColor = {0.2, 0.9, 0.4}
             local statusOpts = f.STATUS_OPTIONS or {}

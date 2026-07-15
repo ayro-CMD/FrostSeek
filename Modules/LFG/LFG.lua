@@ -5,6 +5,7 @@ local Shared = _G.FrostSeekShared
 local LFG = {}
 local _tk = FrostSeek and FrostSeek._v and FrostSeek._v.a("lfg", LFG)
 
+local L = FrostSeek.L
 local _tc = Shared and Shared._tc or function(t) return {0.5,0.5,0.5} end
 
 local searchExpirationTime = 340
@@ -75,35 +76,62 @@ local MANASTORM_KEYWORDS = {
 }
 
 local DUNGEON_KEYWORDS = {
-    "rfc", "ragefire", "dm", "deadmines", "vc", "wc", "wailing", "sfk", "shadowfang",
-    "stocks", "bfd", "gnomer", "rfk", "sm", "scarlet", "gy", "lib", "arm", "cath",
-    "rfd", "ulda", "zf", "mara", "st", "brd", "dire", "maul", "dme", "dmn", "dmw","gmm",
-    "strat", "scholo", "lbrs", "ubrs", "ramps", "bf", "sp", "ub", "mt", "ac", "sh",
-    "ohf", "mecha", "bm", "mgt", "shh", "bota", "sl", "sv", "arca", "uk", "up","kcm",
-    "nexus", "oculus", "ak", "dtk", "vh", "gun", "hos", "hol", "cos", "fos", "pos", "hor", "vault", "roads", "brc", "kc", "graveyard", "scarlet monastery","",
-    "spam", "dg", "aura", "rdf",
-    "ragefire chasm", "deadmines", "wailing caverns", "shadowfang keep",
-    "blackfathom deeps", "gnomeregan", "razorfen kraul", "razorfen downs",
-    "scarlet monastery", "uldaman", "zul'farrak", "maraudon",
-    "sunken temple", "blackrock depths", "dire maul", "stratholme",
-    "scholomance", "lower blackrock spire", "upper blackrock spire",
-    "hellfire ramparts", "blood furnace", "slave pens", "underbog", "mana-tombs", "mana tombs",
-    "auchenai crypts", "sethekk halls", "shadow labyrinth", "auchenai-crypts",
-    "old hillsbrad foothills", "the black morass", "mechanar", "botanica", "sethekk-halls",
-    "arcatraz", "magisters terrace", "sunken temple", "shadow labyrinth", "shadow-labyrinth",
-    "utgarde keep", "utgarde pinnacle", "the nexus", "the oculus",
-    "azjol-nerub", "ahn'kahet", "drak'tharon keep", "violet hold",
-    "gundrak", "halls of stone", "halls of lightning", "culling of stratholme",
-    "trial of the champion", "forge of souls", "pit of saron", "halls of reflection",
-    "blackrock caverns", "throne of the tides", "vortex pinnacle",
-    "lost city of tol'vir", "halls of origination", "grim batol",
-    "stonecore", "zul'aman", "end time", "well of eternity",
-    "hour of twilight","karazhan crypt","glittermurk mines",
-    "temple of the jade serpent", "jade serpent", "tjs",
-    "stormstout brewery", "brewery", "shado-pan monastery", "shado-pan",
-    "mogu'shan palace", "scarlet halls", "siege of niuzao temple", "niuzao",
-    "gate of the setting sun", "setting sun",
-    "mythic", "mythic+", "keystone"
+    -- Classic Dungeons
+    "rfc", "ragefire", "ragefire chasm", "dm", "deadmines", "vc", "wc", "wailing", "wailing caverns",
+    "sfk", "shadowfang", "shadowfang keep", "stocks", "stockade", "bfd", "blackfathom", "blackfathom deeps",
+    "gnomer", "gnomeregan", "rfk", "razorfen kraul", "sm", "scarlet", "scarlet monastery", "gy", "lib", "arm", "cath",
+    "rfd", "razorfen downs", "ulda", "uldaman", "zf", "zul'farrak", "mara", "maraudon",
+    "st", "sunken temple", "brd", "blackrock depths", "dire", "dire maul", "maul", "dme", "dmn", "dmw",
+    "strat", "stratholme", "scholo", "scholomance", "lbrs", "lower blackrock spire", "ubrs", "upper blackrock spire",
+    -- TBC Dungeons
+    "ramps", "hellfire ramparts", "ramparts", "bf", "blood furnace", "sp", "slave pens", "ub", "underbog",
+    "mt", "mana-tombs", "mana tombs", "ac", "auchenai crypts", "auchenai", "sh", "sethekk halls", "sethekk",
+    "ohf", "old hillsbrad", "old hillsbrad foothills", "bm", "black morass", "the black morass",
+    "mecha", "mechanar", "shh", "shattered halls", "the shattered halls", "bota", "botanica",
+    "sl", "shadow labyrinth", "shadow lab", "slabs", "sv", "steamvault", "the steamvault",
+    "arca", "arcatraz", "mgt", "magisters terrace", "magister's terrace",
+    -- WotLK Dungeons
+    "uk", "utgarde keep", "up", "utgarde pinnacle", "pinnacle", "kcm",
+    "nexus", "the nexus", "nex", "oculus", "the oculus", "ocu",
+    "ak", "ahn'kahet", "azjol", "azjol-nerub", "dtk", "drak'tharon", "drak'tharon keep",
+    "vh", "violet hold", "gun", "gundrak",
+    "hos", "halls of stone", "hol", "halls of lightning",
+    "cos", "culling", "culling of stratholme",
+    "toc_d", "champion", "trial of the champion",
+    "fos", "forge of souls", "forge", "pos", "pit of saron", "pit",
+    "hor", "halls of reflection", "reflection",
+    -- Cata Dungeons
+    "brc", "blackrock caverns", "blackrock cavern", "tott", "throne of the tides", "naz'jar",
+    "vp", "vortex pinnacle", "the vortex pinnacle", "sc", "stonecore",
+    "lct", "lost city", "tol'vir", "lost city of tol'vir",
+    "hoo", "halls of origination", "origination", "gb", "grim batol",
+    "zg_cata", "zul'gurub", "za_cata", "zul'aman",
+    "et", "end time", "woe", "well of eternity", "hot", "hour of twilight",
+    -- Ascension/CoA Dungeons
+    "gmm", "glittermurk", "karazhan crypt", "glittermurk mines",
+    "kc", "vault", "vault of the inquisition", "roads", "road to de", "de' other side",
+    "tor'watha", "tor watha","voult of the inquisition","voult",
+    -- MoP Dungeons
+    "tjs", "jade serpent", "temple of the jade serpent",
+    "sb", "stormstout", "stormstout brewery", "brewery",
+    "spm", "shado-pan", "shado-pan monastery",
+    "msp", "mogu'shan palace", "mogushan palace",
+    "scarlet halls", "siege of niuzao temple", "niuzao",
+    "gss", "gate of the setting sun", "setting sun",
+    -- General dungeon indicators
+    "dg", "aura", "mythic", "mythic+", "keystone",
+    "rdf", "lfd", "random dungeon", "random heroic", "rhc", "heroic random",
+    "daily heroic", "daily dungeon", "graveyard",
+    -- retail porting  Dungeons
+    "algeth academy", "aa", "ruby life pools", "rlp", "nokhud offensive", "no",
+    "azure vault", "brackenhide hollow", "uldaman cata",
+    "neltharus", "nelth", "freehold", "fh", "tol dagor", "td",
+    "waycrest manor", "wm", "kings rest", "kr",
+    "de other side", "dos", "mists of tirna scithe", "mots",
+    "sanguine depths", "sd", "theater of pain", "top", "plaguefall", "pf",
+    "spires of ascension", "soa", "spires",
+    "necrotic wake", "nw", "necrotic",
+    "tazavesh", "taz", "lower karazhan", "lkara", "upper karazhan", "ukara"
 }
 
 local ACTIVITY_FILTER_GROUPS = {
@@ -235,7 +263,7 @@ local ACTIVITY_FILTER_GROUPS = {
     { id = "TOT", name = "Throne of Thunder", keywords = {"TOT", "THUNDER", "LEI SHEN"} },
     { id = "SOO", name = "Siege of Orgrimmar", keywords = {"SOO", "SIEGE", "ORGRIMMAR", "GARROSH"} },
 
-    { header = "CUSTOM DUNGEONS", isHeader = true },
+    { header = "ASCENSION DUNGEONS", isHeader = true },
     { id = "BRC", name = "Blackrock Cavern", keywords = {"BRC", "BLACKROCK CAVERN"} },
     { id = "KC", name = "Karazhan Crypt", keywords = {"KC", "KARAZHAN CRYPT"} },
     { id = "VAULT", name = "Vault of the Inquisition", keywords = {"VAULT", "INQUISITION"} },
@@ -287,8 +315,6 @@ local ACTIVITY_FILTER_GROUPS = {
     { header = "KEYSTONE", isHeader = true },
     { id = "KEYSTONE", name = "Keystone Runs", keywords = {"KEYSTONE"} },
 
-    { header = "CUSTOM", isHeader = true },
-    { id = "CSTM", name = "Custom (General)", keywords = {"CUSTOM", "CSTM"} },
 }
 
 local ACTIVITY_DUNGEON_LOOKUP = {}
@@ -336,12 +362,12 @@ local SPAM_WORDS = {
     "service", "cache", "nuked", "ksh", "keystone master","florida","grass",
     "mdi", "server first", "top guild", "best guild","gf","which","every",
     "world first", "qualif","girl","small","boy","goth","gnome",
-    "awakening", "twisting",
+    "awakening", "twisting","why","crafter","whick","professions","profession",
     "transfer", "transfers", "realm transfer", "server transfer", "move to", "come join",
     "invite link", "discord link", "discord server",
     "website", "armory", "raider.io", "rio", "wowprogress", "wcl", "warcraftlogs",
     "check our", "check my", "for info", "apply in", "apply on", "apply at",
-    "register", "enroll",
+    "register", "enroll","day","days","hour","quest","quests","hours","no","alone","them","woodworker",
     "stream", "streamer", "content creator", "clip", "recording", "obs", "studio",
     "tiktok", "instagram", "twitter", "facebook", "reddit", "patreon", "paypal",
     "donate", "donation", "support me", "follow", "subscribe", "giveaway",
@@ -354,6 +380,16 @@ local SPAM_WORDS = {
     "tSM", "mRP", "trp", "total rp",
     "gamble", "bet", "wager", "jackpot", "lottery", "lucky draw", "spin the wheel",
     "selling.*run", "gold.*run",
+    "alchemy", "alch", "blacksmithing", "bs", "enchanting", "ench", "engineering", "eng", "inscription",
+    "jewelcrafting", "jc", "leatherworking", "lw", "tailoring", "skinning", "mining",
+    "herbalism", "herb", "herbalist", "first aid", "fishing", "archaeology", "arch",
+    "prospecting", "milling", "smelting", "lf crafter", "lf craft",
+    "looking for crafter", "need crafter", "can craft", "crafting for",
+    "wts craft", "wtb craft", "crafting service", "lw service", "bs service",
+    "enchant service", "jc service", "alch service", "lf enchanter", "lf bs", "lf lw",
+    "lf jc", "lf alch", "lf eng", "lf tailor", "lf miner", "lf herbalist",
+    "lf skinner", "lf crafter", "crafting lf", "enchanting lf", "smelting lf",
+    "cooking", "lf cook", " Cooking ",
     "raid on wednesday", "raid on thursday", "raid on friday", "raid on saturday",
     "raid on sunday", "raid on monday", "raid on tuesday",
 }
@@ -405,7 +441,7 @@ local CATEGORY_ACCENT = setmetatable({}, {
         local tokenMap = {
             DUNGEON = "catDungeon", RAID = "catRaid", WORLD_BOSS = "catWorldBoss",
             PVP = "catPvP", MANASTORM = "catMana", KEYSTONE = "catKeystone",
-            CUSTOM = "catCustom", ALL = "catAll", MISC = "catMisc"
+            ALL = "catAll", MISC = "catMisc"
         }
         local token = tokenMap[key] or "catMisc"
         return _tc(token)
@@ -419,7 +455,7 @@ local CATEGORY_TAG = {
     PVP = "|cFFFF5555P|r",
     MANASTORM = "|cFFAA88FFM|r",
     KEYSTONE = "|cFFFF88FFK|r",
-    CUSTOM = "|cFFFFCC00C|r",
+    MISC = "|cFF88CCFF?|r",
 }
 
 local function wholeWordFind(text, word)
@@ -533,6 +569,34 @@ function LFG.ClassifyMessage(msg)
             return "MANASTORM", "MANASTORM", false, false, false, false, false
         end
     end
+
+    local RDF_INDICATORS = {"rdf", "lfd", "random dungeon", "random heroic", "rhc", "heroic random", "daily heroic", "daily dungeon"}
+    for _, rdfKw in ipairs(RDF_INDICATORS) do
+        if wholeWordFind(lowerMsg, rdfKw) then
+            local isHeroic = wholeWordFind(lowerMsg, "hc") or
+                             wholeWordFind(lowerMsg, "heroic") or
+                             wholeWordFind(lowerMsg, "rhc")
+            for _, d in ipairs(DUNGEON_KEYWORDS) do
+                if wholeWordFind(lowerMsg, d) then
+                    return "DUNGEON", string.upper(d), isHeroic, false, false, false, false
+                end
+            end
+            return "DUNGEON", "RDF", isHeroic, false, false, false, false
+        end
+    end
+    
+    if wholeWordFind(lowerMsg, "dg") then
+        local isHeroic = wholeWordFind(lowerMsg, "hc") or
+                         wholeWordFind(lowerMsg, "heroic") or
+                         string.match(lowerMsg, " h[%s%p]") or
+                         string.match(lowerMsg, " h$")
+        for _, d in ipairs(DUNGEON_KEYWORDS) do
+            if wholeWordFind(lowerMsg, d) then
+                return "DUNGEON", string.upper(d), isHeroic, false, false, false, false
+            end
+        end
+        return "DUNGEON", "RDF", isHeroic, false, false, false, false
+    end
     for _, d in ipairs(DUNGEON_KEYWORDS) do
         if wholeWordFind(lowerMsg, d) then
             local isHeroic = wholeWordFind(lowerMsg, "hc") or
@@ -549,7 +613,6 @@ function LFG.ClassifyMessage(msg)
         PVP = { category = "PVP", isPvp = true },
         MANASTORM = { category = "MANASTORM", isManastorm = true },
         KEYSTONE = { category = "KEYSTONE", isKeystone = true },
-        CUSTOM = { category = "CUSTOM", isCustom = true },
     }
     for catKey, catInfo in pairs(customCategoryMap) do
         local customKws = GetCustomKeywords(catKey)
@@ -561,6 +624,7 @@ function LFG.ClassifyMessage(msg)
             end
         end
     end
+    
     return "MISC", "MISC", false, false, false, false, false
 end
 
@@ -651,7 +715,7 @@ end
 function LFG.CreateWhisperMessage()
     local classInfo, ilvl, enchant = LFG.GetFullPlayerInfo()
     local gs = LFG.GetGearScore()
-    local roleText = FrostSeekDB.LFG.myRole ~= "" and FrostSeekDB.LFG.myRole ~= "No Role" and FrostSeekDB.LFG.myRole or ""
+    local roleText = FrostSeekDB.LFG.myRole ~= "" and FrostSeekDB.LFG.myRole ~= L["none"] and FrostSeekDB.LFG.myRole or ""
     local playerLevel = UnitLevel("player") or 0
     if FrostSeekDB.LFG.customMessages and FrostSeekDB.LFG.customMessages.enabled then
         local template = FrostSeekDB.LFG.customMessages.template or "inv {role} {class} {ench} {ilvl} ilvl {gs}gs"
@@ -716,7 +780,7 @@ end
 
 function LFG.SetRole(role)
     if role == "" or role == nil then
-        role = "No Role"
+        role = L["none"]
     end
     FrostSeekDB.LFG.myRole = role
     if FrostSeekDB.Profile then
@@ -746,13 +810,11 @@ function LFG.RecordActiveSearch(sender, message, channel)
         return
     end
     if category == "MISC" then
-        category = "DUNGEON"
-        dungeon = "MISC"
+        
     end
     if not activeSearches then activeSearches = {} end
     local isManastorm = (category == "MANASTORM")
     local isWorldBoss = (category == "WORLD_BOSS")
-    local isCustom = (category == "CUSTOM")
     local now = GetTime()
     for _, record in ipairs(activeSearches) do
         if record.player == sender then
@@ -766,10 +828,9 @@ function LFG.RecordActiveSearch(sender, message, channel)
             record.isKeystone = isKeystone
             record.isManastorm = isManastorm
             record.isWorldBoss = isWorldBoss
-            record.isCustom = isCustom
-            record.channel = channel
+                    record.channel = channel
             if LFG.UpdateRecruitersList then LFG.UpdateRecruitersList() end
-            LFG.CreateLFGPopup(sender, message, dungeon, isHeroic, isRaid, isPvp, isKeystone, isManastorm, isCustom, category)
+            LFG.CreateLFGPopup(sender, message, dungeon, isHeroic, isRaid, isPvp, isKeystone, isManastorm, category)
             return
         end
     end
@@ -784,13 +845,12 @@ function LFG.RecordActiveSearch(sender, message, channel)
         isKeystone = isKeystone,
         isManastorm = isManastorm,
         isWorldBoss = isWorldBoss,
-        isCustom = isCustom,
         channel = channel,
         lastUpdate = now,
         startTime = now,
     })
     if LFG.UpdateRecruitersList then LFG.UpdateRecruitersList() end
-    LFG.CreateLFGPopup(sender, message, dungeon, isHeroic, isRaid, isPvp, isKeystone, isManastorm, isCustom, category)
+    LFG.CreateLFGPopup(sender, message, dungeon, isHeroic, isRaid, isPvp, isKeystone, isManastorm, category)
 end
 
 function LFG.RecordFromListing(listing)
@@ -815,8 +875,6 @@ function LFG.RecordFromListing(listing)
         category = "MANASTORM"
     elseif ltype == "PvP" then
         category = "PVP"
-    elseif ltype == "Custom" then
-        category = "CUSTOM"
     end
     local msg = ""
     local roles = listing.roles or ""
@@ -840,7 +898,6 @@ function LFG.RecordFromListing(listing)
     local isPvp = (ltype == "PvP")
     local isManastorm = (ltype == "Event" or ltype == "Manastorm")
     local isWorldBoss = (ltype == "World Boss")
-    local isCustom = (ltype == "Custom")
     for _, record in ipairs(activeSearches) do
         if record.player == sender then
             record.message = msg
@@ -853,8 +910,7 @@ function LFG.RecordFromListing(listing)
             record.isKeystone = isKeystone
             record.isManastorm = isManastorm
             record.isWorldBoss = isWorldBoss
-            record.isCustom = isCustom
-            record.channel = "FrostNet"
+                    record.channel = "FrostNet"
             record.source = "protocol"
             if LFG.UpdateRecruitersList then LFG.UpdateRecruitersList() end
             return
@@ -871,7 +927,6 @@ function LFG.RecordFromListing(listing)
         isKeystone = isKeystone,
         isManastorm = isManastorm,
         isWorldBoss = isWorldBoss,
-        isCustom = isCustom,
         channel = "FrostNet",
         lastUpdate = now,
         startTime = now,
@@ -882,7 +937,6 @@ end
 
 function LFG.GroupMatchesCategory(group, category)
     if not group then return false end
-    if group.category == "MISC" then return false end
     if category == "ALL" then return true end
     return group.category == category
 end
@@ -927,8 +981,6 @@ local DIFFICULTY_PATTERNS = {
         { keywords = {"arena", "2v2", "3v3", "5v5"}, label = "Arena" },
         { keywords = {"bg", "battleground"}, label = "Battleground" },
         { keywords = {"skirmish"}, label = "Skirmish" },
-    },
-    CUSTOM = {
     },
 }
 
@@ -1076,7 +1128,6 @@ function LFG.ProcessPopupQueue()
         nextPopup.isPvp,
         nextPopup.isKeystone,
         nextPopup.isManastorm,
-        nextPopup.isCustom,
         nextPopup.category
     )
 end
@@ -1108,7 +1159,8 @@ function LFG.RepositionPopups()
     local activeCount = 0
     for _, frame in ipairs(openFrames) do
         if frame and frame:IsShown() then
-            local yOffset = 50 + (activeCount * 110)
+            local h = frame:GetHeight() or 90
+            local yOffset = 40 + (activeCount * (h + 6))
             frame:ClearAllPoints()
             frame:SetPoint("TOP", UIParent, "TOP", 0, -yOffset)
             activeCount = activeCount + 1
@@ -1116,7 +1168,7 @@ function LFG.RepositionPopups()
     end
 end
 
-function LFG.CreateLFGPopup(sender, message, dungeon, isHeroic, isRaid, isPvp, isKeystone, isManastorm, isCustom, category)
+function LFG.CreateLFGPopup(sender, message, dungeon, isHeroic, isRaid, isPvp, isKeystone, isManastorm, category)
     if category == "MISC" then return end
     if FrostSeekDB.LFG.disablePopups then return end
     if FrostSeekDB.LFG.disableLFG then return end
@@ -1136,54 +1188,129 @@ function LFG.CreateLFGPopup(sender, message, dungeon, isHeroic, isRaid, isPvp, i
             isPvp = isPvp,
             isKeystone = isKeystone,
             isManastorm = isManastorm,
-            isCustom = isCustom,
             category = category,
         })
         return
     end
-    if not FrostSeekDB.LFG.popupCategories[category] and not FrostSeekDB.LFG.popupCategories["ALL"] then
+    if category ~= "MISC" and not FrostSeekDB.LFG.popupCategories[category] and not FrostSeekDB.LFG.popupCategories["ALL"] then
         return
     end
     if not LFG.CanShowPopup(sender, message) then return end
+
     local accent = CATEGORY_ACCENT[category] or CATEGORY_ACCENT.MISC
+    local ar, ag, ab = accent[1], accent[2], accent[3]
+
+    local UI = FrostSeekUIUtils
+    local W, H = 340, 78
     local popup = CreateFrame("Frame", nil, UIParent)
-    popup:SetSize(320, 100)
+    popup:SetSize(W, H)
     popup:SetFrameStrata("DIALOG")
+    popup:SetClampedToScreen(true)
     popup.category = category
-    local yOffset = 50 + (activePopupCount * 110)
+
+    
+    local borderTex = popup:CreateTexture(nil, "BACKGROUND")
+    borderTex:SetAllPoints()
+    borderTex:SetColorTexture(ar * 0.3, ag * 0.3, ab * 0.3, 0.65)
+
+    
+    local bgTex = popup:CreateTexture(nil, "BORDER")
+    bgTex:SetPoint("TOPLEFT", 1, -1)
+    bgTex:SetPoint("BOTTOMRIGHT", -1, 1)
+    bgTex:SetColorTexture(0.04, 0.04, 0.08, 0.93)
+
+    local yOffset = 40 + (activePopupCount * (H + 6))
     popup:SetPoint("TOP", UIParent, "TOP", 0, -yOffset)
     popup:SetAlpha(0)
-    UIFrameFadeIn(popup, 0.15, 0, 1)
-    popup.bg = popup:CreateTexture(nil, "BACKGROUND")
-    popup.bg:SetPoint("TOPLEFT", 0, 0)
-    popup.bg:SetPoint("BOTTOMRIGHT", 0, 0)
-    popup.bg:SetColorTexture(unpack(_tc("bgMenuBg")))
-    local bw = 1.5
-    local br, bg2, bb = accent[1], accent[2], accent[3]
-    popup.borderTop = popup:CreateTexture(nil, "BORDER")
-    popup.borderTop:SetPoint("TOPLEFT", 0, 0)
-    popup.borderTop:SetPoint("TOPRIGHT", 0, 0)
-    popup.borderTop:SetHeight(bw)
-    popup.borderTop:SetColorTexture(br, bg2, bb, 0.9)
-    popup.borderBottom = popup:CreateTexture(nil, "BORDER")
-    popup.borderBottom:SetPoint("BOTTOMLEFT", 0, 0)
-    popup.borderBottom:SetPoint("BOTTOMRIGHT", 0, 0)
-    popup.borderBottom:SetHeight(bw)
-    popup.borderBottom:SetColorTexture(br, bg2, bb, 0.9)
-    popup.borderLeft = popup:CreateTexture(nil, "BORDER")
-    popup.borderLeft:SetPoint("TOPLEFT", 0, 0)
-    popup.borderLeft:SetPoint("BOTTOMLEFT", 0, 0)
-    popup.borderLeft:SetWidth(bw)
-    popup.borderLeft:SetColorTexture(br, bg2, bb, 0.9)
-    popup.borderRight = popup:CreateTexture(nil, "BORDER")
-    popup.borderRight:SetPoint("TOPRIGHT", 0, 0)
-    popup.borderRight:SetPoint("BOTTOMRIGHT", 0, 0)
-    popup.borderRight:SetWidth(bw)
-    popup.borderRight:SetColorTexture(br, bg2, bb, 0.9)
+    UIFrameFadeIn(popup, 0.2, 0, 1)
+
+    
+    local topAccent = popup:CreateTexture(nil, "ARTWORK")
+    topAccent:SetPoint("TOPLEFT", 1, 0)
+    topAccent:SetPoint("TOPRIGHT", -1, 0)
+    topAccent:SetHeight(2)
+    topAccent:SetColorTexture(ar, ag, ab, 0.9)
+
+    
+    local glassReflect = popup:CreateTexture(nil, "ARTWORK")
+    glassReflect:SetPoint("TOPLEFT", 2, -3)
+    glassReflect:SetPoint("TOPRIGHT", -2, -3)
+    glassReflect:SetHeight(14)
+    glassReflect:SetColorTexture(ar * 0.06, ag * 0.06, ab * 0.06, 0.3)
+
+    
+    local catLabels = {
+        DUNGEON = L["cat_dungeon"], RAID = L["cat_raid"],
+        WORLD_BOSS = L["cat_world_boss"], PVP = L["cat_pvp"],
+        MANASTORM = L["cat_manastorm"], KEYSTONE = L["cat_keystone"],
+    }
+    local catText = catLabels[category] or L["cat_misc"]
+    popup.headerText = popup:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    popup.headerText:SetPoint("TOPLEFT", popup, "TOPLEFT", 10, -8)
+    popup.headerText:SetText(catText)
+    popup.headerText:SetTextColor(min(ar * 1.4, 1), min(ag * 1.4, 1), min(ab * 1.4, 1))
+
+    local difficulty = LFG.ParseDifficulty(message, category)
+    local diffTag = ""
+    local diffColor = "|cffcccccc"
+    if difficulty then
+        local dl = difficulty:lower()
+        if dl:find("ascended") or dl:find("asc") then
+            local num = dl:match("ascended%s*(%d+)") or dl:match("asc%s*(%d+)") or ""
+            diffTag = L["diff_ascended"] .. (num ~= "" and num or "")
+            diffColor = "|cffaa44ff"
+        elseif dl:find("trial") then
+            local num = dl:match("trial%s*(%d+)") or ""
+            diffTag = L["diff_trial"] .. (num ~= "" and num or "")
+            diffColor = "|cffff8800"
+        elseif dl:find("mythic") then
+            local num = dl:match("mythic%s*(%d+)") or dl:match("m%s*(%d+)") or ""
+            diffTag = L["diff_mythic"] .. (num ~= "" and num or "")
+            diffColor = "|cffff44ff"
+        elseif dl:find("heroic") or dl:find("hc") then
+            diffTag = L["diff_heroic"]
+            diffColor = "|cff44cc44"
+        elseif dl:find("ranked") then
+            diffTag = L["diff_ranked"]
+            diffColor = "|cffff4444"
+        else
+            diffTag = difficulty
+            diffColor = "|cffcccccc"
+        end
+    elseif isHeroic then
+        diffTag = L["diff_heroic"]
+        diffColor = "|cff44cc44"
+    end
+
+    local catHex = string.format("%02x%02x%02x", math.floor(ar*255), math.floor(ag*255), math.floor(ab*255))
+    local dungeonDisplay = ""
+    if isKeystone then
+        local ksName, ksLevel = LFG.ParseKeystoneInfo(message)
+        if ksName then
+            dungeonDisplay = ksName
+            if ksLevel then
+                diffTag = L["diff_mythic"] .. ksLevel
+                diffColor = "|cffff44ff"
+            end
+        end
+    elseif category == "RAID" then
+        dungeonDisplay = dungeon and dungeon ~= "RAID" and dungeon or L["cat_raid"]
+    elseif category == "WORLD_BOSS" then
+        dungeonDisplay = dungeon and dungeon ~= "WORLD_BOSS" and dungeon or L["cat_world_boss"]
+    elseif category == "MANASTORM" then
+        dungeonDisplay = L["cat_manastorm"]
+    elseif category == "PVP" then
+        dungeonDisplay = dungeon and dungeon ~= "PVP" and dungeon or L["cat_pvp"]
+    else
+        dungeonDisplay = dungeon and dungeon ~= "MISC" and dungeon ~= "DUNGEON" and dungeon or L["cat_dungeon"]
+    end
+
+    local row1Y = -22
+    local iconX = 10
 
     popup.classIcon = popup:CreateTexture(nil, "ARTWORK")
-    popup.classIcon:SetSize(18, 18)
-    popup.classIcon:SetPoint("TOPLEFT", popup, "TOPLEFT", 10, -11)
+    popup.classIcon:SetSize(14, 14)
+    popup.classIcon:SetPoint("TOPLEFT", popup, "TOPLEFT", iconX, row1Y)
     popup.classIcon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
     do
         local cf = nil
@@ -1199,122 +1326,92 @@ function LFG.CreateLFGPopup(sender, message, dungeon, isHeroic, isRaid, isPvp, i
         end
     end
 
-    local nameText = popup:CreateFontString(nil, "OVERLAY")
-    nameText:SetFont("Fonts\\FRIZQT__.TTF", 14, "OUTLINE")
-    nameText:SetPoint("TOPLEFT", popup, "TOPLEFT", 34, -12)
-    nameText:SetText(string.format("|cffffffff%s|r", sender or "Unknown"))
-    local catColors = {
-        KEYSTONE = "|cFFFF88FF[KS]|r",
-        PVP = "|cFFFF5555[PVP]|r",
-        MANASTORM = "|cFFAA88FF[MS]|r",
-        RAID = "|cFFFFAA00[RAID]|r",
-        WORLD_BOSS = "|cFFFFA500[WB]|r",
-        CUSTOM = "|cFFFFCC00[CSTM]|r",
-    }
-    local contentText = popup:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-    contentText:SetPoint("TOPLEFT", popup, "TOPLEFT", 14, -30)
-    contentText:SetPoint("RIGHT", popup, "RIGHT", -14, 0)
-    contentText:SetJustifyH("LEFT")
-    local difficulty = LFG.ParseDifficulty(message, category)
-    local contentLine = ""
-    if isKeystone then
-        local ksName, ksLevel = LFG.ParseKeystoneInfo(message)
-        if ksName and ksLevel then
-            contentLine = string.format("%s %s (%d)", catColors.KEYSTONE, ksName, ksLevel)
-        elseif ksName then
-            contentLine = string.format("%s %s", catColors.KEYSTONE, ksName)
-        else
-            contentLine = catColors.KEYSTONE
-        end
-    elseif category == "RAID" then
-        local raidName = dungeon and dungeon ~= "RAID" and dungeon or ""
-        local diffTag = difficulty and (" |cffcccccc" .. difficulty .. "|r") or ""
-        if raidName ~= "" then
-            contentLine = string.format("%s %s%s", catColors.RAID, raidName, diffTag)
-        else
-            contentLine = catColors.RAID .. diffTag
-        end
-    elseif category == "WORLD_BOSS" then
-        local bossName = dungeon and dungeon ~= "WORLD_BOSS" and dungeon or ""
-        local diffTag = difficulty and (" |cffcccccc" .. difficulty .. "|r") or ""
-        if bossName ~= "" then
-            contentLine = string.format("%s %s%s", catColors.WORLD_BOSS, bossName, diffTag)
-        else
-            contentLine = catColors.WORLD_BOSS .. diffTag
-        end
-    elseif category == "MANASTORM" then
-        local diffTag = difficulty and (" " .. difficulty) or ""
-        contentLine = catColors.MANASTORM .. " |cffcccccc" .. diffTag .. "|r"
-    elseif category == "PVP" then
-        local diffTag = difficulty and (" " .. difficulty) or ""
-        contentLine = catColors.PVP .. " |cffcccccc" .. diffTag .. "|r"
-    elseif category == "CUSTOM" then
-        local customName = dungeon and dungeon ~= "MISC" and dungeon ~= "CUSTOM" and dungeon or ""
-        local diffTag = difficulty and (" |cffcccccc" .. difficulty .. "|r") or ""
-        if customName ~= "" then
-            contentLine = string.format("%s %s%s", catColors.CUSTOM, customName, diffTag)
-        else
-            contentLine = catColors.CUSTOM .. diffTag
-        end
-    else
-        local dungeonName = dungeon and dungeon ~= "MISC" and dungeon ~= "DUNGEON" and dungeon or ""
-        local diffTag = difficulty and (" |cffcccccc" .. difficulty .. "|r") or (isHeroic and " |cFFFF0000Heroic|r" or "")
-        if dungeonName ~= "" then
-            contentLine = string.format("|cFF00FF00[DNG]|r %s%s", dungeonName, diffTag)
-        else
-            contentLine = "|cFF00FF00[DNG]|r" .. diffTag
-        end
+    local dungeonFS = popup:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    dungeonFS:SetPoint("TOPLEFT", popup, "TOPLEFT", iconX + 18, row1Y)
+    dungeonFS:SetPoint("RIGHT", popup, "RIGHT", -10, 0)
+    dungeonFS:SetJustifyH("LEFT")
+    local dungeonColorHex = catHex
+    if diffColor == "|cffaa44ff" then dungeonColorHex = "aa44ff"
+    elseif diffColor == "|cffff8800" then dungeonColorHex = "ff8800"
+    elseif diffColor == "|cffff44ff" then dungeonColorHex = "ff44ff"
+    elseif diffColor == "|cff44cc44" then dungeonColorHex = "44cc44"
+    elseif diffColor == "|cffff4444" then dungeonColorHex = "ff4444"
     end
-    contentText:SetText(contentLine)
-    local roles = LFG.ParseRoles(message)
-    local rolesText = LFG.FormatRolesText(roles)
-    local rolesDisplay = popup:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-    rolesDisplay:SetPoint("TOPLEFT", popup, "TOPLEFT", 14, -48)
-    rolesDisplay:SetPoint("RIGHT", popup, "RIGHT", -14, 0)
-    rolesDisplay:SetJustifyH("LEFT")
-    if rolesText ~= "" then
-        rolesDisplay:SetText(string.format("|cff888888LF:|r |cffffffff%s|r", rolesText))
-    elseif category == "MANASTORM" or category == "CUSTOM" then
-        rolesDisplay:SetText("|cff888888LF:|r |cffffffffAll|r")
-    else
-        local shortMsg = LFG.ShortenMessage(message or "")
-        if shortMsg ~= "" then
-            rolesDisplay:SetText(string.format("|cff888888LF:|r |cffaaaaaa%s|r", shortMsg))
-        end
+    local dungeonLine = "|cff" .. dungeonColorHex .. dungeonDisplay .. "|r"
+    if diffTag ~= "" then
+        dungeonLine = dungeonLine .. "  " .. diffColor .. "[" .. diffTag .. "]|r"
     end
-    local btnSpacing = 8
-    local btnWidth = 88
-    local btnHeight = 24
-    local totalWidth = (btnWidth * 2) + btnSpacing
-    local startX = (popup:GetWidth() - totalWidth) / 2
-    local acceptBtn = FrostSeekUIUtils.CreateModernButton(popup, btnWidth, btnHeight, "Accept", _tc("catDungeon"))
-    acceptBtn:SetPoint("BOTTOMLEFT", popup, "BOTTOMLEFT", startX, 8)
-    acceptBtn:SetScript("OnClick", function()
+    dungeonLine = dungeonLine .. "  |cffffffff" .. (sender or "Unknown") .. "|r"
+    dungeonFS:SetText(dungeonLine)
+
+    local row2Y = -40
+    local msgFS = popup:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    msgFS:SetPoint("TOPLEFT", popup, "TOPLEFT", iconX, row2Y)
+    msgFS:SetPoint("RIGHT", popup, "RIGHT", -10, 0)
+    msgFS:SetJustifyH("LEFT")
+    msgFS:SetWordWrap(false)
+    local truncMsg = message and #message > 60 and string.sub(message, 1, 57) .. "..." or (message or "")
+    msgFS:SetTextColor(unpack(_tc("textDim")))
+    msgFS:SetText(truncMsg)
+
+    local footerY = 6
+
+    local whisperBtn = UI and UI.CreateModernButton and UI.CreateModernButton(popup, 64, 20, L["popup_whisper"], _tc("success"))
+    if not whisperBtn then
+        whisperBtn = CreateFrame("Button", nil, popup)
+        whisperBtn:SetSize(64, 20)
+        whisperBtn.text = whisperBtn:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+        whisperBtn.text:SetPoint("CENTER")
+        whisperBtn.text:SetText(L["popup_whisper"])
+    end
+    whisperBtn:SetPoint("BOTTOMLEFT", popup, "BOTTOMLEFT", 6, footerY)
+    whisperBtn:SetScript("OnClick", function()
         local whisperMsg = LFG.CreateWhisperMessage()
         SendChatMessage(whisperMsg, "WHISPER", nil, sender)
         LFG.RemovePopupFrame(popup)
-        UIErrorsFrame:AddMessage("|cff88ccffWhisper sent to " .. sender, 1, 1, 1, 3)
+        UIErrorsFrame:AddMessage("|cff88ccff" .. FrostSeek.Lf("popup_whisper_sent", sender) .. "|r", 1, 1, 1, 3)
     end)
-    local declineBtn = FrostSeekUIUtils.CreateModernButton(popup, btnWidth, btnHeight, "Close", _tc("catPvP"))
-    declineBtn:SetPoint("LEFT", acceptBtn, "RIGHT", btnSpacing, 0)
-    declineBtn:SetScript("OnClick", function()
-        LFG.RemovePopupFrame(popup)
-    end)
-    local muteBtn = FrostSeekUIUtils.CreateModernButton(popup, 50, btnHeight, "Mute", _tc("catRaid"))
-    muteBtn:SetPoint("LEFT", declineBtn, "RIGHT", btnSpacing, 0)
+
+    local muteBtn = UI and UI.CreateModernButton and UI.CreateModernButton(popup, 48, 20, L["popup_mute"], _tc("warning"))
+    if not muteBtn then
+        muteBtn = CreateFrame("Button", nil, popup)
+        muteBtn:SetSize(48, 20)
+        muteBtn.text = muteBtn:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+        muteBtn.text:SetPoint("CENTER")
+        muteBtn.text:SetText(L["popup_mute"])
+    end
+    muteBtn:SetPoint("LEFT", whisperBtn, "RIGHT", 4, 0)
     muteBtn:SetScript("OnClick", function()
         mutedPlayers[sender] = GetTime() + 1800
         LFG.RemovePopupFrame(popup)
-        print("|cffff8800FrostSeek:|r Muted " .. sender .. " for 30 minutes")
+        print("|cffff8800FrostSeek:|r " .. FrostSeek.Lf("popup_muted", sender))
     end)
+
+    local closeBtn = UI and UI.CreateModernButton and UI.CreateModernButton(popup, 48, 20, L["close"], _tc("secondary"))
+    if not closeBtn then
+        closeBtn = CreateFrame("Button", nil, popup)
+        closeBtn:SetSize(48, 20)
+        closeBtn.text = closeBtn:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+        closeBtn.text:SetPoint("CENTER")
+        closeBtn.text:SetText(L["close"])
+    end
+    closeBtn:SetPoint("BOTTOMRIGHT", popup, "BOTTOMRIGHT", -6, footerY)
+    closeBtn:SetScript("OnClick", function()
+        LFG.RemovePopupFrame(popup)
+    end)
+
     local duration = FrostSeekDB.LFG.frameDuration or 5
     popup.expiryTime = GetTime() + duration
     popup:SetScript("OnUpdate", function(self, elapsed)
-        if GetTime() >= self.expiryTime then
+        local remaining = self.expiryTime - GetTime()
+        if remaining <= 0 then
             self:SetScript("OnUpdate", nil)
             LFG.RemovePopupFrame(self)
+        elseif remaining < 0.8 then
+            self:SetAlpha(remaining / 0.8)
         end
     end)
+
     if not FrostSeekDB.LFG.silentNotifications then
         if FrostSeekDB.LFG.soundEnabled ~= false and Shared and Shared.PlaySound then
             Shared.PlaySound("popup")
@@ -1391,7 +1488,7 @@ end
 function LFG.UpdatePlayerInfo()
     if not LFG.playerInfoText then return end
     local classInfo, ilvl, enchant = LFG.GetFullPlayerInfo()
-    local roleText = (FrostSeekDB.LFG.myRole ~= "" and FrostSeekDB.LFG.myRole ~= "No Role") and ("Role: " .. FrostSeekDB.LFG.myRole) or "Role: Not Set"
+    local roleText = (FrostSeekDB.LFG.myRole ~= "" and FrostSeekDB.LFG.myRole ~= L["none"]) and ("Role: " .. FrostSeekDB.LFG.myRole) or "Role: Not Set"
     local gs = LFG.GetGearScore()
     local gsColor = "|cff88ccff"
     if FrostSeek and FrostSeek.GetGearScoreColor then
@@ -1779,7 +1876,7 @@ function LFG.UpdateRecruitersList()
         end
     end
     if LFG.lfgCountText then
-        LFG.lfgCountText:SetText("Active Recruiters: " .. #filteredSearches)
+        LFG.lfgCountText:SetText(string.format(L["lfg_active_recruiters"], #filteredSearches))
     end
     local totalFiltered = #filteredSearches
     if scrollChild then
@@ -1819,7 +1916,7 @@ function LFG.UpdateRecruitersList()
                 poolRow.timeText:SetText(string.format("%dm", math.floor(timeSince/60)))
             end
             poolRow.catText:SetText(CATEGORY_TAG[record.category] or "|cFF00FF00D|r")
-            if record.dungeon and record.dungeon ~= "MISC" and record.dungeon ~= "KEYSTONE" and record.dungeon ~= "PVP" and record.dungeon ~= "MANASTORM" and record.dungeon ~= "WORLD_BOSS" and record.dungeon ~= "CUSTOM" then
+            if record.dungeon and record.dungeon ~= "MISC" and record.dungeon ~= "KEYSTONE" and record.dungeon ~= "PVP" and record.dungeon ~= "MANASTORM" and record.dungeon ~= "WORLD_BOSS" then
                 poolRow.dungeonText:SetText(record.dungeon)
             else
                 poolRow.dungeonText:SetText("")
@@ -1958,13 +2055,13 @@ function LFG:Initialize(parentFrame)
     end)
     lfgToggle:SetScript("OnEnter", function(self)
         GameTooltip:SetOwner(self, "ANCHOR_TOP")
-        GameTooltip:SetText("LFG Toggle", 0.8, 0.9, 1)
+        GameTooltip:SetText(L["lfg_toggle"], 0.8, 0.9, 1)
         if FrostSeekDB.LFG.disableLFG then
-            GameTooltip:AddLine("Currently: |cffff4444Disabled|r", 1, 1, 1)
-            GameTooltip:AddLine("Click to enable LFG radar", 0.7, 0.7, 0.7)
+            GameTooltip:AddLine(L["lfg_currently_disabled"], 1, 1, 1)
+            GameTooltip:AddLine(L["lfg_click_enable"], 0.7, 0.7, 0.7)
         else
-            GameTooltip:AddLine("Currently: |cff33cc33Enabled|r", 1, 1, 1)
-            GameTooltip:AddLine("Click to disable LFG radar", 0.7, 0.7, 0.7)
+            GameTooltip:AddLine(L["lfg_currently_enabled"], 1, 1, 1)
+            GameTooltip:AddLine(L["lfg_click_disable"], 0.7, 0.7, 0.7)
         end
         GameTooltip:Show()
     end)
@@ -1979,8 +2076,8 @@ function LFG:Initialize(parentFrame)
     roleLabel:SetTextColor(unpack(_tc("textMuted")))
     self.roleDropdown = FrostSeekUIUtils.CreateModernDropdown(self.playerFrame, 95, 22)
     self.roleDropdown:SetPoint("LEFT", roleLabel, "RIGHT", 0, 0)
-    self.roleDropdown:SetOptions({"No Role", "Tank", "Healer", "DPS"})
-    local savedRole = FrostSeekDB.LFG and (FrostSeekDB.LFG.myRole ~= "" and FrostSeekDB.LFG.myRole or "No Role") or "No Role"
+    self.roleDropdown:SetOptions({L["none"], "Tank", "Healer", "DPS"})
+    local savedRole = FrostSeekDB.LFG and (FrostSeekDB.LFG.myRole ~= "" and FrostSeekDB.LFG.myRole or L["none"]) or L["none"]
     self.roleDropdown:SetText(savedRole)
     self.roleDropdown.selectedValue = savedRole
     self.roleDropdown.onChange = function(val)
@@ -1988,7 +2085,7 @@ function LFG:Initialize(parentFrame)
     end
     self.title = self.mainContainer:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     self.title:SetPoint("TOP", self.playerFrame, "BOTTOM", 0, -8)
-    self.title:SetText("|cff88ccffLooking For Group|r")
+    self.title:SetText("|cff88ccff" .. L["lfg_title"] .. "|r")
     self.title:SetTextColor(unpack(_tc("textAccent")))
     local filterBtn = CreateFrame("Button", "FrostSeekLFGFilterBtn", self.mainContainer)
     filterBtn:SetSize(22, 22)
@@ -2027,8 +2124,8 @@ function LFG:Initialize(parentFrame)
     filterBtn:SetScript("OnEnter", function(self)
         self.border:SetColorTexture(unpack(_tc("borderHover")))
         GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
-        GameTooltip:SetText("Activity Filter", 0.8, 0.9, 1)
-        GameTooltip:AddLine("Click to configure which dungeons\nand raids appear in LFG", 0.8, 0.8, 0.8, true)
+        GameTooltip:SetText(L["tooltip_activity_filter"], 0.8, 0.9, 1)
+        GameTooltip:AddLine(L["tooltip_activity_filter_desc"], 0.8, 0.8, 0.8, true)
         GameTooltip:Show()
     end)
     filterBtn:SetScript("OnLeave", function(self)
@@ -2047,14 +2144,14 @@ function LFG:Initialize(parentFrame)
     LFG.UpdateFilterIconState = UpdateFilterIconState
     self.lfgCountText = self.mainContainer:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     self.lfgCountText:SetPoint("TOP", self.title, "BOTTOM", 0, -4)
-    self.lfgCountText:SetText("Active Recruiters: 0")
+    self.lfgCountText:SetText(string.format(L["lfg_active_recruiters"], 0))
     self.lfgCountText:SetTextColor(unpack(_tc("textAccent")))
     self.searchFrame = CreateFrame("Frame", nil, self.mainContainer)
     self.searchFrame:SetSize(740, 26)
     self.searchFrame:SetPoint("TOP", self.lfgCountText, "BOTTOM", 0, -4)
     local searchLabel = self.searchFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     searchLabel:SetPoint("LEFT", self.searchFrame, "LEFT", 10, 0)
-    searchLabel:SetText("Search:")
+    searchLabel:SetText(L["search"] .. ":")
     searchLabel:SetTextColor(unpack(_tc("textNorm")))
     self.lfgSearchBox = FrostSeekUIUtils.CreateModernEditBox(self.searchFrame, 300, 18)
     self.lfgSearchBox:SetPoint("LEFT", searchLabel, "RIGHT", 10, 0)
@@ -2083,8 +2180,8 @@ function LFG:Initialize(parentFrame)
     recruitersBg:SetAllPoints()
     recruitersBg:SetColorTexture(unpack(_tc("bgRowOdd")))
     self.lfgTabs = {}
-    local lfgTabTypes = {"ALL", "DUNGEON", "RAID", "WORLD_BOSS", "PVP", "MANASTORM", "KEYSTONE"}
-    local lfgTabNames = {"All", "Dungeon", "Raid", "WBoss", "PvP", "Mana", "Key"}
+    local lfgTabTypes = {"ALL", "DUNGEON", "RAID", "WORLD_BOSS", "PVP", "MANASTORM", "KEYSTONE", "MISC"}
+    local lfgTabNames = {"All", L["col_dungeon"], "Raid", "WBoss", "PvP", "Mana", "Key", "Misc"}
     for i, tabName in ipairs(lfgTabNames) do
         local tab = CreateFrame("Button", nil, self.recruitersFrame)
         tab:SetSize(70, 22)
@@ -2116,27 +2213,27 @@ function LFG:Initialize(parentFrame)
     headerFrame:SetPoint("TOPRIGHT", self.recruitersFrame, "TOPRIGHT", -24, -40)
     local nameHeader = headerFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     nameHeader:SetPoint("LEFT", headerFrame, "LEFT", 18, 0)
-    nameHeader:SetText("Player")
+    nameHeader:SetText(L["col_player"])
     nameHeader:SetTextColor(unpack(_tc("textAccent")))
     local timeHeader = headerFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     timeHeader:SetPoint("LEFT", headerFrame, "LEFT", 108, 0)
-    timeHeader:SetText("Time")
+    timeHeader:SetText(L["col_time"])
     timeHeader:SetTextColor(unpack(_tc("textAccent")))
     local catHeader = headerFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     catHeader:SetPoint("LEFT", headerFrame, "LEFT", 158, 0)
-    catHeader:SetText("Type")
+    catHeader:SetText(L["col_type"])
     catHeader:SetTextColor(unpack(_tc("textAccent")))
     local dungeonHeader = headerFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     dungeonHeader:SetPoint("LEFT", headerFrame, "LEFT", 198, 0)
-    dungeonHeader:SetText("Dungeon")
+    dungeonHeader:SetText(L["col_dungeon"])
     dungeonHeader:SetTextColor(unpack(_tc("textAccent")))
     local msgHeader = headerFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     msgHeader:SetPoint("LEFT", headerFrame, "LEFT", 290, 0)
-    msgHeader:SetText("Message")
+    msgHeader:SetText(L["col_message"])
     msgHeader:SetTextColor(unpack(_tc("textAccent")))
     local acceptHeader = headerFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     acceptHeader:SetPoint("RIGHT", headerFrame, "RIGHT", -10, 0)
-    acceptHeader:SetText("Action")
+    acceptHeader:SetText(L["col_action"])
     acceptHeader:SetTextColor(unpack(_tc("textAccent")))
     local separator = self.recruitersFrame:CreateTexture(nil, "BACKGROUND")
     separator:SetPoint("TOP", headerFrame, "BOTTOM", 0, -2)
@@ -2161,7 +2258,7 @@ function LFG:Initialize(parentFrame)
     self.recruitersList.rows = {}
     LFG.noRecruitersText = self.recruitersList:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     LFG.noRecruitersText:SetPoint("CENTER", self.recruitersList, "CENTER", 0, 0)
-    LFG.noRecruitersText:SetText("No active recruiters found")
+    LFG.noRecruitersText:SetText(L["lfg_no_recruiters"])
     LFG.noRecruitersText:SetTextColor(unpack(_tc("textDim")))
     LFG.noRecruitersText:Hide()
     LFG.InitRowPool(scrollChild)
@@ -2175,17 +2272,17 @@ function LFG:Initialize(parentFrame)
     self.controlsFrame = CreateFrame("Frame", nil, self.mainContainer)
     self.controlsFrame:SetSize(740, 30)
     self.controlsFrame:SetPoint("BOTTOM", self.mainContainer, "BOTTOM", 0, 5)
-    self.refreshBtn = FrostSeekUIUtils.CreateModernButton(self.controlsFrame, 70, 22, "Refresh", _tc("primary"))
+    self.refreshBtn = FrostSeekUIUtils.CreateModernButton(self.controlsFrame, 70, 22, L["refresh"], _tc("primary"))
     self.refreshBtn:SetPoint("LEFT", self.controlsFrame, "LEFT", 10, -30)
     self.refreshBtn:SetScript("OnClick", function()
         if LFG.recruitersScrollFrame then LFG.recruitersScrollFrame:SetVerticalScroll(0) end
         if LFG.UpdateRecruitersList then LFG.UpdateRecruitersList() end
     end)
-    self.clearAllBtn = FrostSeekUIUtils.CreateModernButton(self.controlsFrame, 70, 22, "Clear All", _tc("catPvP"))
+    self.clearAllBtn = FrostSeekUIUtils.CreateModernButton(self.controlsFrame, 70, 22, L["clear_all"], _tc("catPvP"))
     self.clearAllBtn:SetPoint("LEFT", self.refreshBtn, "RIGHT", 5, 0)
     self.clearAllBtn:SetScript("OnClick", function()
         if Shared and Shared.ConfirmDialog then
-            Shared.ConfirmDialog("Clear All", "Clear all active LFG searches?", function()
+            Shared.ConfirmDialog(L["clear_all"], "Clear all active LFG searches?", function()
                 LFG.ClearAllSearches()
             end)
         else
@@ -2315,10 +2412,17 @@ local function InitializeLFGSystem()
     lastPopupTimes = lastPopupTimes or {}
     sessionStartTime = GetTime()
     FrostSeekDB.LFG = FrostSeekDB.LFG or {}
-    FrostSeekDB.LFG.myRole = FrostSeekDB.LFG.myRole or "No Role"
+    FrostSeekDB.LFG.myRole = FrostSeekDB.LFG.myRole or L["none"]
     FrostSeekDB.LFG.popupCategories = FrostSeekDB.LFG.popupCategories or {
-        ALL = true, DUNGEON = true, RAID = true, WORLD_BOSS = true, PVP = true, MANASTORM = true, KEYSTONE = true, CUSTOM = true
+        ALL = true, DUNGEON = true, RAID = true, WORLD_BOSS = true, PVP = true, MANASTORM = true, KEYSTONE = true, MISC = false
     }
+
+    if FrostSeekDB.LFG.popupCategories.CUSTOM ~= nil then
+        FrostSeekDB.LFG.popupCategories.CUSTOM = nil
+    end
+    if FrostSeekDB.LFG.popupCategories.RDF ~= nil then
+        FrostSeekDB.LFG.popupCategories.RDF = nil
+    end
     if not FrostSeekDB.LFG.activityFilter then
         FrostSeekDB.LFG.activityFilter = {}
     end
@@ -2333,9 +2437,9 @@ local function InitializeLFGSystem()
     FrostSeekDB.LFG.customFilterWords = FrostSeekDB.LFG.customFilterWords or ""
     FrostSeekDB.LFG.showActiveRecruitersWindow = false
     FrostSeekDB.LFG.maxMessageLength = FrostSeekDB.LFG.maxMessageLength or 150
-    FrostSeekDB.LFG.frameDuration = FrostSeekDB.LFG.frameDuration or 6
-    FrostSeekDB.LFG.popupCooldown = FrostSeekDB.LFG.popupCooldown or 400
-    FrostSeekDB.LFG.maxConcurrentPopups = FrostSeekDB.LFG.maxConcurrentPopups or 3
+    FrostSeekDB.LFG.frameDuration = FrostSeekDB.LFG.frameDuration or 5
+    FrostSeekDB.LFG.popupCooldown = FrostSeekDB.LFG.popupCooldown or 370
+    FrostSeekDB.LFG.maxConcurrentPopups = FrostSeekDB.LFG.maxConcurrentPopups or 2
     FrostSeekDB.LFG.soundEnabled = FrostSeekDB.LFG.soundEnabled ~= false
     C_Timer.NewTicker(10, LFG.CleanupActiveSearches)
     print("|cff88ccffFrostSeek LFG:|r System initialized")

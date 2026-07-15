@@ -4,6 +4,7 @@
 <Script file="Modules\UI\UIUtils.lua"/>
 <Script file="Modules\Shared.lua"/>
 <Script file="Core.lua"/>
+<Include file="Locales\locales.xml"/>
 <Include file="Modules\Network\network.xml"/>
 <Include file="Modules\Presence\presence.xml"/>
 <Include file="Modules\Profile\profile.xml"/>

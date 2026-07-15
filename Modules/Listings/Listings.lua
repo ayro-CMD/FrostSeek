@@ -7,6 +7,8 @@ local UI = _G.FrostSeekUIUtils
 local Listings = {}
 local _tk = FrostSeek and FrostSeek._v and FrostSeek._v.a("listings", Listings)
 
+local L = FrostSeek.L
+
 Listings.listings = {}
 Listings.applicants = {}
 Listings.myListing = nil
@@ -263,17 +265,17 @@ function Listings:HandleIncomingListing(listing)
 end
 
 local appPopups = {}
-local APP_POPUP_W = 240
-local APP_POPUP_H = 82
+local APP_POPUP_W = 340
+local APP_POPUP_H = 100
 local APP_POPUP_GAP = 6
 local APP_POPUP_MAX = 4
-local APP_POPUP_X = 20
-local APP_POPUP_Y = -60
 
 local function RepositionAppPopups()
     for i, popup in ipairs(appPopups) do
         popup:ClearAllPoints()
-        popup:SetPoint("TOPLEFT", UIParent, "TOPLEFT", APP_POPUP_X, APP_POPUP_Y - ((i - 1) * (APP_POPUP_H + APP_POPUP_GAP)))
+        local h = popup:GetHeight() or APP_POPUP_H
+        local yOffset = -40 - ((i - 1) * (h + APP_POPUP_GAP))
+        popup:SetPoint("TOPLEFT", UIParent, "TOPLEFT", 10, yOffset)
     end
 end
 
@@ -312,64 +314,52 @@ function Listings:ShowApplicantPopup(applicant)
     local roleColor = roleColorMap[roleDisplay] or "|cffffffff"
     local activity = self.myListing and self.myListing.activity or "Unknown"
     local listingType = self.myListing and self.myListing.type or "Dungeon"
-    local typeColor = TYPE_COLORS[listingType] or "|cff88ccff"
 
+    local UI = FrostSeekUIUtils
+    local ar, ag, ab = 0.35, 0.65, 0.95 
+
+    local W, H = APP_POPUP_W, 100
     local popup = CreateFrame("Frame", nil, UIParent)
-    popup:SetSize(APP_POPUP_W, APP_POPUP_H)
+    popup:SetSize(W, H)
     popup:SetFrameStrata("DIALOG")
+    popup:SetClampedToScreen(true)
     popup:SetAlpha(0)
-    if UIFrameFadeIn then
-        UIFrameFadeIn(popup, 0.15, 0, 1)
-    else
-        popup:SetAlpha(1)
-    end
+    UIFrameFadeIn(popup, 0.2, 0, 1)
     popup.applicantName = applicant.name
+    local borderTex = popup:CreateTexture(nil, "BACKGROUND")
+    borderTex:SetAllPoints()
+    borderTex:SetColorTexture(ar * 0.3, ag * 0.3, ab * 0.3, 0.65)
 
-    local frostBlue = {0.35, 0.65, 0.95}
-    local frostBorder = {0.25, 0.55, 0.85}
+    local bgTex = popup:CreateTexture(nil, "BORDER")
+    bgTex:SetPoint("TOPLEFT", 1, -1)
+    bgTex:SetPoint("BOTTOMRIGHT", -1, 1)
+    bgTex:SetColorTexture(0.04, 0.04, 0.08, 0.93)
 
-    popup.bg = popup:CreateTexture(nil, "BACKGROUND")
-    popup.bg:SetAllPoints()
-    popup.bg:SetColorTexture(unpack(_tc("bgMenuBg")))
+    local topAccent = popup:CreateTexture(nil, "ARTWORK")
+    topAccent:SetPoint("TOPLEFT", 1, 0)
+    topAccent:SetPoint("TOPRIGHT", -1, 0)
+    topAccent:SetHeight(2)
+    topAccent:SetColorTexture(ar, ag, ab, 0.9)
 
-    local glowTop = popup:CreateTexture(nil, "BORDER")
-    glowTop:SetPoint("TOPLEFT", 0, 0)
-    glowTop:SetPoint("TOPRIGHT", 0, 0)
-    glowTop:SetHeight(2)
-    glowTop:SetColorTexture(frostBlue[1], frostBlue[2], frostBlue[3], 0.9)
+    local glassReflect = popup:CreateTexture(nil, "ARTWORK")
+    glassReflect:SetPoint("TOPLEFT", 2, -3)
+    glassReflect:SetPoint("TOPRIGHT", -2, -3)
+    glassReflect:SetHeight(16)
+    glassReflect:SetColorTexture(ar * 0.06, ag * 0.06, ab * 0.06, 0.3)
 
-    local glowBot = popup:CreateTexture(nil, "BORDER")
-    glowBot:SetPoint("BOTTOMLEFT", 0, 0)
-    glowBot:SetPoint("BOTTOMRIGHT", 0, 0)
-    glowBot:SetHeight(1)
-    glowBot:SetColorTexture(frostBorder[1], frostBorder[2], frostBorder[3], 0.4)
+    popup.headerText = popup:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    popup.headerText:SetPoint("TOPLEFT", popup, "TOPLEFT", 10, -8)
+    popup.headerText:SetText(L["app_new_applied"])
+    popup.headerText:SetTextColor(min(ar * 1.4, 1), min(ag * 1.4, 1), min(ab * 1.4, 1))
 
-    local glowLeft = popup:CreateTexture(nil, "BORDER")
-    glowLeft:SetPoint("TOPLEFT", 0, 0)
-    glowLeft:SetPoint("BOTTOMLEFT", 0, 0)
-    glowLeft:SetWidth(1)
-    glowLeft:SetColorTexture(frostBorder[1], frostBorder[2], frostBorder[3], 0.4)
+    local badgeFS = popup:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    badgeFS:SetPoint("TOPRIGHT", popup, "TOPRIGHT", -10, -8)
+    badgeFS:SetText("|cff88ccff" .. (activity or "?") .. "|r")
 
-    local glowRight = popup:CreateTexture(nil, "BORDER")
-    glowRight:SetPoint("TOPRIGHT", 0, 0)
-    glowRight:SetPoint("BOTTOMRIGHT", 0, 0)
-    glowRight:SetWidth(1)
-    glowRight:SetColorTexture(frostBorder[1], frostBorder[2], frostBorder[3], 0.4)
-
-    local dot = popup:CreateTexture(nil, "ARTWORK")
-    dot:SetSize(8, 8)
-    dot:SetPoint("TOPLEFT", popup, "TOPLEFT", 8, -9)
-    dot:SetColorTexture(0.35, 0.85, 1, 1)
-
-    local headerText = popup:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-    headerText:SetPoint("TOPLEFT", popup, "TOPLEFT", 20, -10)
-    headerText:SetPoint("RIGHT", popup, "RIGHT", -8, 0)
-    headerText:SetJustifyH("LEFT")
-    headerText:SetText("|cff88ccffNew |r" .. roleColor .. roleDisplay .. "|r |cff88ccffapplied|r")
-
+    local row1Y = -26
     popup.classIcon = popup:CreateTexture(nil, "ARTWORK")
     popup.classIcon:SetSize(16, 16)
-    popup.classIcon:SetPoint("TOPLEFT", popup, "TOPLEFT", 8, -24)
+    popup.classIcon:SetPoint("TOPLEFT", popup, "TOPLEFT", 12, row1Y)
     popup.classIcon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
     do
         local cf = applicant.classFile
@@ -382,55 +372,116 @@ function Listings:ShowApplicantPopup(applicant)
     end
 
     local nameStr = classColorText(applicant.name, applicant.classFile)
-    local nameText = popup:CreateFontString(nil, "OVERLAY")
-    nameText:SetFont("Fonts\\FRIZQT__.TTF", 11, "OUTLINE")
-    nameText:SetPoint("TOPLEFT", popup, "TOPLEFT", 28, -27)
-    nameText:SetText(nameStr)
+    local nameFS = popup:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    nameFS:SetPoint("TOPLEFT", popup, "TOPLEFT", 32, row1Y + 1)
+    nameFS:SetText(nameStr)
 
-    local infoText = popup:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-    infoText:SetPoint("TOPLEFT", popup, "TOPLEFT", 28, -40)
-    infoText:SetPoint("RIGHT", popup, "RIGHT", -8, 0)
-    infoText:SetJustifyH("LEFT")
+    local roleFS = popup:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    roleFS:SetPoint("LEFT", nameFS, "RIGHT", 6, 0)
+    roleFS:SetText(roleColor .. roleDisplay .. "|r")
+
+    local row2Y = -42
     local lvl = applicant.level or "?"
     local ilvl = applicant.itemLevel or "?"
     local gs = applicant.gearScore or "?"
-    infoText:SetText("|cff888888Lv|r " .. lvl .. "  |cff88ccffiLvl:|r |cff44ff44" .. ilvl .. "|r  |cff88ccffGS:|r |cffffcc00" .. gs .. "|r  |cff888888Group:|r " .. typeColor .. activity .. "|r")
+    local infoFS = popup:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    infoFS:SetPoint("TOPLEFT", popup, "TOPLEFT", 32, row2Y)
+    infoFS:SetPoint("RIGHT", popup, "RIGHT", -10, 0)
+    infoFS:SetJustifyH("LEFT")
+    infoFS:SetTextColor(unpack(_tc("textNorm")))
+    infoFS:SetText("|cff888888" .. L["app_level"] .. ":|r " .. lvl .. "  |cff88ccffiLvl:|r |cff44ff44" .. ilvl .. "|r  |cff88ccffGS:|r |cffffcc00" .. gs .. "|r")
 
-    local btnW, btnH, btnGap = 70, 20, 6
-    local totalBtnW = (btnW * 2) + btnGap
-    local btnStartX = (popup:GetWidth() - totalBtnW) / 2
+    local row3Y = -56
+    local noteText = applicant.note or applicant.message or ""
+    if noteText ~= "" then
+        local noteFS = popup:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+        noteFS:SetPoint("TOPLEFT", popup, "TOPLEFT", 12, row3Y)
+        noteFS:SetPoint("RIGHT", popup, "RIGHT", -10, 0)
+        noteFS:SetJustifyH("LEFT")
+        noteFS:SetWordWrap(false)
+        local truncNote = #noteText > 60 and string.sub(noteText, 1, 57) .. "..." or noteText
+        noteFS:SetTextColor(unpack(_tc("textDim")))
+        noteFS:SetText(truncNote)
+    end
 
-    local acceptBtn = UI and UI.CreateModernButton and UI.CreateModernButton(popup, btnW, btnH, "Accept", {0.15, 0.5, 0.25})
+    popup.countdownBar = CreateFrame("Frame", nil, popup)
+    popup.countdownBar:SetPoint("BOTTOMLEFT", popup, "BOTTOMLEFT", 4, 28)
+    popup.countdownBar:SetPoint("BOTTOMRIGHT", popup, "BOTTOMRIGHT", -4, 28)
+    popup.countdownBar:SetHeight(3)
+
+    popup.countdownBg = popup.countdownBar:CreateTexture(nil, "BACKGROUND")
+    popup.countdownBg:SetAllPoints()
+    popup.countdownBg:SetColorTexture(0.1, 0.1, 0.1, 0.8)
+
+    popup.countdownFill = popup.countdownBar:CreateTexture(nil, "ARTWORK")
+    popup.countdownFill:SetPoint("TOPLEFT", popup.countdownBar, "TOPLEFT", 0, 0)
+    popup.countdownFill:SetPoint("BOTTOMLEFT", popup.countdownBar, "BOTTOMLEFT", 0, 0)
+    popup.countdownFill:SetWidth(W - 10)
+    popup.countdownFill:SetColorTexture(ar, ag, ab, 0.7)
+
+    local footerY = 6
+
+    local acceptBtn = UI and UI.CreateModernButton and UI.CreateModernButton(popup, 68, 20, L["listings_accept"], _tc("success"))
     if not acceptBtn then
         acceptBtn = CreateFrame("Button", nil, popup)
-        acceptBtn:SetSize(btnW, btnH)
-        acceptBtn:SetText("Accept")
+        acceptBtn:SetSize(68, 20)
+        acceptBtn.text = acceptBtn:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+        acceptBtn.text:SetPoint("CENTER")
+        acceptBtn.text:SetText(L["listings_accept"])
     end
-    acceptBtn:SetPoint("BOTTOMLEFT", popup, "BOTTOMLEFT", btnStartX, 6)
+    acceptBtn:SetPoint("BOTTOMLEFT", popup, "BOTTOMLEFT", 8, footerY)
     acceptBtn:SetScript("OnClick", function()
         Listings:AcceptApplicant(applicant.name)
         RemoveAppPopup(popup)
     end)
 
-    local declineBtn = UI and UI.CreateModernButton and UI.CreateModernButton(popup, btnW, btnH, "Decline", {0.5, 0.15, 0.15})
+    local declineBtn = UI and UI.CreateModernButton and UI.CreateModernButton(popup, 68, 20, L["listings_decline"], _tc("danger"))
     if not declineBtn then
         declineBtn = CreateFrame("Button", nil, popup)
-        declineBtn:SetSize(btnW, btnH)
-        declineBtn:SetText("Decline")
+        declineBtn:SetSize(68, 20)
+        declineBtn.text = declineBtn:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+        declineBtn.text:SetPoint("CENTER")
+        declineBtn.text:SetText(L["listings_decline"])
     end
-    declineBtn:SetPoint("LEFT", acceptBtn, "RIGHT", btnGap, 0)
+    declineBtn:SetPoint("LEFT", acceptBtn, "RIGHT", 4, 0)
     declineBtn:SetScript("OnClick", function()
         Listings:DeclineApplicant(applicant.name)
         RemoveAppPopup(popup)
     end)
 
+    local closeBtn = UI and UI.CreateModernButton and UI.CreateModernButton(popup, 48, 20, L["close"], _tc("secondary"))
+    if not closeBtn then
+        closeBtn = CreateFrame("Button", nil, popup)
+        closeBtn:SetSize(48, 20)
+        closeBtn.text = closeBtn:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+        closeBtn.text:SetPoint("CENTER")
+        closeBtn.text:SetText(L["close"])
+    end
+    closeBtn:SetPoint("BOTTOMRIGHT", popup, "BOTTOMRIGHT", -8, footerY)
+    closeBtn:SetScript("OnClick", function()
+        RemoveAppPopup(popup)
+    end)
+
+    local duration = 12
+    popup.expiryTime = GetTime() + duration
     popup:SetScript("OnUpdate", function(self, elapsed)
-        if GetTime() >= self.expiryTime then
+        local remaining = self.expiryTime - GetTime()
+        if remaining <= 0 then
             self:SetScript("OnUpdate", nil)
             RemoveAppPopup(self)
+        else
+            local pct = remaining / duration
+            self.countdownFill:SetWidth(math.max(1, (W - 10) * pct))
+            if pct < 0.3 then
+                self.countdownFill:SetColorTexture(0.9, 0.3, 0.2, 0.8)
+            else
+                self.countdownFill:SetColorTexture(ar, ag, ab, 0.7)
+            end
+            if remaining < 1 then
+                self:SetAlpha(remaining / 1)
+            end
         end
     end)
-    popup.expiryTime = GetTime() + 12
 
     table.insert(appPopups, popup)
     RepositionAppPopups()
@@ -953,18 +1004,18 @@ function Listings:BuildBrowseFrame()
     self.detailText:SetJustifyV("TOP")
     self.detailText:SetText(_hex("textDim") .. "Select a group to see details|r")
 
-    self.applyBtn = UI and UI.CreateModernButton(self.detailPanel, 120, 26, "Apply") or CreateFrame("Button", nil, self.detailPanel, "UIPanelButtonTemplate")
+    self.applyBtn = UI and UI.CreateModernButton(self.detailPanel, 120, 26, L["listings_apply"]) or CreateFrame("Button", nil, self.detailPanel, "UIPanelButtonTemplate")
     if not UI then
         self.applyBtn:SetSize(120, 26)
-        self.applyBtn:SetText("Apply")
+        self.applyBtn:SetText(L["listings_apply"])
     end
     self.applyBtn:SetPoint("BOTTOMRIGHT", self.detailPanel, "BOTTOMRIGHT", -10, 8)
     self.applyBtn:SetScript("OnClick", function() Listings:Apply() end)
 
-    self.whisperBtn = UI and UI.CreateModernButton(self.detailPanel, 90, 26, "Whisper") or CreateFrame("Button", nil, self.detailPanel, "UIPanelButtonTemplate")
+    self.whisperBtn = UI and UI.CreateModernButton(self.detailPanel, 90, 26, L["popup_whisper"]) or CreateFrame("Button", nil, self.detailPanel, "UIPanelButtonTemplate")
     if not UI then
         self.whisperBtn:SetSize(90, 26)
-        self.whisperBtn:SetText("Whisper")
+        self.whisperBtn:SetText(L["popup_whisper"])
     end
     self.whisperBtn:SetPoint("BOTTOMRIGHT", self.applyBtn, "BOTTOMLEFT", -8, 0)
     self.whisperBtn:SetScript("OnClick", function()
@@ -981,7 +1032,7 @@ function Listings:BuildBrowseFrame()
     self.frostnetBtn = UI and UI.CreateModernButton(self.detailPanel, 100, 26, "FrostNet", _tc("accent")) or CreateFrame("Button", nil, self.detailPanel, "UIPanelButtonTemplate")
     if not UI then
         self.frostnetBtn:SetSize(100, 26)
-        self.frostnetBtn:SetText("FrostNet")
+        self.frostnetBtn:SetText(L["frostnet_title"])
     end
     self.frostnetBtn:SetPoint("BOTTOMLEFT", self.whisperBtn, "BOTTOMLEFT", -108, 0)
     self.frostnetBtn:SetScript("OnClick", function()
@@ -1011,7 +1062,7 @@ function Listings:RefreshBrowse()
     local totalFiltered = #list
 
     if self.browseCount then
-        self.browseCount:SetText("Active groups: " .. tostring(totalFiltered))
+        self.browseCount:SetText(string.format(L["listings_active_groups"], totalFiltered))
     end
 
     if self.scrollIndicator then
@@ -1120,7 +1171,7 @@ function Listings:BuildApplicationsFrame()
 
     local title = f:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
     title:SetPoint("TOPLEFT", f, "TOPLEFT", 0, 0)
-    title:SetText("|cff88ccffMy Applications|r")
+    title:SetText("|cff88ccff" .. L["listings_my_applications"] .. "|r")
 
     self.appCount = f:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     self.appCount:SetPoint("TOPRIGHT", f, "TOPRIGHT", 0, -4)
@@ -1200,10 +1251,10 @@ function Listings:BuildApplicationsFrame()
         r:Hide()
     end
 
-    self.clearAppsBtn = UI and UI.CreateModernButton(f, 140, 24, "Clear History", _tc("catPvP")) or CreateFrame("Button", nil, f, "UIPanelButtonTemplate")
+    self.clearAppsBtn = UI and UI.CreateModernButton(f, 140, 24, L["listings_clear_history"], _tc("catPvP")) or CreateFrame("Button", nil, f, "UIPanelButtonTemplate")
     if not UI then
         self.clearAppsBtn:SetSize(140, 24)
-        self.clearAppsBtn:SetText("Clear History")
+        self.clearAppsBtn:SetText(L["listings_clear_history"])
     end
     self.clearAppsBtn:SetPoint("BOTTOMLEFT", f, "BOTTOMLEFT", 0, 0)
     self.clearAppsBtn:SetScript("OnClick", function()
@@ -1216,7 +1267,7 @@ function Listings:BuildApplicationsFrame()
             Listings:RefreshApplications()
         end
         if Shared and Shared.ConfirmDialog then
-            Shared.ConfirmDialog("Clear History", "Clear all non-pending application history?", doClear)
+            Shared.ConfirmDialog(L["listings_clear_history"], "Clear all non-pending application history?", doClear)
         else
             doClear()
         end
@@ -1245,7 +1296,7 @@ function Listings:RefreshApplications()
         if app.status == "pending" then pending = pending + 1 end
     end
     if self.appCount then
-        self.appCount:SetText("Total: " .. #apps .. "  |  Pending: " .. pending)
+        self.appCount:SetText(string.format("Total: %d  |  Pending: %d", #apps, pending))
     end
 
     for i, row in ipairs(self.appRows) do
@@ -1486,7 +1537,7 @@ function Listings:BuildCreateFrame()
     self.createVoice:SetPoint("TOPLEFT", f, "TOPLEFT", leftPad + labelW, curY)
     if self.createVoice.SetOptions then
         self.createVoice:SetOptions(VOICE_OPTIONS)
-        self.createVoice:SetText("None")
+        self.createVoice:SetText(L["none"])
     end
     curY = curY - rowH
 
@@ -1523,7 +1574,7 @@ function Listings:BuildCreateFrame()
     self.createBtn = UI and UI.CreateModernButton(f, 160, 30, "Publish Group") or CreateFrame("Button", nil, f, "UIPanelButtonTemplate")
     if not UI then
         self.createBtn:SetSize(160, 30)
-        self.createBtn:SetText("|cff44ff44Publish Group|r")
+        self.createBtn:SetText("|cff44ff44" .. L["listings_publish_group"] .. "|r")
     end
     self.createBtn:SetPoint("TOPLEFT", f, "TOPLEFT", leftPad + labelW, curY)
     self.createBtn:SetScript("OnClick", function()
@@ -1690,10 +1741,10 @@ function Listings:BuildMyListingFrame()
         r.note:SetWidth(200)
         r.note:SetJustifyH("LEFT")
 
-        r.acceptBtn = UI and UI.CreateModernButton(r, 55, 20, "OK") or CreateFrame("Button", nil, r, "UIPanelButtonTemplate")
+        r.acceptBtn = UI and UI.CreateModernButton(r, 55, 20, L["listings_accept"]) or CreateFrame("Button", nil, r, "UIPanelButtonTemplate")
         if not UI then
             r.acceptBtn:SetSize(55, 20)
-            r.acceptBtn:SetText("OK")
+            r.acceptBtn:SetText(L["listings_accept"])
         end
         r.acceptBtn:SetPoint("RIGHT", r, "RIGHT", -62, 0)
         r.acceptBtn:SetScript("OnClick", function()
@@ -1703,7 +1754,7 @@ function Listings:BuildMyListingFrame()
         r.declineBtn = UI and UI.CreateModernButton(r, 55, 20, "No") or CreateFrame("Button", nil, r, "UIPanelButtonTemplate")
         if not UI then
             r.declineBtn:SetSize(55, 20)
-            r.declineBtn:SetText("No")
+            r.declineBtn:SetText(L["no"])
         end
         r.declineBtn:SetPoint("RIGHT", r, "RIGHT", -4, 0)
         r.declineBtn:SetScript("OnClick", function()
@@ -1717,7 +1768,7 @@ function Listings:BuildMyListingFrame()
     self.cancelBtn = UI and UI.CreateModernButton(f, 140, 28, "Remove Listing") or CreateFrame("Button", nil, f, "UIPanelButtonTemplate")
     if not UI then
         self.cancelBtn:SetSize(140, 28)
-        self.cancelBtn:SetText("|cffff5555Remove Listing|r")
+        self.cancelBtn:SetText("|cffff5555" .. L["listings_remove_listing"] .. "|r")
     end
     self.cancelBtn:SetPoint("BOTTOMRIGHT", f, "BOTTOMRIGHT", -10, 10)
     self.cancelBtn:SetScript("OnClick", function() Listings:CancelListing("manual") end)

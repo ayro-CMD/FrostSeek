@@ -2,6 +2,7 @@ local FrostSeek = _G.FrostSeek
 
 local Options = {}
 
+local L = FrostSeek.L
 local _tc = _G.FrostSeekShared and _G.FrostSeekShared._tc or function(t) return {0.5,0.5,0.5} end
 
 local UI = _G.FrostSeekUIUtils
@@ -58,7 +59,7 @@ local function EnsurePopupCategoriesStructure()
 
     local defaultCategories = {
         ALL = true, DUNGEON = true, RAID = true, WORLD_BOSS = true,
-        PVP = true, MANASTORM = true, KEYSTONE = true, CUSTOM = true
+        PVP = true, MANASTORM = true, KEYSTONE = true, MISC = false
     }
 
     if not FrostSeekDB.LFG.popupCategories then
@@ -94,7 +95,7 @@ local function FindKeystoneInBags()
         for slot = 1, (numSlots or 0) do
             local itemLink
             pcall(function() itemLink = GetContainerLink(bag, slot) end)
-            if itemLink and string.find(itemLink, "Keystone") then
+            if itemLink and string.find(itemLink, L["cat_keystone"]) then
                 return itemLink
             end
         end
@@ -105,7 +106,7 @@ end
 local function GetItemNameFromLink(itemLink)
     if not itemLink then return nil end
     local _, _, itemName = string.find(itemLink, "|h%[(.-)%]|h")
-    return itemName or "Keystone"
+    return itemName or L["cat_keystone"]
 end
 
 local function GetPlayerData()
@@ -408,7 +409,7 @@ local function UpdateCustomPreview(previewText)
 
         if customMessages.showKeystone then
             local keystoneLink = FindKeystoneInBags()
-            local keystoneName = keystoneLink and (GetItemNameFromLink(keystoneLink) or "Keystone") or "No Keystone"
+            local keystoneName = keystoneLink and (GetItemNameFromLink(keystoneLink) or L["cat_keystone"]) or "No Keystone"
             message = string.gsub(message, "{keystone}", "[" .. keystoneName .. "]")
             customMessages.keystoneLink = keystoneLink
         else
@@ -421,7 +422,7 @@ local function UpdateCustomPreview(previewText)
         previewText:SetText(message == "" and "No content selected" or message)
         previewText:SetTextColor(unpack(_tc("textAccent")))
     else
-        previewText:SetText("Custom messages disabled - Enable the checkbox above")
+        previewText:SetText(L["options_custom_disabled"])
         previewText:SetTextColor(unpack(_tc("textMuted")))
     end
 end
@@ -474,12 +475,12 @@ local function CreateCustomMessageTab(parent, scrollContent)
 
     local title = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
     title:SetPoint("TOP", frame, "TOP", 0, -15)
-    title:SetText("Custom Whisper Messages")
+    title:SetText(L["options_custom_whisper"])
     title:SetTextColor(unpack(_tc("textAccent")))
 
     local desc = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     desc:SetPoint("TOP", title, "BOTTOM", 0, -5)
-    desc:SetText("Customize the message sent when you click Accept in LFG")
+    desc:SetText(L["options_custom_whisper_desc"])
     desc:SetTextColor(unpack(_tc("textMuted")))
 
     local yOffset = -50
@@ -498,7 +499,7 @@ local function CreateCustomMessageTab(parent, scrollContent)
 
     local templateLabel = frame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     templateLabel:SetPoint("TOPLEFT", 20, yOffset)
-    templateLabel:SetText("Message Template:")
+    templateLabel:SetText(L["options_msg_template"])
     templateLabel:SetTextColor(unpack(_tc("textMuted")))
     yOffset = yOffset - 25
 
@@ -513,7 +514,7 @@ local function CreateCustomMessageTab(parent, scrollContent)
 
     local varsLabel = frame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     varsLabel:SetPoint("TOPLEFT", 20, yOffset)
-    varsLabel:SetText("Insert Variable:")
+    varsLabel:SetText(L["options_insert_variable"])
     varsLabel:SetTextColor(unpack(_tc("textMuted")))
     yOffset = yOffset - 25
 
@@ -548,7 +549,7 @@ local function CreateCustomMessageTab(parent, scrollContent)
 
     local componentsLabel = frame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     componentsLabel:SetPoint("TOPLEFT", 20, yOffset)
-    componentsLabel:SetText("Include in message:")
+    componentsLabel:SetText(L["options_include_in_msg"])
     componentsLabel:SetTextColor(unpack(_tc("textMuted")))
     yOffset = yOffset - 30
 
@@ -558,7 +559,7 @@ local function CreateCustomMessageTab(parent, scrollContent)
         { id = "showIlvl", name = "Item Level", x = 150, y = yOffset },
         { id = "showGs", name = "GearScore", x = 270, y = yOffset },
         { id = "showEnchant", name = "Enchant", x = 30, y = yOffset - 30 },
-        { id = "showRole", name = "Role", x = 150, y = yOffset - 30 },
+        { id = "showRole", name = L["lfg_role"], x = 150, y = yOffset - 30 },
         { id = "showLevel", name = "Level", x = 270, y = yOffset - 30 },
         { id = "showKeystone", name = "Keystone (auto)", x = 30, y = yOffset - 60 }
     }
@@ -579,7 +580,7 @@ local function CreateCustomMessageTab(parent, scrollContent)
 
     local previewLabel = frame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     previewLabel:SetPoint("TOPLEFT", 20, yOffset)
-    previewLabel:SetText("Preview:")
+    previewLabel:SetText(L["options_preview"])
     previewLabel:SetTextColor(unpack(_tc("textMuted")))
     yOffset = yOffset - 25
 
@@ -630,12 +631,12 @@ local function CreateCustomKeywordsTab(parent, scrollContent)
 
     local title = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
     title:SetPoint("TOP", frame, "TOP", 0, -15)
-    title:SetText("Custom Keywords")
+    title:SetText(L["options_custom_keywords"])
     title:SetTextColor(unpack(_tc("textAccent")))
 
     local desc = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     desc:SetPoint("TOP", title, "BOTTOM", 0, -5)
-    desc:SetText("Add custom keywords for each category. Separate with commas.\nMessages containing these keywords will be classified into the matching category.")
+    desc:SetText(L["options_keywords_desc"])
     desc:SetTextColor(unpack(_tc("textMuted")))
     desc:SetJustifyH("CENTER")
 
@@ -643,11 +644,12 @@ local function CreateCustomKeywordsTab(parent, scrollContent)
     if not FrostSeekDB.LFG.customKeywords then
         FrostSeekDB.LFG.customKeywords = {
             DUNGEON = "", RAID = "", WORLD_BOSS = "",
-            PVP = "", MANASTORM = "", KEYSTONE = "", CUSTOM = ""
+            PVP = "", MANASTORM = "", KEYSTONE = ""
         }
     end
-    if FrostSeekDB.LFG.customKeywords.CUSTOM == nil then
-        FrostSeekDB.LFG.customKeywords.CUSTOM = ""
+    
+    if FrostSeekDB.LFG.customKeywords.CUSTOM ~= nil then
+        FrostSeekDB.LFG.customKeywords.CUSTOM = nil
     end
 
     local categories = {
@@ -655,9 +657,9 @@ local function CreateCustomKeywordsTab(parent, scrollContent)
         { id = "RAID", name = "Raid", color = _tc("catRaid"), desc = "Keywords that classify a message as a Raid" },
         { id = "WORLD_BOSS", name = "World Boss", color = _tc("catWorldBoss"), desc = "Keywords that classify a message as a World Boss" },
         { id = "PVP", name = "PvP", color = _tc("catPvP"), desc = "Keywords that classify a message as PvP" },
-        { id = "MANASTORM", name = "Manastorm", color = _tc("catMana"), desc = "Keywords that classify a message as Manastorm" },
-        { id = "KEYSTONE", name = "Keystone", color = _tc("catKeystone"), desc = "Keywords that classify a message as Keystone/Mythic+" },
-        { id = "CUSTOM", name = "Custom", color = _tc("catCustom"), desc = "Keywords that classify a message as Custom" },
+        { id = "MANASTORM", name = L["cat_manastorm"], color = _tc("catMana"), desc = "Keywords that classify a message as Manastorm" },
+        { id = "KEYSTONE", name = L["cat_keystone"], color = _tc("catKeystone"), desc = "Keywords that classify a message as Keystone/Mythic+" },
+        { id = "MISC", name = "Misc", color = _tc("catMisc"), desc = "Uncategorized LFG messages" },
     }
 
     local yOffset = -80
@@ -730,31 +732,31 @@ end
 local SETTINGS_CATEGORIES = {
     { id = "frostnetprofile", name = "Frostnet Profile", icon = "Interface\\AddOns\\FrostSeek\\Media\\texture\\bottoni\\generale.tga", settings = {
         { type = "header", id = "frostnetProfileHeader", name = "", desc = "Configure your FrostNet presence - this information is sent when you apply to groups or ping the network" },
-        { type = "frostnetrole", id = "frostnetRole", name = "Role", desc = "Select your primary role for group applications" },
+        { type = "frostnetrole", id = "frostnetRole", name = L["lfg_role"], desc = "Select your primary role for group applications" },
         { type = "editbox", id = "frostnetSpec", name = "Spec / Secondary Role", desc = "Your spec or secondary role (shown in applications)", getter = function() if not FrostSeekDB.Profile then FrostSeekDB.Profile = {} end; return FrostSeekDB.Profile.spec or "" end, setter = function(v) if not FrostSeekDB.Profile then FrostSeekDB.Profile = {} end; FrostSeekDB.Profile.spec = v; local Profile = _G.FrostSeek and _G.FrostSeek.Profile; if Profile and Profile.UpdateAutoInfo then Profile:UpdateAutoInfo() end end },
-        { type = "checkbox", id = "frostnetDiscord", name = "Discord Ready", desc = "Mark yourself as available on Discord (shown in applications)", default = false, getter = function() if not FrostSeekDB.Profile then FrostSeekDB.Profile = {} end; return FrostSeekDB.Profile.discord or false end, setter = function(v) if not FrostSeekDB.Profile then FrostSeekDB.Profile = {} end; FrostSeekDB.Profile.discord = v; local Profile = _G.FrostSeek and _G.FrostSeek.Profile; if Profile and Profile.UpdateDiscordToggle then Profile:UpdateDiscordToggle() end; if Profile and Profile.UpdateAutoInfo then Profile:UpdateAutoInfo() end; print("|cff88ccffFrostNet:|r Discord " .. (v and "|cff44ff44Ready|r" or "|cffff5555Not Available|r")) end },
-        { type = "editbox", id = "frostnetNote", name = "Application Notes", desc = "Default notes included when you apply to groups", getter = function() if not FrostSeekDB.Profile then FrostSeekDB.Profile = {} end; return FrostSeekDB.Profile.note or "" end, setter = function(v) if not FrostSeekDB.Profile then FrostSeekDB.Profile = {} end; FrostSeekDB.Profile.note = v end },
+        { type = "checkbox", id = "frostnetDiscord", name = L["profile_discord"], desc = "Mark yourself as available on Discord (shown in applications)", default = false, getter = function() if not FrostSeekDB.Profile then FrostSeekDB.Profile = {} end; return FrostSeekDB.Profile.discord or false end, setter = function(v) if not FrostSeekDB.Profile then FrostSeekDB.Profile = {} end; FrostSeekDB.Profile.discord = v; local Profile = _G.FrostSeek and _G.FrostSeek.Profile; if Profile and Profile.UpdateDiscordToggle then Profile:UpdateDiscordToggle() end; if Profile and Profile.UpdateAutoInfo then Profile:UpdateAutoInfo() end; print("|cff88ccffFrostNet:|r Discord " .. (v and "|cff44ff44Ready|r" or "|cffff5555Not Available|r")) end },
+        { type = "editbox", id = "frostnetNote", name = L["profile_note"], desc = "Default notes included when you apply to groups", getter = function() if not FrostSeekDB.Profile then FrostSeekDB.Profile = {} end; return FrostSeekDB.Profile.note or "" end, setter = function(v) if not FrostSeekDB.Profile then FrostSeekDB.Profile = {} end; FrostSeekDB.Profile.note = v end },
         { type = "checkbox", id = "frostnetEnabled", name = "Enable FrostNet", desc = "Enable the FrostNet network (join FSK channel and communicate)", default = true, getter = function() return FrostSeekDB.Settings.frostnetEnabled ~= false end, setter = function(v) FrostSeekDB.Settings.frostnetEnabled = v; local net = _G.FrostSeek and _G.FrostSeek.Network; if net then if v then net:JoinChannel() else net:LeaveChannel() end end; print("|cff88ccffFrostNet:|r " .. (v and "|cff44ff44Enabled|r" or "|cffff5555Disabled|r")) end },
         { type = "checkbox", id = "applyWhisper", name = "Whisper Leader on Apply", desc = "When applying to a group, also send a [FrostSeek] whisper to the leader (useful if the leader does not run FrostSeek; the FSK APP message alone is enough for addon users)", default = false, getter = function() return FrostSeekDB.Settings.applyWhisper == true end, setter = function(v) FrostSeekDB.Settings.applyWhisper = v print("|cff88ccffFrostSeek:|r Apply-whisper " .. (v and "enabled" or "disabled")) end },
     }},
-    { id = "general", name = "General", icon = "Interface\\AddOns\\FrostSeek\\Media\\texture\\bottoni\\generale.tga", settings = {
+    { id = "general", name = L["options_general"], icon = "Interface\\AddOns\\FrostSeek\\Media\\texture\\bottoni\\generale.tga", settings = {
         { type = "header", id = "generalHeader", name = "", desc = "Basic addon configuration" },
         { type = "checkbox", id = "autoOpen", name = "Auto-Open on Login", desc = "Automatically open FrostSeek window when you log in", default = false, getter = function() return FrostSeekDB.Settings.autoOpen end, setter = function(v) FrostSeekDB.Settings.autoOpen = v print("|cff88ccffFrostSeek:|r Auto-open " .. (v and "enabled" or "disabled")) end },
-        { type = "checkbox", id = "minimapButton", name = "Show Minimap Button", desc = "Show the FrostSeek minimap button", default = true, getter = function() return FrostSeekDB.Settings.minimapButton end, setter = function(v) FrostSeekDB.Settings.minimapButton = v local mb = _G["FrostSeekMiniMapButton"]; if mb and mb.SetShown then mb:SetShown(v) end end },
+        { type = "checkbox", id = "minimapButton", name = L["minimap_show"], desc = "Show the FrostSeek minimap button", default = true, getter = function() return FrostSeekDB.Settings.minimapButton end, setter = function(v) FrostSeekDB.Settings.minimapButton = v local mb = _G["FrostSeekMiniMapButton"]; if mb and mb.SetShown then mb:SetShown(v) end end },
         { type = "checkbox", id = "savePosition", name = "Save Window Position", desc = "Remember window positions between sessions", default = true, getter = function() return FrostSeekDB.Settings.savePosition end, setter = function(v) FrostSeekDB.Settings.savePosition = v end },
         { type = "checkbox", id = "debugMode", name = "Debug Mode", desc = "Enable debug messages in chat", default = false, getter = function() return FrostSeekDB.Settings.debugMode end, setter = function(v) FrostSeekDB.Settings.debugMode = v end },
-        { type = "slider", id = "uiScale", name = "UI Scale", desc = "Adjust the scale of the FrostSeek interface (0.5 - 1.5)", min = 0.5, max = 1.5, step = 0.05, default = 1.0, getter = function() return FrostSeekDB.Settings.uiScale end, setter = function(v) FrostSeekDB.Settings.uiScale = v if FrostSeek.MainFrame then FrostSeek.MainFrame:SetScale(v) end end }
+        { type = "slider", id = "uiScale", name = "UI Scale", desc = "Adjust the scale of the FrostSeek interface (0.5 - 1.5)", min = 0.5, max = 1.5, step = 0.05, default = 1.0, getter = function() return FrostSeekDB.Settings.uiScale end, setter = function(v) FrostSeekDB.Settings.uiScale = v if FrostSeek.MainFrame then FrostSeek.MainFrame:SetScale(v) end end },
     }},
-    { id = "lfg", name = "LFG System", icon = "Interface\\AddOns\\FrostSeek\\Media\\texture\\bottoni\\exp.tga", settings = {
+    { id = "lfg", name = L["options_lfg"], icon = "Interface\\AddOns\\FrostSeek\\Media\\texture\\bottoni\\exp.tga", settings = {
         { type = "header", id = "lfgHeader", name = "", desc = "Configure the Looking For Group radar" },
         { type = "checkbox", id = "disableLFG", name = "Disable LFG System", desc = "Completely disable the LFG radar", default = false, getter = function() return FrostSeekDB.LFG.disableLFG end, setter = function(v) FrostSeekDB.LFG.disableLFG = v; local lfg = _G.FrostSeek and _G.FrostSeek.Modules and _G.FrostSeek.Modules.lfg; if lfg and lfg.UpdateToggleVisual then lfg.UpdateToggleVisual(not v) end end },
-        { type = "checkbox", id = "disablePopups", name = "Disable Popups", desc = "Disable LFM alert popups", default = false, getter = function() return FrostSeekDB.LFG.disablePopups end, setter = function(v) FrostSeekDB.LFG.disablePopups = v end },
-        { type = "checkbox", id = "silentNotifications", name = "Silent Notifications", desc = "Disable sound for LFG notifications", default = false, getter = function() return FrostSeekDB.LFG.silentNotifications end, setter = function(v) FrostSeekDB.LFG.silentNotifications = v end },
-        { type = "checkbox", id = "doNotAlertInGroup", name = "No Alerts in Group", desc = "Don't show alerts when in a group", default = false, getter = function() return FrostSeekDB.LFG.doNotAlertInGroup end, setter = function(v) FrostSeekDB.LFG.doNotAlertInGroup = v end },
-        { type = "checkbox", id = "doNotAlertInCombat", name = "No Alerts in Combat", desc = "Don't show alerts when in combat", default = false, getter = function() return FrostSeekDB.LFG.doNotAlertInCombat end, setter = function(v) FrostSeekDB.LFG.doNotAlertInCombat = v end },
-        { type = "slider", id = "frameDuration", name = "Popup Duration", desc = "How long popups stay visible (seconds)", min = 2, max = 10, step = 1, default = 5, getter = function() return FrostSeekDB.LFG.frameDuration end, setter = function(v) FrostSeekDB.LFG.frameDuration = v end },
-        { type = "slider", id = "popupCooldown", name = "Popup Cooldown", desc = "Time between identical popups (seconds)", min = 60, max = 600, step = 10, default = 370, getter = function() return FrostSeekDB.LFG.popupCooldown end, setter = function(v) FrostSeekDB.LFG.popupCooldown = v end },
-        { type = "slider", id = "maxConcurrentPopups", name = "Max Popups", desc = "Maximum number of popups shown at once", min = 1, max = 5, step = 1, default = 2, getter = function() return FrostSeekDB.LFG.maxConcurrentPopups end, setter = function(v) FrostSeekDB.LFG.maxConcurrentPopups = v end },
+        { type = "checkbox", id = "disablePopups", name = L["lfg_disable_popups"], desc = "Disable LFM alert popups", default = false, getter = function() return FrostSeekDB.LFG.disablePopups end, setter = function(v) FrostSeekDB.LFG.disablePopups = v end },
+        { type = "checkbox", id = "silentNotifications", name = L["lfg_silent_notifications"], desc = "Disable sound for LFG notifications", default = false, getter = function() return FrostSeekDB.LFG.silentNotifications end, setter = function(v) FrostSeekDB.LFG.silentNotifications = v end },
+        { type = "checkbox", id = "doNotAlertInGroup", name = L["lfg_no_alerts_group"], desc = "Don't show alerts when in a group", default = false, getter = function() return FrostSeekDB.LFG.doNotAlertInGroup end, setter = function(v) FrostSeekDB.LFG.doNotAlertInGroup = v end },
+        { type = "checkbox", id = "doNotAlertInCombat", name = L["lfg_no_alerts_combat"], desc = "Don't show alerts when in combat", default = false, getter = function() return FrostSeekDB.LFG.doNotAlertInCombat end, setter = function(v) FrostSeekDB.LFG.doNotAlertInCombat = v end },
+        { type = "slider", id = "frameDuration", name = L["lfg_popup_duration"], desc = "How long popups stay visible (seconds)", min = 2, max = 10, step = 1, default = 5, getter = function() return FrostSeekDB.LFG.frameDuration end, setter = function(v) FrostSeekDB.LFG.frameDuration = v end },
+        { type = "slider", id = "popupCooldown", name = L["lfg_popup_cooldown"], desc = "Time between identical popups (seconds)", min = 60, max = 600, step = 10, default = 370, getter = function() return FrostSeekDB.LFG.popupCooldown end, setter = function(v) FrostSeekDB.LFG.popupCooldown = v end },
+        { type = "slider", id = "maxConcurrentPopups", name = L["lfg_max_popups"], desc = "Maximum number of popups shown at once", min = 1, max = 5, step = 1, default = 2, getter = function() return FrostSeekDB.LFG.maxConcurrentPopups end, setter = function(v) FrostSeekDB.LFG.maxConcurrentPopups = v end },
     }},
     { id = "activityfilter", name = "Activity Filter", icon = "Interface\\AddOns\\FrostSeek\\Media\\texture\\bottoni\\filtri.tga", settings = {
         { type = "header", id = "activityFilterHeader", desc = "Choose which dungeons, raids and activities appear in LFG messages and popups. Uncheck items you are NOT interested in." },
@@ -775,14 +777,13 @@ local SETTINGS_CATEGORIES = {
     { id = "popupcategories", name = "Popup Categories", icon = "Interface\\AddOns\\FrostSeek\\Media\\texture\\bottoni\\popupcategorie.tga", settings = {
         { type = "header", id = "popupCategoriesHeader", name = "", desc = "Select which categories trigger popup notifications" },
         { type = "category", id = "popupCategories", name = "Enable popups for:", categories = {
-            { id = "ALL", name = "All Categories", desc = "Show popups for all categories (overrides individual selections)" },
-            { id = "DUNGEON", name = "Dungeons", desc = "Normal and heroic dungeons" },
-            { id = "RAID", name = "Raids", desc = "All raid instances" },
-            { id = "WORLD_BOSS", name = "World Bosses", desc = "Azuregos, Kazzak, Emeriss, Soggoth, etc." },
+            { id = "ALL", name = L["cat_all"], desc = "Show popups for all categories (overrides individual selections)" },
+            { id = "DUNGEON", name = L["cat_dungeon"], desc = "Normal and heroic dungeons" },
+            { id = "RAID", name = L["cat_raid"], desc = "All raid instances" },
+            { id = "WORLD_BOSS", name = L["cat_world_boss"], desc = "Azuregos, Kazzak, Emeriss, Soggoth, etc." },
             { id = "PVP", name = "PvP", desc = "Arena and battlegrounds" },
-            { id = "MANASTORM", name = "Manastorm", desc = "Manastorm activities" },
-            { id = "KEYSTONE", name = "Keystone", desc = "Mythic+ keystone runs" },
-            { id = "CUSTOM", name = "Custom", desc = "Custom activities and events" },
+            { id = "MANASTORM", name = L["cat_manastorm"], desc = "Manastorm activities" },
+            { id = "KEYSTONE", name = L["cat_keystone"], desc = "Mythic+ keystone runs" },
         }, getter = function(catId) if FrostSeekDB.LFG.popupCategories.ALL and catId ~= "ALL" then return true end return FrostSeekDB.LFG.popupCategories[catId] or false end,
         setter = function(catId, value)
             if catId == "ALL" then
@@ -798,23 +799,23 @@ local SETTINGS_CATEGORIES = {
         end },
         { type = "button", id = "popupInfo", name = "How Popup Categories Work", desc = "Click for information", onClick = function() print("|cff88ccff========== POPUP CATEGORIES INFO ==========|r") print("Read logic: ALL overrides individuals. If none selected, ALL is forced ON.") print("|cff88ccff==========================================|r") end }
     }},
-    { id = "sounds", name = "Sounds", icon = "Interface\\AddOns\\FrostSeek\\Media\\texture\\bottoni\\generale.tga", settings = {
+    { id = "sounds", name = L["options_sound"], icon = "Interface\\AddOns\\FrostSeek\\Media\\texture\\bottoni\\generale.tga", settings = {
         { type = "header", id = "soundsHeader", name = "", desc = "Configure sound notifications" },
         { type = "checkbox", id = "soundEnabled", name = "Enable Sounds", desc = "Master sound on/off toggle", default = true, getter = function() return FrostSeekDB.Settings.soundEnabled ~= false end, setter = function(v) FrostSeekDB.Settings.soundEnabled = v end },
-        { type = "checkbox", id = "soundPopup", name = "Popup Sound", desc = "Play sound when a popup notification appears", default = true, getter = function() return FrostSeekDB.Settings.soundPopup ~= false end, setter = function(v) FrostSeekDB.Settings.soundPopup = v end },
+        { type = "checkbox", id = "soundPopup", name = L["sound_popup"], desc = "Play sound when a popup notification appears", default = true, getter = function() return FrostSeekDB.Settings.soundPopup ~= false end, setter = function(v) FrostSeekDB.Settings.soundPopup = v end },
         { type = "checkbox", id = "soundListing", name = "New Listing Sound", desc = "Play sound when a new LFG listing is detected", default = true, getter = function() return FrostSeekDB.Settings.soundListing ~= false end, setter = function(v) FrostSeekDB.Settings.soundListing = v end },
-        { type = "checkbox", id = "soundApplicant", name = "Applicant Sound", desc = "Play sound when a new applicant is received", default = true, getter = function() return FrostSeekDB.Settings.soundApplicant ~= false end, setter = function(v) FrostSeekDB.Settings.soundApplicant = v end },
+        { type = "checkbox", id = "soundApplicant", name = L["sound_applicant"], desc = "Play sound when a new applicant is received", default = true, getter = function() return FrostSeekDB.Settings.soundApplicant ~= false end, setter = function(v) FrostSeekDB.Settings.soundApplicant = v end },
     }},
-    { id = "advanced", name = "Advanced", icon = "Interface\\AddOns\\FrostSeek\\Media\\texture\\bottoni\\avanzato.tga", settings = {
+    { id = "advanced", name = L["options_advanced"], icon = "Interface\\AddOns\\FrostSeek\\Media\\texture\\bottoni\\avanzato.tga", settings = {
         { type = "header", id = "advancedHeader", name = "", desc = "Advanced configuration options" },
         { type = "button", id = "resetPosition", name = "Reset Window Position", desc = "Reset main window to default position", onClick = function() FrostSeekDB.Settings.windowPosition = nil; if FrostSeek.MainFrame then FrostSeek.MainFrame:ClearAllPoints(); FrostSeek.MainFrame:SetPoint("CENTER") end print("|cff88ccffFrostSeek:|r Window positions reset") end },
-        { type = "button", id = "clearAllData", name = "Clear All Data", desc = "Clear all saved data", warning = "This cannot be undone!", onClick = function()
+        { type = "button", id = "clearAllData", name = L["clear_all_data"], desc = "Clear all saved data", warning = "This cannot be undone!", onClick = function()
             local Shared = _G.FrostSeekShared
             if Shared and Shared.ConfirmDialog then
-                Shared.ConfirmDialog("Clear All Data", "This action cannot be undone!\n\nAll FrostSeek data will be reset to defaults.", function()
+                Shared.ConfirmDialog(L["clear_all_data"], "This action cannot be undone!\n\nAll FrostSeek data will be reset to defaults.", function()
                     FrostSeekDB = {
                         Settings = { uiScale = 1.0, windowPosition = nil, minimapButton = true, debugMode = false, savePosition = true, autoOpen = false, soundEnabled = true, soundPopup = true, soundListing = true, soundApplicant = true },
-                        LFG = { myRole = "", silentNotifications = false, frameDuration = 5, disablePopups = false, disableLFG = false, maxMessageLength = 90, popupCooldown = 370, maxConcurrentPopups = 2, doNotAlertInGroup = true, doNotAlertInCombat = true, popupCategories = { ALL = true, DUNGEON = true, RAID = true, WORLD_BOSS = true, PVP = true, MANASTORM = true, KEYSTONE = true, CUSTOM = true }, customFilterWords = "", showActiveRecruitersWindow = false, customMessages = { enabled = false, template = "hello {class} {ilvl} {gs}gs {ench} dps or healer {keystone}", showClass = true, showIlvl = true, showGs = true, showEnchant = true, showRole = true, showLevel = true, showKeystone = false, keystoneLink = "" } },
+                        LFG = { myRole = "", silentNotifications = false, frameDuration = 5, disablePopups = false, disableLFG = false, maxMessageLength = 90, popupCooldown = 370, maxConcurrentPopups = 2, doNotAlertInGroup = true, doNotAlertInCombat = true, popupCategories = { ALL = true, DUNGEON = true, RAID = true, WORLD_BOSS = true, PVP = true, MANASTORM = true, KEYSTONE = true, MISC = false }, customFilterWords = "", showActiveRecruitersWindow = false, customMessages = { enabled = false, template = "hello {class} {ilvl} {gs}gs {ench} dps or healer {keystone}", showClass = true, showIlvl = true, showGs = true, showEnchant = true, showRole = true, showLevel = true, showKeystone = false, keystoneLink = "" } },
                         LFM = { lastMessages = {}, favoriteTemplates = {}, channelPresets = {}, autoUpdateInterval = 60 },
                         MPlusScores = {},
                     }
@@ -823,7 +824,7 @@ local SETTINGS_CATEGORIES = {
             end
         end }
     }},
-    { id = "theme", name = "Theme", icon = "Interface\\AddOns\\FrostSeek\\Media\\texture\\bottoni\\sistema.tga", settings = {
+    { id = "theme", name = L["options_theme"], icon = "Interface\\AddOns\\FrostSeek\\Media\\texture\\bottoni\\sistema.tga", settings = {
         { type = "themeselector", id = "themeSelector", name = "Active Theme", desc = "Select a color theme. Some themes may need to be unlocked..." },
     }}
 }
@@ -838,7 +839,7 @@ local function CreateSettingControl(parent, setting, yOffset)
 
         local roleLabel = roleFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
         roleLabel:SetPoint("TOPLEFT", roleFrame, "TOPLEFT", 0, 0)
-        roleLabel:SetText(setting.name or "Role")
+        roleLabel:SetText(setting.name or L["lfg_role"])
         roleLabel:SetTextColor(unpack(_tc("textPrimary")))
 
         local EnsureProfile = function()
@@ -1008,6 +1009,64 @@ local function CreateSettingControl(parent, setting, yOffset)
         slider.UpdateFromDB = Update
         return controlFrame, -50, slider
 
+    elseif setting.type == "dropdown" then
+        local selectedValue = setting.getter and setting.getter() or setting.default or ""
+        local options = setting.options or {}
+
+        local btn = CreateFrame("Button", nil, controlFrame)
+        btn:SetSize(160, 24)
+        btn:SetPoint("RIGHT", controlFrame, "RIGHT", -10, 0)
+
+        btn.bg = btn:CreateTexture(nil, "BACKGROUND")
+        btn.bg:SetAllPoints()
+        btn.bg:SetColorTexture(unpack(_tc("bgButton")))
+
+        btn.border = btn:CreateTexture(nil, "BORDER")
+        btn.border:SetAllPoints()
+        btn.border:SetColorTexture(unpack(_tc("border")))
+
+        btn.text = btn:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+        btn.text:SetPoint("CENTER")
+        btn.text:SetTextColor(unpack(_tc("textPrimary")))
+
+        
+        local function GetDisplayText(val)
+            for _, opt in ipairs(options) do
+                if opt.value == val then return opt.text end
+            end
+            return val
+        end
+        btn.text:SetText(GetDisplayText(selectedValue))
+
+        
+        btn.arrow = btn:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+        btn.arrow:SetPoint("RIGHT", btn, "RIGHT", -6, 0)
+        btn.arrow:SetTextColor(0.5, 0.5, 0.5, 0.8)
+        btn.arrow:SetText("|cff88ccffv|r")
+
+        btn:SetScript("OnEnter", function(self)
+            self.bg:SetColorTexture(unpack(_tc("bgTabActive")))
+        end)
+        btn:SetScript("OnLeave", function(self)
+            self.bg:SetColorTexture(unpack(_tc("bgButton")))
+        end)
+
+        btn:SetScript("OnClick", function(self)
+            
+            local curVal = setting.getter and setting.getter() or setting.default or ""
+            local nextVal = curVal
+            for i, opt in ipairs(options) do
+                if opt.value == curVal then
+                    nextVal = options[(i % #options) + 1].value
+                    break
+                end
+            end
+            self.text:SetText(GetDisplayText(nextVal))
+            if setting.setter then setting.setter(nextVal) else FrostSeekDB.Settings[setting.id] = nextVal end
+        end)
+
+        return controlFrame, -40, btn
+
     elseif setting.type == "category" then
         local categoriesFrame = CreateFrame("Frame", nil, parent)
         categoriesFrame:SetSize(540, 200)
@@ -1074,7 +1133,7 @@ local function CreateSettingControl(parent, setting, yOffset)
 
         local themeTitle = themeFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
         themeTitle:SetPoint("TOPLEFT", themeFrame, "TOPLEFT", 0, 0)
-        themeTitle:SetText("Select Theme:")
+        themeTitle:SetText(L["options_select_theme_label"])
         themeTitle:SetTextColor(unpack(_tc("textPrimary")))
 
         local themeDropdown
@@ -1089,7 +1148,7 @@ local function CreateSettingControl(parent, setting, yOffset)
         local themeDesc = themeFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
         themeDesc:SetPoint("TOPLEFT", themeDropdown, "BOTTOMLEFT", 0, -6)
         themeDesc:SetPoint("RIGHT", themeFrame, "RIGHT", 0, 0)
-        themeDesc:SetText("Changing theme requires a UI reload. You will be prompted to confirm.")
+        themeDesc:SetText(L["options_theme_reload_desc"])
         themeDesc:SetTextColor(unpack(_tc("textDim")))
         themeDesc:SetJustifyH("LEFT")
 
@@ -1165,7 +1224,7 @@ local function CreateSettingControl(parent, setting, yOffset)
             ["PVP"]              = { 0.85, 0.2, 0.2 },
             ["MANASTORM"]        = { 0.6, 0.3, 0.85 },
             ["KEYSTONE"]         = { 0.9, 0.4, 0.65 },
-            ["CUSTOM"]           = { 1.0, 0.8, 0.0 },
+            ["MISC"]              = { 0.53, 0.80, 1.0 },
         }
 
         local currentHeaderName = nil
@@ -1272,7 +1331,7 @@ local function CreateSettingControl(parent, setting, yOffset)
         btnRow:SetSize(530, 28)
         btnRow:SetPoint("TOPLEFT", container, "TOPLEFT", 5, yOff - 5)
 
-        local selectAllBtn = CreateModernButton(btnRow, "Select All", 90, 22)
+        local selectAllBtn = CreateModernButton(btnRow, L["select_all"], 90, 22)
         selectAllBtn:SetPoint("LEFT", btnRow, "LEFT", 0, 0)
         selectAllBtn:SetScript("OnClick", function()
             for _, info in ipairs(allCheckboxes) do
@@ -1284,7 +1343,7 @@ local function CreateSettingControl(parent, setting, yOffset)
             if LFG.UpdateFilterIconState then LFG.UpdateFilterIconState() end
         end)
 
-        local deselectAllBtn = CreateModernButton(btnRow, "Deselect All", 100, 22)
+        local deselectAllBtn = CreateModernButton(btnRow, L["deselect_all"], 100, 22)
         deselectAllBtn:SetPoint("LEFT", selectAllBtn, "RIGHT", 8, 0)
         deselectAllBtn:SetScript("OnClick", function()
             local Shared = _G.FrostSeekShared
@@ -1509,7 +1568,7 @@ function Options:Initialize(parentFrame)
 
     self.desc = self.frame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     self.desc:SetPoint("TOP", self.title, "BOTTOM", 0, -10)
-    self.desc:SetText("Configure all FrostSeek settings")
+    self.desc:SetText(L["options_desc"])
     self.desc:SetTextColor(unpack(_tc("textMuted")))
 
     local buttonsFrame = CreateFrame("Frame", nil, self.frame)
@@ -1574,7 +1633,7 @@ function Options:Initialize(parentFrame)
 
     local statusTitle = self.statusFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     statusTitle:SetPoint("TOP", self.statusFrame, "TOP", 0, -10)
-    statusTitle:SetText("Current Status")
+    statusTitle:SetText(L["options_current_status"])
     statusTitle:SetTextColor(unpack(_tc("textPrimary")))
 
     self.statusText = self.statusFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
@@ -1590,7 +1649,7 @@ function Options:Show()
         if self.statusText then
             local lfgStatus = "|cFF00FF00Active|r"
             if FrostSeekDB.LFG and FrostSeekDB.LFG.disableLFG then lfgStatus = "|cFFFF0000Disabled|r" end
-            self.statusText:SetText("LFG: " .. lfgStatus ..  "   -   Icon by|cFF88CCFF Ernestodx|r")
+            self.statusText:SetText("LFG: " .. lfgStatus ..  "   -   " .. L["options_icon_credit"])
         end
         self.frame:Show()
     end

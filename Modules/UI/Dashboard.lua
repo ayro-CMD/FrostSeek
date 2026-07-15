@@ -3,6 +3,7 @@ local FrostSeek = _G.FrostSeek
 local Dashboard = {}
 local _tk = FrostSeek and FrostSeek._v and FrostSeek._v.a("dashboard", Dashboard)
 
+local L = FrostSeek.L
 local Shared = _G.FrostSeekShared
 local GetClassIcon = Shared and Shared.GetClassIcon or function(cf) return "Interface\\Icons\\INV_Misc_QuestionMark" end
 
@@ -37,7 +38,8 @@ local function GetCatColor(cat)
     elseif k == "PVP"    then return _tc("catPvP")
     elseif k == "MANASTORM" then return _tc("catMana")
     elseif k == "KEYSTONE"  then return _tc("catKeystone")
-    elseif k == "CUSTOM"    then return _tc("catCustom") end
+    elseif k == "MISC"     then return {0.53, 0.80, 1.00}
+    end
     return _tc("textNorm")
 end
 
@@ -145,7 +147,7 @@ function Dashboard:Initialize(parentFrame)
 
     self.kpiIlvlLabel = kpi1:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     self.kpiIlvlLabel:SetPoint("BOTTOM", kpi1, "BOTTOM", 0, 8)
-    self.kpiIlvlLabel:SetText("ITEM LEVEL")
+    self.kpiIlvlLabel:SetText(L["dashboard_item_level"])
     self.kpiIlvlLabel:SetTextColor(unpack(C.textLabel))
 
     local kpi2 = CreateFrame("Frame", nil, F)
@@ -162,7 +164,7 @@ function Dashboard:Initialize(parentFrame)
 
     self.kpiGsLabel = kpi2:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     self.kpiGsLabel:SetPoint("BOTTOM", kpi2, "BOTTOM", 0, 8)
-    self.kpiGsLabel:SetText("GEARSCORE")
+    self.kpiGsLabel:SetText(L["dashboard_gearscore"])
     self.kpiGsLabel:SetTextColor(unpack(C.textLabel))
 
     local kpi3 = CreateFrame("Frame", nil, F)
@@ -179,7 +181,7 @@ function Dashboard:Initialize(parentFrame)
 
     self.kpiGoldLabel = kpi3:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     self.kpiGoldLabel:SetPoint("BOTTOM", kpi3, "BOTTOM", 0, 8)
-    self.kpiGoldLabel:SetText("GOLD")
+    self.kpiGoldLabel:SetText(L["dashboard_gold"])
     self.kpiGoldLabel:SetTextColor(unpack(C.textLabel))
 
     local kpi4 = CreateFrame("Frame", nil, F)
@@ -235,7 +237,7 @@ function Dashboard:Initialize(parentFrame)
     self.fnBigNum:SetTextColor(unpack(C.accent))
     self.fnBigLabel = fn:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     self.fnBigLabel:SetPoint("TOP", self.fnBigNum, "BOTTOM", 0, -2)
-    self.fnBigLabel:SetText("ONLINE")
+    self.fnBigLabel:SetText(L["dashboard_online"])
     self.fnBigLabel:SetTextColor(unpack(C.textLabel))
     self.fnConnDot = fn:CreateTexture(nil, "ARTWORK")
     self.fnConnDot:SetSize(8, 8)
@@ -320,19 +322,19 @@ function Dashboard:Initialize(parentFrame)
 
     self.lfgTotalLabel = lp:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     self.lfgTotalLabel:SetPoint("TOP", self.lfgTotalNum, "BOTTOM", 0, -2)
-    self.lfgTotalLabel:SetText("ACTIVE RECRUITERS")
+    self.lfgTotalLabel:SetText(L["dashboard_active_recruiters"])
     self.lfgTotalLabel:SetTextColor(unpack(C.textLabel))
 
     self.categoryBars = {}
-    local cats = {"DUNGEON", "RAID", "WORLD_BOSS", "PVP", "MANASTORM", "KEYSTONE", "CUSTOM"}
+    local cats = {"DUNGEON", "RAID", "WORLD_BOSS", "PVP", "MANASTORM", "KEYSTONE", "MISC"}
     local barY = -100
-    local barSp = 16
+    local barSp = 14
 
     for _, cat in ipairs(cats) do
         local col = GetCatColor(cat)
         local lbl = lp:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
         lbl:SetPoint("TOPLEFT", lp, "TOPLEFT", pad, barY)
-        local shortN = {DUNGEON="Dungeon",RAID="Raid",WORLD_BOSS="World Boss",PVP="PvP",MANASTORM="Manastorm",KEYSTONE="Keystone",CUSTOM="Custom"}
+        local shortN = {DUNGEON="Dungeon",RAID="Raid",WORLD_BOSS="World Boss",PVP="PvP",MANASTORM="Manastorm",KEYSTONE="Keystone",MISC="Misc"}
         lbl:SetText(shortN[cat] or cat)
         lbl:SetTextColor(unpack(C.textNorm))
         lbl:SetWidth(85)
@@ -635,7 +637,7 @@ function Dashboard:UpdateAll()
     end
 
     local categoryCounts = {}
-    for _, cat in ipairs({"DUNGEON", "RAID", "WORLD_BOSS", "PVP", "MANASTORM", "KEYSTONE", "CUSTOM"}) do
+    for _, cat in ipairs({"DUNGEON", "RAID", "WORLD_BOSS", "PVP", "MANASTORM", "KEYSTONE", "MISC"}) do
         categoryCounts[cat] = 0
     end
     local searches = {}

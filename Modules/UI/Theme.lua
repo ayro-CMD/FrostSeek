@@ -59,7 +59,7 @@ local THEMES = {
         catKeystone = {0.9, 0.4, 0.65},
         catCustom   = {1.0, 0.8, 0.0},
         catAll      = {0.4, 0.6, 0.8},
-        catMisc     = {0.5, 0.5, 0.5},
+        catMisc     = {0.53, 0.80, 1.00},
 
         titleR = 0.8, titleG = 0.9, titleB = 1.0,
     },

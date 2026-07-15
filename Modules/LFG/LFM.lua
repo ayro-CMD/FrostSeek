@@ -5,6 +5,7 @@ local UI = _G.FrostSeekUIUtils
 local LFM = {}
 local _tk = FrostSeek and FrostSeek._v and FrostSeek._v.a("lfm", LFM)
 
+local L = FrostSeek.L
 local _tc = _G.FrostSeekShared and _G.FrostSeekShared._tc or function(t) return {0.5,0.5,0.5} end
 
 local currentCategory = "RAIDS"
@@ -516,7 +517,7 @@ function LFM:StartAutoSpam()
     if Shared and Shared.ConfirmDialog then
         Shared.ConfirmDialog(
             "Start Auto-Spam",
-            "This will spam \"" .. string.sub(message, 1, 60) .. (string.len(message) > 60 and "..." or "") .. "\" every " .. interval .. "s on " .. table.concat({(function()
+            "This will spam \"" .. string.sub(message, 1, 60) .. (string.len(message) > 60 and "..." or "") .. "\" every " .. interval .. "s on " .. table.concat((function()
                 local chs = {}
                 for i = 1, 10 do
                     if spamChannels[i] then
@@ -527,12 +528,12 @@ function LFM:StartAutoSpam()
                     end
                 end
                 return chs
-            end)()}, ", ") .. ". Continue?",
+            end)(), ", ") .. ". Continue?",
             function()
                 autoSpamActive = true
                 DoAutoSpamTick()
                 autoSpamTicker = C_Timer.NewTicker(interval, DoAutoSpamTick)
-                LFM.spamBtn.text:SetText("Stop Spam")
+                LFM.spamBtn.text:SetText(L["lfm_stop_spam"])
                 local dangerC = _tc("danger")
                 LFM.spamBtn.color = dangerC
                 LFM.spamBtn.text:SetTextColor(min(dangerC[1] * 1.4, 1), min(dangerC[2] * 1.4, 1), min(dangerC[3] * 1.4, 1))
@@ -548,7 +549,7 @@ function LFM:StartAutoSpam()
         autoSpamActive = true
         DoAutoSpamTick()
         autoSpamTicker = C_Timer.NewTicker(interval, DoAutoSpamTick)
-        LFM.spamBtn.text:SetText("Stop Spam")
+        LFM.spamBtn.text:SetText(L["lfm_stop_spam"])
         local dangerC = _tc("danger")
         LFM.spamBtn.color = dangerC
         LFM.spamBtn.text:SetTextColor(min(dangerC[1] * 1.4, 1), min(dangerC[2] * 1.4, 1), min(dangerC[3] * 1.4, 1))
@@ -569,7 +570,7 @@ function LFM:StopAutoSpam()
     end
 
     if LFM.spamBtn then
-        LFM.spamBtn.text:SetText("Start Spam")
+        LFM.spamBtn.text:SetText(L["lfm_start_spam"])
         local successC = _tc("success")
         LFM.spamBtn.color = successC
         LFM.spamBtn.text:SetTextColor(min(successC[1] * 1.4, 1), min(successC[2] * 1.4, 1), min(successC[3] * 1.4, 1))
@@ -889,12 +890,12 @@ end
 
 function UpdateTabsAppearance()
     local categoryTabs = {
-        { key = "RAIDS", name = "Raid" },
-        { key = "DUNGEONS", name = "Dungeon" },
-        { key = "MANASTORM", name = "Mana" },
-        { key = "WORLD_BOSS", name = "WBoss" },
-        { key = "PVP", name = "PvP" },
-        { key = "KEYSTONE", name = "Key" }
+        { key = "RAIDS", name = L["cat_raid"] },
+        { key = "DUNGEONS", name = L["cat_dungeon"] },
+        { key = "MANASTORM", name = L["cat_manastorm"] },
+        { key = "WORLD_BOSS", name = L["cat_world_boss"] },
+        { key = "PVP", name = L["cat_pvp"] },
+        { key = "KEYSTONE", name = L["cat_keystone"] }
     }
 
     for i, tabInfo in ipairs(categoryTabs) do
@@ -1241,12 +1242,12 @@ function LFM:Initialize(parentFrame)
 
     self.title = self.mainContainer:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     self.title:SetPoint("TOP", self.mainContainer, "TOP", 0, -8)
-    self.title:SetText("|cff88ccffLooking For Members|r")
+    self.title:SetText("|cff88ccff" .. L["lfm_title"] .. "|r")
     self.title:SetTextColor(0.8, 0.9, 1)
 
     self.desc = self.mainContainer:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     self.desc:SetPoint("TOP", self.title, "BOTTOM", 0, -3)
-    self.desc:SetText("Create, edit and auto-spam LFM messages")
+    self.desc:SetText(L["lfm_desc"])
     self.desc:SetTextColor(unpack(_tc("textMuted")))
 
     self.rolesFrame = CreateFrame("Frame", nil, self.mainContainer)
@@ -1255,7 +1256,7 @@ function LFM:Initialize(parentFrame)
 
     local rolesLabel = self.rolesFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     rolesLabel:SetPoint("LEFT", self.rolesFrame, "LEFT", 10, 0)
-    rolesLabel:SetText("Need:")
+    rolesLabel:SetText(L["lfm_need"] .. ":")
     rolesLabel:SetTextColor(unpack(_tc("textMuted")))
 
     self.roleCheckboxes = {}
@@ -1305,7 +1306,7 @@ function LFM:Initialize(parentFrame)
 
     local difficultyLabel = self.rolesFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     difficultyLabel:SetPoint("LEFT", self.roleCheckboxes["BC"], "RIGHT", 30, 0)
-    difficultyLabel:SetText("Diff:")
+    difficultyLabel:SetText(L["lfm_difficulty"] .. ":")
     difficultyLabel:SetTextColor(unpack(_tc("textMuted")))
 
     self.difficultyDropdown = CreateModernDropdown(self.rolesFrame, 100, 22)
@@ -1322,7 +1323,7 @@ function LFM:Initialize(parentFrame)
 
     local searchLabel = self.searchFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     searchLabel:SetPoint("LEFT", self.searchFrame, "LEFT", 10, 0)
-    searchLabel:SetText("Search:")
+    searchLabel:SetText(L["search"] .. ":")
     searchLabel:SetTextColor(unpack(_tc("textMuted")))
 
     self.searchBox = CreateModernEditBox(self.searchFrame, 160, 18)
@@ -1333,7 +1334,7 @@ function LFM:Initialize(parentFrame)
         UpdateActivityList()
     end)
 
-    self.clearSearchBtn = CreateModernButton(self.searchFrame, 45, 18, "Clear", _tc("border"))
+    self.clearSearchBtn = CreateModernButton(self.searchFrame, 45, 18, L["clear"], _tc("border"))
     self.clearSearchBtn:SetPoint("LEFT", self.searchBox, "RIGHT", 5, 0)
     self.clearSearchBtn:SetScript("OnClick", function()
         self.searchBox:SetText("")
@@ -1346,12 +1347,12 @@ function LFM:Initialize(parentFrame)
     self.categoriesFrame:SetPoint("TOP", self.searchFrame, "BOTTOM", 0, -4)
 
     local categoryTabs = {
-        { key = "RAIDS", name = "Raid" },
-        { key = "DUNGEONS", name = "Dungeon" },
-        { key = "MANASTORM", name = "Mana" },
-        { key = "WORLD_BOSS", name = "WBoss" },
-        { key = "PVP", name = "PvP" },
-        { key = "KEYSTONE", name = "Key" }
+        { key = "RAIDS", name = L["cat_raid"] },
+        { key = "DUNGEONS", name = L["cat_dungeon"] },
+        { key = "MANASTORM", name = L["cat_manastorm"] },
+        { key = "WORLD_BOSS", name = L["cat_world_boss"] },
+        { key = "PVP", name = L["cat_pvp"] },
+        { key = "KEYSTONE", name = L["cat_keystone"] }
     }
 
     for i, tabInfo in ipairs(categoryTabs) do
@@ -1422,7 +1423,7 @@ function LFM:Initialize(parentFrame)
 
     local messageLabel = self.messageFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     messageLabel:SetPoint("TOPLEFT", self.messageFrame, "TOPLEFT", 10, -2)
-    messageLabel:SetText("Message:")
+    messageLabel:SetText(L["lfm_message"] .. ":")
     messageLabel:SetTextColor(0.6, 0.8, 1)
 
     self.messageEditBox = CreateModernEditBox(self.messageFrame, 500, 20)
@@ -1445,7 +1446,7 @@ function LFM:Initialize(parentFrame)
 
     local spamLabel = self.spamFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     spamLabel:SetPoint("LEFT", self.spamFrame, "LEFT", 10, 0)
-    spamLabel:SetText("Spam:")
+    spamLabel:SetText(L["lfm_spam"] .. ":")
     spamLabel:SetTextColor(0.6, 0.8, 1)
 
     local timerLabel = self.spamFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
@@ -1464,7 +1465,7 @@ function LFM:Initialize(parentFrame)
     secLabel:SetText("s")
     secLabel:SetTextColor(unpack(_tc("textMuted")))
 
-    self.spamBtn = CreateModernButton(self.spamFrame, 76, 20, "Start Spam", _tc("success"))
+    self.spamBtn = CreateModernButton(self.spamFrame, 76, 20, L["lfm_start_spam"], _tc("success"))
     self.spamBtn:SetPoint("LEFT", secLabel, "RIGHT", 10, 0)
     self.spamBtn:SetScript("OnClick", function()
         if autoSpamActive then
@@ -1481,7 +1482,7 @@ function LFM:Initialize(parentFrame)
 
     local chLabel = self.spamFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     chLabel:SetPoint("RIGHT", self.spamFrame, "RIGHT", -290, 0)
-    chLabel:SetText("Channel:")
+    chLabel:SetText(L["lfm_channel"] .. ":")
     chLabel:SetTextColor(unpack(_tc("textMuted")))
 
     local function GetChannelSlotName(slotIndex)
@@ -1577,7 +1578,7 @@ function LFM:Initialize(parentFrame)
 
     local aiLabel = self.autoInviteFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     aiLabel:SetPoint("LEFT", self.autoInviteFrame, "LEFT", 10, 0)
-    aiLabel:SetText("Auto-Invite:")
+    aiLabel:SetText(L["lfm_auto_invite"] .. ":")
     aiLabel:SetTextColor(0.6, 0.8, 1)
 
     self.autoInviteToggle = CreateSmallToggle(self.autoInviteFrame, "ON/OFF", 90, 0, 50, 20,
@@ -1601,7 +1602,7 @@ function LFM:Initialize(parentFrame)
 
     local minIlvlLabel = self.autoInviteFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     minIlvlLabel:SetPoint("LEFT", self.autoInviteToggle, "RIGHT", 10, 0)
-    minIlvlLabel:SetText("Min iLvl:")
+    minIlvlLabel:SetText(L["lfm_min_ilvl"] .. ":")
     minIlvlLabel:SetTextColor(unpack(_tc("textMuted")))
 
     self.minIlvlBox = CreateModernEditBox(self.autoInviteFrame, 50, 18)
@@ -1624,7 +1625,7 @@ function LFM:Initialize(parentFrame)
 
     local minLevelLabel = self.autoInviteFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     minLevelLabel:SetPoint("LEFT", plusLabel, "RIGHT", 15, 0)
-    minLevelLabel:SetText("Min Lvl:")
+    minLevelLabel:SetText(L["lfm_min_level"] .. ":")
     minLevelLabel:SetTextColor(unpack(_tc("textMuted")))
 
     self.minLevelBox = CreateModernEditBox(self.autoInviteFrame, 40, 18)
@@ -1649,7 +1650,7 @@ function LFM:Initialize(parentFrame)
     self.controlsFrame:SetSize(740, 32)
     self.controlsFrame:SetPoint("BOTTOM", self.mainContainer, "BOTTOM", 0, 8)
 
-    self.sendAllBtn = CreateModernButton(self.controlsFrame, 76, 22, "Send All", _tc("warning"))
+    self.sendAllBtn = CreateModernButton(self.controlsFrame, 76, 22, L["lfm_send_all"], _tc("warning"))
     self.sendAllBtn:SetPoint("RIGHT", -5, 20)
     self.sendAllBtn:SetScript("OnClick", function(btn)
         local message = LFM.messageEditBox:GetText()
