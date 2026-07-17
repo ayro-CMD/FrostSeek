@@ -365,7 +365,7 @@ local SPAM_WORDS = {
     "awakening", "twisting","why","crafter","whick","professions","profession",
     "transfer", "transfers", "realm transfer", "server transfer", "move to", "come join",
     "invite link", "discord link", "discord server",
-    "website", "armory", "raider.io", "rio", "wowprogress", "wcl", "warcraftlogs",
+    "website", "baby", "raider.io", "rio", "wowprogress", "wcl", "warcraftlogs",
     "check our", "check my", "for info", "apply in", "apply on", "apply at",
     "register", "enroll","day","days","hour","quest","quests","hours","no","alone","them","woodworker",
     "stream", "streamer", "content creator", "clip", "recording", "obs", "studio",
