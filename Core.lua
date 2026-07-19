@@ -33,7 +33,7 @@ function FrostSeek._v.g(name)
     return FrostSeek._v.w[name]
 end
 
-FrostSeek.VERSION = "2.1.1"
+FrostSeek.VERSION = "2.1.2"
 
 FrostSeekDB = FrostSeekDB or {}
 
@@ -114,6 +114,23 @@ end
 
 if not FrostSeekDB.MPlusScores then
     FrostSeekDB.MPlusScores = {}
+end
+
+if not FrostSeekDB.Favorites then
+    FrostSeekDB.Favorites = {}  
+end
+
+if not FrostSeekDB.SessionStats then
+    FrostSeekDB.SessionStats = {
+        listingsCreated = 0,
+        applicantsReceived = 0,
+        applicantsAccepted = 0,
+        applicantsDeclined = 0,
+        applicationsSent = 0,
+        applicationsAccepted = 0,
+        peakOnline = 0,
+        sessionStart = time(),
+    }
 end
 
 if not FrostSeekDB.Profile then
