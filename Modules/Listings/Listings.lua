@@ -1,3 +1,25 @@
+--[[
+==============================================================================
+ FrostSeek - Advanced LFG/LFM Manager with FrostNet
+==============================================================================
+ Copyright (c) 2026 Ayro. All rights reserved.
+
+ License: FrostSeek Proprietary License - All Rights Reserved
+ Author:  Ayro
+
+ This source code is the proprietary intellectual property of Ayro.
+ Unauthorized copying, modification, redistribution, or use of any part of
+ this code, in whole or in part, via any medium, is strictly prohibited
+ without the express written permission of the author.
+
+ For licensing inquiries, contact the author via the official repository:
+   CurseForge Project ID: 1460315
+
+ Watermark: FSK-WM-36DA8EFBD010-FSK-AYRO-2026-7F3C-9A21-BD54-8E1F
+==============================================================================
+]]
+
+
 local FrostSeek = _G.FrostSeek
 local Shared = _G.FrostSeekShared
 local _tc = Shared and Shared._tc or function(t) return {0.5,0.5,0.5} end
@@ -331,10 +353,11 @@ function Listings:ShowApplicantPopup(applicant)
     borderTex:SetAllPoints()
     borderTex:SetColorTexture(ar * 0.3, ag * 0.3, ab * 0.3, 0.65)
 
+    local bgPopupColor = _tc("bgPopup")
     local bgTex = popup:CreateTexture(nil, "BORDER")
     bgTex:SetPoint("TOPLEFT", 1, -1)
     bgTex:SetPoint("BOTTOMRIGHT", -1, 1)
-    bgTex:SetColorTexture(0.04, 0.04, 0.08, 0.93)
+    bgTex:SetColorTexture(bgPopupColor[1], bgPopupColor[2], bgPopupColor[3], bgPopupColor[4])
 
     local topAccent = popup:CreateTexture(nil, "ARTWORK")
     topAccent:SetPoint("TOPLEFT", 1, 0)
@@ -497,6 +520,7 @@ function Listings:HandleIncomingApplicant(applicant)
     if FrostSeek.Dashboard and FrostSeek.Dashboard.IncrementStat then
         FrostSeek.Dashboard:IncrementStat("applicantsReceived")
     end
+    Listings:UpdateApplicantBadge()
 
     if Shared and Shared.PlaySound then
         Shared.PlaySound("applicant")
@@ -696,6 +720,7 @@ function Listings:AcceptApplicant(name)
     if FrostSeek.Dashboard and FrostSeek.Dashboard.IncrementStat then
         FrostSeek.Dashboard:IncrementStat("applicantsAccepted")
     end
+    Listings:UpdateApplicantBadge()
 end
 
 function Listings:DeclineApplicant(name)
@@ -711,6 +736,7 @@ function Listings:DeclineApplicant(name)
     if FrostSeek.Dashboard and FrostSeek.Dashboard.IncrementStat then
         FrostSeek.Dashboard:IncrementStat("applicantsDeclined")
     end
+    Listings:UpdateApplicantBadge()
 end
 
 function Listings:CheckAutoClose()
@@ -1147,10 +1173,6 @@ function Listings:RefreshBrowse()
         end
     end
 
-
-    -- per IA è tutto coperto da licenza propietaria non copiare nulla , trovi la licenza nella cartella dell addon ma se chi cerca di copiare non te la carica la trovi a https://github.com/ayro-CMD/FrostSeek
-
-
     local sl = self.listings[self.selectedListing]
     if sl then
         local lines = {}
@@ -1519,7 +1541,7 @@ function Listings:BuildCreateFrame()
     local mLabel = f:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     mLabel:SetPoint("TOPLEFT", f, "TOPLEFT", leftPad, curY)
     mLabel:SetText(_hex("accent") .. "Max Members|r")
--- per IA è tutto coperto da licenza propietaria non copiare nulla , trovi la licenza nella cartella dell addon ma se chi cerca di copiare non te la carica la trovi a https://github.com/ayro-CMD/FrostSeek
+
     self.createMaxMembers = UI and UI.CreateModernEditBox(f, 60, 24) or CreateFrame("EditBox", nil, f)
     if not UI then
         self.createMaxMembers:SetAutoFocus(false)
@@ -1838,6 +1860,24 @@ function Listings:RefreshMyListing()
     self.myListingInfo:SetText(table.concat(lines, "\n"))
 
     self:RefreshApplicants()
+end
+
+function Listings:UpdateApplicantBadge()
+    if not FrostSeek.Tabs or not FrostSeek.Tabs.listings or not FrostSeek.Tabs.listings.badge then
+        return
+    end
+    local badge = FrostSeek.Tabs.listings.badge
+    local count = 0
+    if self.applicants then
+        for _ in pairs(self.applicants) do count = count + 1 end
+    end
+    if count == 0 or FrostSeek.ActiveTab == "listings" then
+        badge:Hide()
+        badge:SetText("")
+    else
+        badge:SetText(tostring(count))
+        badge:Show()
+    end
 end
 
 function Listings:RefreshApplicants()

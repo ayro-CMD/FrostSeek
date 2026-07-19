@@ -1,3 +1,25 @@
+--[[
+==============================================================================
+ FrostSeek - Advanced LFG/LFM Manager with FrostNet
+==============================================================================
+ Copyright (c) 2026 Ayro. All rights reserved.
+
+ License: FrostSeek Proprietary License - All Rights Reserved
+ Author:  Ayro
+
+ This source code is the proprietary intellectual property of Ayro.
+ Unauthorized copying, modification, redistribution, or use of any part of
+ this code, in whole or in part, via any medium, is strictly prohibited
+ without the express written permission of the author.
+
+ For licensing inquiries, contact the author via the official repository:
+   CurseForge Project ID: 1460315
+
+ Watermark: FSK-WM-36DA8EFBD010-FSK-AYRO-2026-7F3C-9A21-BD54-8E1F
+==============================================================================
+]]
+
+
 local FrostSeek = _G.FrostSeek
 local Shared = _G.FrostSeekShared
 local UI = _G.FrostSeekUIUtils
@@ -396,7 +418,6 @@ local function ValidateGroupComposition()
 
     for role, recommended in pairs(reqs) do
         if recommended == 0 then
-        
         elseif not selectedRoles[role] then
             local c = ROLE_COLORS[role] or {1, 1, 1}
             local hex = string.format("|cFF%02X%02X%02X", math.floor(c[1] * 255 + 0.5), math.floor(c[2] * 255 + 0.5), math.floor(c[3] * 255 + 0.5))

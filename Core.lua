@@ -1,3 +1,25 @@
+--[[
+==============================================================================
+ FrostSeek - Advanced LFG/LFM Manager with FrostNet
+==============================================================================
+ Copyright (c) 2026 Ayro. All rights reserved.
+
+ License: FrostSeek Proprietary License - All Rights Reserved
+ Author:  Ayro
+
+ This source code is the proprietary intellectual property of Ayro.
+ Unauthorized copying, modification, redistribution, or use of any part of
+ this code, in whole or in part, via any medium, is strictly prohibited
+ without the express written permission of the author.
+
+ For licensing inquiries, contact the author via the official repository:
+   CurseForge Project ID: 1460315
+
+ Watermark: FSK-WM-36DA8EFBD010-FSK-AYRO-2026-7F3C-9A21-BD54-8E1F
+==============================================================================
+]]
+
+
 local FrostSeek = {}
 _G.FrostSeek = FrostSeek
 
@@ -33,7 +55,7 @@ function FrostSeek._v.g(name)
     return FrostSeek._v.w[name]
 end
 
-FrostSeek.VERSION = "2.1.2"
+FrostSeek.VERSION = "2.1.3"
 
 FrostSeekDB = FrostSeekDB or {}
 
@@ -47,7 +69,7 @@ if not FrostSeekDB.LFG then
         dontDisplaySpammers = 30,
         disablePopups = false,
         disableLFG = false,
-        filterWords = "echo,recruit,lfg,wts,buy,shop,gold,sell,account,boost,carry,guild,pve,eu,na,need,wtt,wtb,bazar,hello,player",
+        filterWords = "echo,lfg,wts,buy,shop,gold,sell,account,boost,carry,pve,eu,na,need,wtt,wtb,bazar,hello,player",
         maxMessageLength = 90,
         popupCooldown = 370,
         maxConcurrentPopups = 2,
@@ -117,7 +139,15 @@ if not FrostSeekDB.MPlusScores then
 end
 
 if not FrostSeekDB.Favorites then
-    FrostSeekDB.Favorites = {}  
+    FrostSeekDB.Favorites = {}
+end
+
+if not FrostSeekDB.Guilds then
+    FrostSeekDB.Guilds = {}
+end
+
+if not FrostSeekDB.GuildTemplates then
+    FrostSeekDB.GuildTemplates = {}
 end
 
 if not FrostSeekDB.SessionStats then
@@ -408,6 +438,10 @@ function FrostSeek:SwitchTab(tabName)
         end
 
         self.ActiveTab = tabName
+
+        if tabName == "listings" and self.Tabs.listings and self.Tabs.listings.badge then
+            self.Tabs.listings.badge:Hide()
+        end
     end
 end
 
@@ -423,6 +457,7 @@ local tabDefinitions = {
     { id = "listings", name = "FrostNet", desc = "Browse, Create Groups & Profile" },
     { id = "lfg", name = "LFG", desc = "Looking For Group" },
     { id = "lfm", name = "LFM", desc = "Looking For Members" },
+    { id = "community", name = "Community", desc = "Guild browser, recruitment & community" },
     { id = "options", name = "Options", desc = "System Settings" },
 }
 
@@ -433,6 +468,15 @@ for i, tabDef in ipairs(tabDefinitions) do
         tab:SetPoint("LEFT", TabFrame, "LEFT", 0, 0)
     else
         tab:SetPoint("LEFT", FrostSeek.Tabs[tabDefinitions[i-1].id].button, "RIGHT", 2, 0)
+    end
+
+    if tabDef.id == "listings" then
+        local badge = tab:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+        badge:SetPoint("TOPRIGHT", tab, "TOPRIGHT", -2, -2)
+        badge:SetText("")
+        badge:SetTextColor(1, 0.3, 0.3, 1)
+        badge:Hide()
+        FrostSeek.Tabs[tabDef.id].badge = badge
     end
 
     tab:SetScript("OnEnter", function(self)
@@ -669,6 +713,37 @@ SLASH_FSLFM1 = "/fslfm"
 SlashCmdList["FSLFM"] = function()
     MainFrame:Show()
     FrostSeek:SwitchTab("lfm")
+end
+
+SLASH_FSCOMMUNITY1 = "/fscommunity"
+SLASH_FSCOMMUNITY2 = "/fsguild"
+SlashCmdList["FSCOMMUNITY"] = function()
+    MainFrame:Show()
+    FrostSeek:SwitchTab("community")
+end
+
+SLASH_FSLOADTPL1 = "/fsloadtemplate"
+SlashCmdList["FSLOADTPL"] = function(msg)
+    local name = msg and msg:match("^%s*(.-)%s*$") or ""
+    if name == "" then
+        print("|cffff5555FrostSeek:|r Usage: /fsloadtemplate <name>")
+        return
+    end
+    if FrostSeek.Community and FrostSeek.Community.LoadTemplateByName then
+        FrostSeek.Community:LoadTemplateByName(name)
+    end
+end
+
+SLASH_FSDELTPL1 = "/fsdeltemplate"
+SlashCmdList["FSDELTPL"] = function(msg)
+    local name = msg and msg:match("^%s*(.-)%s*$") or ""
+    if name == "" then
+        print("|cffff5555FrostSeek:|r Usage: /fsdeltemplate <name>")
+        return
+    end
+    if FrostSeek.Community and FrostSeek.Community.DeleteTemplateByName then
+        FrostSeek.Community:DeleteTemplateByName(name)
+    end
 end
 
 SLASH_FSOPTIONS1 = "/fsoptions"
@@ -956,6 +1031,7 @@ local function LoadModules()
             "lfg",
             "lfm",
             "listings",
+            "community",
             "options",
             "tooltip"
         }

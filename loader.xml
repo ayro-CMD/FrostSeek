@@ -10,5 +10,6 @@
 <Include file="Modules\Profile\profile.xml"/>
 <Include file="Modules\LFG\lf.xml"/>
 <Include file="Modules\Listings\listings.xml"/>
+<Include file="Modules\Community\community.xml"/>
 <Include file="Modules\Module.xml"/>
 </Ui>

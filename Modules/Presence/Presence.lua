@@ -1,3 +1,25 @@
+--[[
+==============================================================================
+ FrostSeek - Advanced LFG/LFM Manager with FrostNet
+==============================================================================
+ Copyright (c) 2026 Ayro. All rights reserved.
+
+ License: FrostSeek Proprietary License - All Rights Reserved
+ Author:  Ayro
+
+ This source code is the proprietary intellectual property of Ayro.
+ Unauthorized copying, modification, redistribution, or use of any part of
+ this code, in whole or in part, via any medium, is strictly prohibited
+ without the express written permission of the author.
+
+ For licensing inquiries, contact the author via the official repository:
+   CurseForge Project ID: 1460315
+
+ Watermark: FSK-WM-36DA8EFBD010-FSK-AYRO-2026-7F3C-9A21-BD54-8E1F
+==============================================================================
+]]
+
+
 local FrostSeek = _G.FrostSeek
 
 local Presence = {}
@@ -725,7 +747,49 @@ function Presence:BuildPanel(parent)
 
     f.autoLabel = f:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     f.autoLabel:SetPoint("BOTTOM", f, "BOTTOM", 0, footerY + 4)
-    f.autoLabel:SetText(_hex("textDim") .. "Auto-refresh: " .. tostring(REFRESH_INTERVAL) .. "s|r")
+
+    if not FrostSeekDB.Settings then FrostSeekDB.Settings = {} end
+    if FrostSeekDB.Settings.presenceRefreshInterval == nil then
+        FrostSeekDB.Settings.presenceRefreshInterval = REFRESH_INTERVAL
+    end
+    Presence.refreshIntervals = { 10, 30, 60, 0 }
+
+    local autoBtn = CreateFrame("Button", nil, f)
+    autoBtn:SetSize(120, 18)
+    autoBtn:SetPoint("BOTTOM", f, "BOTTOM", 0, footerY + 2)
+    autoBtn:SetFrameLevel(f:GetFrameLevel() + 5)
+    autoBtn.text = f.autoLabel
+    local function UpdateAutoBtnLabel()
+        local v = FrostSeekDB.Settings.presenceRefreshInterval
+        local txt
+        if v == 0 then
+            txt = "|cffff5555Auto-refresh: OFF|r"
+        else
+            txt = _hex("textDim") .. "Auto-refresh: " .. tostring(v) .. "s|r"
+        end
+        f.autoLabel:SetText(txt)
+    end
+    UpdateAutoBtnLabel()
+    autoBtn:SetScript("OnEnter", function(self)
+        f.autoLabel:SetText("|cff88ccffClick to cycle (10s / 30s / 60s / OFF)|r")
+    end)
+    autoBtn:SetScript("OnLeave", function(self)
+        UpdateAutoBtnLabel()
+    end)
+    autoBtn:SetScript("OnClick", function()
+        local cur = FrostSeekDB.Settings.presenceRefreshInterval
+        local idx = 1
+        for i, v in ipairs(Presence.refreshIntervals) do
+            if v == cur then idx = i break end
+        end
+        idx = (idx % #Presence.refreshIntervals) + 1
+        FrostSeekDB.Settings.presenceRefreshInterval = Presence.refreshIntervals[idx]
+        UpdateAutoBtnLabel()
+        Presence:ApplyRefreshInterval()
+    end)
+    f.autoBtn = autoBtn
+    f.UpdateAutoBtnLabel = UpdateAutoBtnLabel
+    Presence:ApplyRefreshInterval()
 
     f.versionLabel = f:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     f.versionLabel:SetPoint("BOTTOMLEFT", f, "BOTTOMLEFT", 14, footerY + 28)
@@ -941,13 +1005,26 @@ C_Timer.NewTicker(PING_INTERVAL, function()
     end
 end)
 
-C_Timer.NewTicker(REFRESH_INTERVAL, function()
+C_Timer.NewTicker(5, function()
     if not FrostSeek or not FrostSeek._v or not FrostSeek._v.c(_tk) then return end
     Presence:PruneUsers()
-    if Presence.panelVisible and Presence.panel and Presence.panel:IsShown() then
-        Presence:RefreshPanel()
-    end
 end)
+
+Presence._refreshTicker = nil
+function Presence:ApplyRefreshInterval()
+    local v = FrostSeekDB.Settings.presenceRefreshInterval or REFRESH_INTERVAL
+    if Presence._refreshTicker then
+        Presence._refreshTicker:Cancel()
+        Presence._refreshTicker = nil
+    end
+    if v == 0 then return end
+    Presence._refreshTicker = C_Timer.NewTicker(v, function()
+        if not FrostSeek or not FrostSeek._v or not FrostSeek._v.c(_tk) then return end
+        if Presence.panelVisible and Presence.panel and Presence.panel:IsShown() then
+            Presence:RefreshPanel()
+        end
+    end)
+end
 
 FrostSeek.Presence = Presence
 

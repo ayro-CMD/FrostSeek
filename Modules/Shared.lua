@@ -1,3 +1,25 @@
+--[[
+==============================================================================
+ FrostSeek - Advanced LFG/LFM Manager with FrostNet
+==============================================================================
+ Copyright (c) 2026 Ayro. All rights reserved.
+
+ License: FrostSeek Proprietary License - All Rights Reserved
+ Author:  Ayro
+
+ This source code is the proprietary intellectual property of Ayro.
+ Unauthorized copying, modification, redistribution, or use of any part of
+ this code, in whole or in part, via any medium, is strictly prohibited
+ without the express written permission of the author.
+
+ For licensing inquiries, contact the author via the official repository:
+   CurseForge Project ID: 1460315
+
+ Watermark: FSK-WM-36DA8EFBD010-FSK-AYRO-2026-7F3C-9A21-BD54-8E1F
+==============================================================================
+]]
+
+
 local Shared = {}
 
 local function _tc(token)
@@ -221,40 +243,104 @@ Shared.MAX_SEND_RATE = 1.0
 Shared.MAX_MESSAGE_LENGTH = 240
 
 function Shared.ConfirmDialog(title, text, onConfirm, onCancel)
+    local _tc = Shared._tc or function(t) return {0.05, 0.05, 0.1, 0.9} end
+
     local frame = CreateFrame("Frame", nil, UIParent)
     frame:SetFrameStrata("DIALOG")
     frame:SetPoint("CENTER")
     frame:SetSize(320, 120)
-    frame:SetBackdrop({
-        bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background",
-        edgeFile = "Interface\\DialogFrame\\UI-DialogBox-Border",
-        tile = true, tileSize = 32, edgeSize = 16,
-        insets = {left = 4, right = 4, top = 4, bottom = 4},
-    })
-    frame:SetBackdropColor(0, 0, 0, 0.9)
+    frame:SetBackdrop(nil)
+
+    local borderTex = frame:CreateTexture(nil, "BACKGROUND")
+    borderTex:SetAllPoints()
+    local accentColor = _tc("accent") or {0.3, 0.5, 1}
+    borderTex:SetColorTexture(accentColor[1] * 0.3, accentColor[2] * 0.3, accentColor[3] * 0.3, 0.65)
+
+    local bgPopupColor = _tc("bgPopup")
+    local bgTex = frame:CreateTexture(nil, "BORDER")
+    bgTex:SetPoint("TOPLEFT", 1, -1)
+    bgTex:SetPoint("BOTTOMRIGHT", -1, 1)
+    bgTex:SetColorTexture(bgPopupColor[1], bgPopupColor[2], bgPopupColor[3], bgPopupColor[4])
+
+    local topAccent = frame:CreateTexture(nil, "ARTWORK")
+    topAccent:SetPoint("TOPLEFT", 1, 0)
+    topAccent:SetPoint("TOPRIGHT", -1, 0)
+    topAccent:SetHeight(2)
+    topAccent:SetColorTexture(accentColor[1], accentColor[2], accentColor[3], 0.9)
+
+    local glassReflect = frame:CreateTexture(nil, "ARTWORK")
+    glassReflect:SetPoint("TOPLEFT", 2, -3)
+    glassReflect:SetPoint("TOPRIGHT", -2, -3)
+    glassReflect:SetHeight(14)
+    glassReflect:SetColorTexture(accentColor[1] * 0.06, accentColor[2] * 0.06, accentColor[3] * 0.06, 0.3)
+
     frame.title = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
-    frame.title:SetPoint("TOP", frame, "TOP", 0, -12)
+    frame.title:SetPoint("TOP", frame, "TOP", 0, -16)
     frame.title:SetText(title or "Confirm")
+    local titleColor = _tc("textBright") or {1, 1, 1}
+    frame.title:SetTextColor(titleColor[1], titleColor[2], titleColor[3])
+
     frame.text = frame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     frame.text:SetPoint("TOP", frame.title, "BOTTOM", 0, -8)
     frame.text:SetWidth(280)
     frame.text:SetText(text or "Are you sure?")
-    frame.confirmBtn = CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
+    local textColor = _tc("textNorm") or {0.8, 0.8, 0.8}
+    frame.text:SetTextColor(textColor[1], textColor[2], textColor[3])
+
+    local confirmColor = _tc("success") or {0.3, 0.8, 0.3}
+    frame.confirmBtn = CreateFrame("Button", nil, frame)
     frame.confirmBtn:SetSize(128, 24)
-    frame.confirmBtn:SetPoint("BOTTOMRIGHT", frame, "BOTTOM", -8, 12)
-    frame.confirmBtn:SetText(YES or "Yes")
+    frame.confirmBtn:SetPoint("BOTTOMRIGHT", frame, "BOTTOM", -8, 14)
+    frame.confirmBtn.bg = frame.confirmBtn:CreateTexture(nil, "BACKGROUND")
+    frame.confirmBtn.bg:SetPoint("TOPLEFT", 1, -1)
+    frame.confirmBtn.bg:SetPoint("BOTTOMRIGHT", -1, 1)
+    frame.confirmBtn.bg:SetColorTexture(unpack(_tc("bgButton") or {0.1, 0.1, 0.15}))
+    frame.confirmBtn.border = frame.confirmBtn:CreateTexture(nil, "BORDER")
+    frame.confirmBtn.border:SetAllPoints()
+    frame.confirmBtn.border:SetColorTexture(unpack(_tc("border") or {0.3, 0.3, 0.4}))
+    frame.confirmBtn.accent = frame.confirmBtn:CreateTexture(nil, "OVERLAY")
+    frame.confirmBtn.accent:SetPoint("BOTTOMLEFT", 2, 0)
+    frame.confirmBtn.accent:SetPoint("BOTTOMRIGHT", -2, 0)
+    frame.confirmBtn.accent:SetHeight(2)
+    frame.confirmBtn.accent:SetColorTexture(unpack(confirmColor))
+    frame.confirmBtn.text = frame.confirmBtn:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    frame.confirmBtn.text:SetPoint("CENTER")
+    frame.confirmBtn.text:SetText("|cff44ff66" .. (YES or "Yes") .. "|r")
     frame.confirmBtn:SetScript("OnClick", function()
         frame:Hide()
         if onConfirm then onConfirm() end
     end)
-    frame.cancelBtn = CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
+
+    local dangerColor = _tc("danger") or {0.8, 0.3, 0.3}
+    frame.cancelBtn = CreateFrame("Button", nil, frame)
     frame.cancelBtn:SetSize(128, 24)
-    frame.cancelBtn:SetPoint("BOTTOMLEFT", frame, "BOTTOM", 8, 12)
-    frame.cancelBtn:SetText(NO or "No")
+    frame.cancelBtn:SetPoint("BOTTOMLEFT", frame, "BOTTOM", 8, 14)
+    frame.cancelBtn.bg = frame.cancelBtn:CreateTexture(nil, "BACKGROUND")
+    frame.cancelBtn.bg:SetPoint("TOPLEFT", 1, -1)
+    frame.cancelBtn.bg:SetPoint("BOTTOMRIGHT", -1, 1)
+    frame.cancelBtn.bg:SetColorTexture(unpack(_tc("bgButton") or {0.1, 0.1, 0.15}))
+    frame.cancelBtn.border = frame.cancelBtn:CreateTexture(nil, "BORDER")
+    frame.cancelBtn.border:SetAllPoints()
+    frame.cancelBtn.border:SetColorTexture(unpack(_tc("border") or {0.3, 0.3, 0.4}))
+    frame.cancelBtn.accent = frame.cancelBtn:CreateTexture(nil, "OVERLAY")
+    frame.cancelBtn.accent:SetPoint("BOTTOMLEFT", 2, 0)
+    frame.cancelBtn.accent:SetPoint("BOTTOMRIGHT", -2, 0)
+    frame.cancelBtn.accent:SetHeight(2)
+    frame.cancelBtn.accent:SetColorTexture(unpack(dangerColor))
+    frame.cancelBtn.text = frame.cancelBtn:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    frame.cancelBtn.text:SetPoint("CENTER")
+    frame.cancelBtn.text:SetText("|cffff5555" .. (NO or "No") .. "|r")
     frame.cancelBtn:SetScript("OnClick", function()
         frame:Hide()
         if onCancel then onCancel() end
     end)
+
+    frame:SetAlpha(0)
+    if UIFrameFadeIn then
+        UIFrameFadeIn(frame, 0.15, 0, 1)
+    else
+        frame:SetAlpha(1)
+    end
     frame:Show()
     return frame
 end

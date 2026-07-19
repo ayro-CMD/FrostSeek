@@ -1,3 +1,25 @@
+--[[
+==============================================================================
+ FrostSeek - Advanced LFG/LFM Manager with FrostNet
+==============================================================================
+ Copyright (c) 2026 Ayro. All rights reserved.
+
+ License: FrostSeek Proprietary License - All Rights Reserved
+ Author:  Ayro
+
+ This source code is the proprietary intellectual property of Ayro.
+ Unauthorized copying, modification, redistribution, or use of any part of
+ this code, in whole or in part, via any medium, is strictly prohibited
+ without the express written permission of the author.
+
+ For licensing inquiries, contact the author via the official repository:
+   CurseForge Project ID: 1460315
+
+ Watermark: FSK-WM-36DA8EFBD010-FSK-AYRO-2026-7F3C-9A21-BD54-8E1F
+==============================================================================
+]]
+
+
 local FrostSeek = _G.FrostSeek
 
 local Options = {}
@@ -1653,7 +1675,7 @@ function Options:Initialize(parentFrame)
         return btn
     end
 
-    CreateLinkButton(buttonsFrame, "Discord", "https://discord.gg/T5rtyW9yX4", {r=0.345, g=0.396, b=0.949}, -50, "Interface\\AddOns\\FrostSeek\\Media\\texture\\bottoni\\discord.tga")
+    CreateLinkButton(buttonsFrame, "Donate", "https://paypal.me/1AYRO", {r=0.000, g=0.439, b=0.729}, -50, "Interface\\AddOns\\FrostSeek\\Media\\texture\\bottoni\\paypal.tga")
     CreateLinkButton(buttonsFrame, "CurseForge", "https://www.curseforge.com/wow/addons/frostseek", {r=0.937, g=0.502, b=0.196}, -90, "Interface\\AddOns\\FrostSeek\\Media\\texture\\bottoni\\forge.tga")
     CreateLinkButton(buttonsFrame, "GitHub", "https://github.com/ayro-CMD/FrostSeek", {r=0.533, g=0.533, b=0.533}, -130, "Interface\\AddOns\\FrostSeek\\Media\\texture\\bottoni\\Kjrt.tga")
     CreateLinkButton(buttonsFrame, "BugReport", "https://discord.gg/uvtvKXzbXW", {r=0.863, g=0.078, b=0.235}, -170, "Interface\\AddOns\\FrostSeek\\Media\\texture\\bottoni\\bug.tga")
