@@ -730,17 +730,9 @@ local function CreateCustomKeywordsTab(parent, scrollContent)
 end
 
 local SETTINGS_CATEGORIES = {
-    { id = "frostnetprofile", name = "Frostnet Profile", icon = "Interface\\AddOns\\FrostSeek\\Media\\texture\\bottoni\\generale.tga", settings = {
-        { type = "header", id = "frostnetProfileHeader", name = "", desc = "Configure your FrostNet presence - this information is sent when you apply to groups or ping the network" },
-        { type = "frostnetrole", id = "frostnetRole", name = L["lfg_role"], desc = "Select your primary role for group applications" },
-        { type = "editbox", id = "frostnetSpec", name = "Spec / Secondary Role", desc = "Your spec or secondary role (shown in applications)", getter = function() if not FrostSeekDB.Profile then FrostSeekDB.Profile = {} end; return FrostSeekDB.Profile.spec or "" end, setter = function(v) if not FrostSeekDB.Profile then FrostSeekDB.Profile = {} end; FrostSeekDB.Profile.spec = v; local Profile = _G.FrostSeek and _G.FrostSeek.Profile; if Profile and Profile.UpdateAutoInfo then Profile:UpdateAutoInfo() end end },
-        { type = "checkbox", id = "frostnetDiscord", name = L["profile_discord"], desc = "Mark yourself as available on Discord (shown in applications)", default = false, getter = function() if not FrostSeekDB.Profile then FrostSeekDB.Profile = {} end; return FrostSeekDB.Profile.discord or false end, setter = function(v) if not FrostSeekDB.Profile then FrostSeekDB.Profile = {} end; FrostSeekDB.Profile.discord = v; local Profile = _G.FrostSeek and _G.FrostSeek.Profile; if Profile and Profile.UpdateDiscordToggle then Profile:UpdateDiscordToggle() end; if Profile and Profile.UpdateAutoInfo then Profile:UpdateAutoInfo() end; print("|cff88ccffFrostNet:|r Discord " .. (v and "|cff44ff44Ready|r" or "|cffff5555Not Available|r")) end },
-        { type = "editbox", id = "frostnetNote", name = L["profile_note"], desc = "Default notes included when you apply to groups", getter = function() if not FrostSeekDB.Profile then FrostSeekDB.Profile = {} end; return FrostSeekDB.Profile.note or "" end, setter = function(v) if not FrostSeekDB.Profile then FrostSeekDB.Profile = {} end; FrostSeekDB.Profile.note = v end },
-        { type = "checkbox", id = "frostnetEnabled", name = "Enable FrostNet", desc = "Enable the FrostNet network (join FSK channel and communicate)", default = true, getter = function() return FrostSeekDB.Settings.frostnetEnabled ~= false end, setter = function(v) FrostSeekDB.Settings.frostnetEnabled = v; local net = _G.FrostSeek and _G.FrostSeek.Network; if net then if v then net:JoinChannel() else net:LeaveChannel() end end; print("|cff88ccffFrostNet:|r " .. (v and "|cff44ff44Enabled|r" or "|cffff5555Disabled|r")) end },
-        { type = "checkbox", id = "applyWhisper", name = "Whisper Leader on Apply", desc = "When applying to a group, also send a [FrostSeek] whisper to the leader (useful if the leader does not run FrostSeek; the FSK APP message alone is enough for addon users)", default = false, getter = function() return FrostSeekDB.Settings.applyWhisper == true end, setter = function(v) FrostSeekDB.Settings.applyWhisper = v print("|cff88ccffFrostSeek:|r Apply-whisper " .. (v and "enabled" or "disabled")) end },
-    }},
     { id = "general", name = L["options_general"], icon = "Interface\\AddOns\\FrostSeek\\Media\\texture\\bottoni\\generale.tga", settings = {
         { type = "header", id = "generalHeader", name = "", desc = "Basic addon configuration" },
+        { type = "checkbox", id = "frostnetEnabled", name = "Enable FrostNet", desc = "Enable the FrostNet network (join FSK channel and communicate)", default = true, getter = function() return FrostSeekDB.Settings.frostnetEnabled ~= false end, setter = function(v) FrostSeekDB.Settings.frostnetEnabled = v; local net = _G.FrostSeek and _G.FrostSeek.Network; if net then if v then net:JoinChannel() else net:LeaveChannel() end end; print("|cff88ccffFrostNet:|r " .. (v and "|cff44ff44Enabled|r" or "|cffff5555Disabled|r")) end },
         { type = "checkbox", id = "autoOpen", name = "Auto-Open on Login", desc = "Automatically open FrostSeek window when you log in", default = false, getter = function() return FrostSeekDB.Settings.autoOpen end, setter = function(v) FrostSeekDB.Settings.autoOpen = v print("|cff88ccffFrostSeek:|r Auto-open " .. (v and "enabled" or "disabled")) end },
         { type = "checkbox", id = "minimapButton", name = L["minimap_show"], desc = "Show the FrostSeek minimap button", default = true, getter = function() return FrostSeekDB.Settings.minimapButton end, setter = function(v) FrostSeekDB.Settings.minimapButton = v local mb = _G["FrostSeekMiniMapButton"]; if mb and mb.SetShown then mb:SetShown(v) end end },
         { type = "checkbox", id = "savePosition", name = "Save Window Position", desc = "Remember window positions between sessions", default = true, getter = function() return FrostSeekDB.Settings.savePosition end, setter = function(v) FrostSeekDB.Settings.savePosition = v end },
@@ -809,13 +801,56 @@ local SETTINGS_CATEGORIES = {
     { id = "advanced", name = L["options_advanced"], icon = "Interface\\AddOns\\FrostSeek\\Media\\texture\\bottoni\\avanzato.tga", settings = {
         { type = "header", id = "advancedHeader", name = "", desc = "Advanced configuration options" },
         { type = "button", id = "resetPosition", name = "Reset Window Position", desc = "Reset main window to default position", onClick = function() FrostSeekDB.Settings.windowPosition = nil; if FrostSeek.MainFrame then FrostSeek.MainFrame:ClearAllPoints(); FrostSeek.MainFrame:SetPoint("CENTER") end print("|cff88ccffFrostSeek:|r Window positions reset") end },
+        { type = "button", id = "resetSessionStats", name = "Reset Session Stats", desc = "Reset all session counters (listings, applicants, applications, peak online)", onClick = function()
+            FrostSeekDB.SessionStats = {
+                listingsCreated = 0,
+                applicantsReceived = 0,
+                applicantsAccepted = 0,
+                applicantsDeclined = 0,
+                applicationsSent = 0,
+                applicationsAccepted = 0,
+                peakOnline = 0,
+                sessionStart = time(),
+            }
+            print("|cff88ccffFrostSeek:|r Session stats reset")
+        end },
+        { type = "button", id = "clearFavorites", name = "Clear Favorites", desc = "Remove all favorite players", onClick = function()
+            local Shared = _G.FrostSeekShared
+            if Shared and Shared.ConfirmDialog then
+                Shared.ConfirmDialog("Clear Favorites", "Remove all favorite players?", function()
+                    FrostSeekDB.Favorites = {}
+                    print("|cff88ccffFrostSeek:|r Favorites cleared")
+                end)
+            else
+                FrostSeekDB.Favorites = {}
+                print("|cff88ccffFrostSeek:|r Favorites cleared")
+            end
+        end },
+        { type = "button", id = "listFavorites", name = "List Favorites", desc = "Print all favorite players to chat", onClick = function()
+            local count = 0
+            if FrostSeekDB.Favorites then
+                for name, _ in pairs(FrostSeekDB.Favorites) do
+                    count = count + 1
+                end
+            end
+            if count == 0 then
+                print("|cff88ccffFrostSeek:|r No favorites set. Shift+Click a player in Presence to add.")
+            else
+                print("|cff88ccffFrostSeek Favorites:|r")
+                for name, _ in pairs(FrostSeekDB.Favorites) do
+                    local online = _G.FrostSeek and _G.FrostSeek.Presence and _G.FrostSeek.Presence.onlineUsers and _G.FrostSeek.Presence.onlineUsers[name] ~= nil
+                    local status = online and " |cff44ff44online|r" or " |cff888888offline|r"
+                    print("  |cffb366ff*|r " .. name .. status)
+                end
+            end
+        end },
         { type = "button", id = "clearAllData", name = L["clear_all_data"], desc = "Clear all saved data", warning = "This cannot be undone!", onClick = function()
             local Shared = _G.FrostSeekShared
             if Shared and Shared.ConfirmDialog then
                 Shared.ConfirmDialog(L["clear_all_data"], "This action cannot be undone!\n\nAll FrostSeek data will be reset to defaults.", function()
                     FrostSeekDB = {
                         Settings = { uiScale = 1.0, windowPosition = nil, minimapButton = true, debugMode = false, savePosition = true, autoOpen = false, soundEnabled = true, soundPopup = true, soundListing = true, soundApplicant = true },
-                        LFG = { myRole = "", silentNotifications = false, frameDuration = 5, disablePopups = false, disableLFG = false, maxMessageLength = 90, popupCooldown = 370, maxConcurrentPopups = 2, doNotAlertInGroup = true, doNotAlertInCombat = true, popupCategories = { ALL = true, DUNGEON = true, RAID = true, WORLD_BOSS = true, PVP = true, MANASTORM = true, KEYSTONE = true, MISC = false }, customFilterWords = "", showActiveRecruitersWindow = false, customMessages = { enabled = false, template = "hello {class} {ilvl} {gs}gs {ench} dps or healer {keystone}", showClass = true, showIlvl = true, showGs = true, showEnchant = true, showRole = true, showLevel = true, showKeystone = false, keystoneLink = "" } },
+                        LFG = { myRole = "", silentNotifications = false, frameDuration = 5, disablePopups = false, disableLFG = false, maxMessageLength = 90, popupCooldown = 370, maxConcurrentPopups = 2, doNotAlertInGroup = true, doNotAlertInCombat = true, popupCategories = { ALL = true, DUNGEON = true, RAID = true, WORLD_BOSS = true, PVP = true, MANASTORM = true, KEYSTONE = true, MISC = false }, customFilterWords = "", showActiveRecruitersWindow = false, customMessages = { enabled = false, template = "hello {class} {ilvl} {gs}gs {ench} dps or healer {keystone}", showClass = true, showIlvl = true, showGs = false, showEnchant = true, showRole = true, showLevel = true, showKeystone = false, keystoneLink = "" } },
                         LFM = { lastMessages = {}, favoriteTemplates = {}, channelPresets = {}, autoUpdateInterval = 60 },
                         MPlusScores = {},
                     }

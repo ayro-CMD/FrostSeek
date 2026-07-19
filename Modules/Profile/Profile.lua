@@ -156,13 +156,13 @@ function Profile:Initialize(parentFrame)
     curY = curY - 22
 
     local roleButtons = {}
-    local roles = { "No Role", "Tank", "Healer", "DPS" }
-    local roleColors = { ["No Role"] = "|cff888888", Tank = "|cff4aa3ff", Healer = "|cff44ff66", DPS = "|cffff5555" }
+    local roles = { "No Role", "Tank", "Healer", "DPS", "Support" }
+    local roleColors = { ["No Role"] = "|cff888888", Tank = "|cff4aa3ff", Healer = "|cff44ff66", DPS = "|cffff5555", Support = "|cffb366ff" }
 
     for i, role in ipairs(roles) do
         local btn = CreateFrame("Button", nil, F)
-        btn:SetSize(90, 28)
-        btn:SetPoint("TOPLEFT", F, "TOPLEFT", pad + (i - 1) * 95, curY)
+        btn:SetSize(82, 28)
+        btn:SetPoint("TOPLEFT", F, "TOPLEFT", pad + (i - 1) * 86, curY)
 
         btn.bg = btn:CreateTexture(nil, "BACKGROUND")
         btn.bg:SetPoint("TOPLEFT", 1, -1)
@@ -310,6 +310,75 @@ function Profile:Initialize(parentFrame)
     end)
     self.discToggle = discToggle
     curY = curY - 45
+
+    local wispLabel = F:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    wispLabel:SetPoint("LEFT", discLabel, "RIGHT", 175, 0)
+    wispLabel:SetText(_hex("accent") .. "Whisper Leader on Apply|r")
+
+    if not FrostSeekDB.Settings then FrostSeekDB.Settings = {} end
+    if FrostSeekDB.Settings.applyWhisper == nil then FrostSeekDB.Settings.applyWhisper = false end
+
+    local wispToggle = CreateFrame("Button", nil, F)
+    wispToggle:SetSize(160, 28)
+    wispToggle:SetPoint("LEFT", discToggle, "RIGHT", 15, 0)
+
+    wispToggle.bg = wispToggle:CreateTexture(nil, "BACKGROUND")
+    wispToggle.bg:SetPoint("TOPLEFT", 1, -1)
+    wispToggle.bg:SetPoint("BOTTOMRIGHT", -1, 1)
+    wispToggle.bg:SetColorTexture(unpack(_tc("bgButton")))
+
+    wispToggle.border = wispToggle:CreateTexture(nil, "BORDER")
+    wispToggle.border:SetAllPoints()
+    wispToggle.border:SetColorTexture(unpack(_tc("border")))
+
+    wispToggle.hoverTex = wispToggle:CreateTexture(nil, "HIGHLIGHT")
+    wispToggle.hoverTex:SetAllPoints()
+    wispToggle.hoverTex:SetColorTexture(unpack(_tc("accentBar")))
+    wispToggle.hoverTex:Hide()
+
+    wispToggle.accent = wispToggle:CreateTexture(nil, "OVERLAY")
+    wispToggle.accent:SetPoint("BOTTOMLEFT", 2, 0)
+    wispToggle.accent:SetPoint("BOTTOMRIGHT", -2, 0)
+    wispToggle.accent:SetHeight(2)
+    wispToggle.accent:SetColorTexture(unpack(_tc("accentBar")))
+
+    wispToggle.text = wispToggle:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    wispToggle.text:SetPoint("CENTER")
+
+    local function UpdateWispToggleVisual()
+        local on = FrostSeekDB.Settings.applyWhisper == true
+        wispToggle.text:SetText(on and "|cff44ff44Whisper ON|r" or "|cff888888Whisper OFF|r")
+        if on then
+            wispToggle.border:SetColorTexture(0.3, 0.7, 0.4, 0.9)
+            wispToggle.bg:SetColorTexture(unpack(_tc("bgTabActive")))
+        else
+            wispToggle.border:SetColorTexture(unpack(_tc("border")))
+            wispToggle.bg:SetColorTexture(unpack(_tc("bgButton")))
+        end
+    end
+    UpdateWispToggleVisual()
+
+    wispToggle:SetScript("OnEnter", function(self)
+        self.hoverTex:Show()
+        self.border:SetColorTexture(unpack(_tc("borderHover")))
+        GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+        GameTooltip:SetText("Whisper Leader on Apply", 0.8, 0.9, 1)
+        GameTooltip:AddLine("When applying to a group, also send a [FrostSeek] whisper to the leader.", 0.8, 0.8, 0.8, true)
+        GameTooltip:AddLine("Useful if the leader does not run FrostSeek; the FSK APP message alone is enough for addon users.", 0.6, 0.6, 0.6, true)
+        GameTooltip:Show()
+    end)
+    wispToggle:SetScript("OnLeave", function(self)
+        self.hoverTex:Hide()
+        UpdateWispToggleVisual()
+        GameTooltip:Hide()
+    end)
+    wispToggle:SetScript("OnClick", function(self)
+        FrostSeekDB.Settings.applyWhisper = not (FrostSeekDB.Settings.applyWhisper == true)
+        UpdateWispToggleVisual()
+        print("|cff88ccffFrostSeek:|r Apply-whisper " .. (FrostSeekDB.Settings.applyWhisper and "enabled" or "disabled"))
+    end)
+    self.wispToggle = wispToggle
+    self.UpdateWispToggleVisual = UpdateWispToggleVisual
 
     local noteLabel = F:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     noteLabel:SetPoint("TOPLEFT", F, "TOPLEFT", pad, curY)

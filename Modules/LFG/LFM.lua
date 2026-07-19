@@ -9,8 +9,8 @@ local L = FrostSeek.L
 local _tc = _G.FrostSeekShared and _G.FrostSeekShared._tc or function(t) return {0.5,0.5,0.5} end
 
 local currentCategory = "RAIDS"
-local selectedRoles = { Tank = false, Healer = false, DPS = false, BC = false }
-local needCount = { Tank = 1, Healer = 1, DPS = 1 }
+local selectedRoles = { Tank = false, Healer = false, DPS = false, Support = false, BC = false }
+local needCount = { Tank = 1, Healer = 1, DPS = 1, Support = 1 }
 local selectedDifficulty = "Normal"
 local searchText = ""
 local currentKeystone = nil
@@ -201,8 +201,8 @@ local CHANNELS = {
 }
 
 local RAID_ROLE_REQUIREMENTS = {
-    RAIDS = { Tank = 2, Healer = 2, DPS = 5 },
-    WORLD_BOSS = { Tank = 1, Healer = 2, DPS = 5 },
+    RAIDS = { Tank = 2, Healer = 2, DPS = 5, Support = 0 },
+    WORLD_BOSS = { Tank = 1, Healer = 2, DPS = 5, Support = 0 },
 }
 
 local function FindKeystoneInBags()
@@ -318,6 +318,10 @@ local function GenerateRolesText()
         local n = needCount.DPS or 1
         table.insert(roles, n > 1 and (n .. " DPS") or "DPS")
     end
+    if selectedRoles.Support then
+        local n = needCount.Support or 1
+        table.insert(roles, n > 1 and (n .. " Support") or "Support")
+    end
     if selectedRoles.BC then table.insert(roles, "BC") end
     if #roles == 0 then return "All Roles" end
     return table.concat(roles, " ")
@@ -368,6 +372,10 @@ local function DetectRolesFromMessage(msg)
         table.insert(found, "DPS")
     end
 
+    if string.find(msgLower, "support") or string.find(msgLower, " supp") or string.find(msgLower, "^supp") then
+        table.insert(found, "Support")
+    end
+
     if string.find(msgLower, "bc") then
         table.insert(found, "BC")
     end
@@ -384,10 +392,12 @@ local function ValidateGroupComposition()
     if not reqs then return nil end
 
     local warnings = {}
-    local ROLE_COLORS = Shared and Shared.ROLE_COLORS or { Tank = {0.3, 0.5, 0.85}, Healer = {0.2, 0.8, 0.3}, DPS = {0.85, 0.3, 0.2} }
+    local ROLE_COLORS = Shared and Shared.ROLE_COLORS or { Tank = {0.3, 0.5, 0.85}, Healer = {0.2, 0.8, 0.3}, DPS = {0.85, 0.3, 0.2}, Support = {0.7, 0.4, 1.0} }
 
     for role, recommended in pairs(reqs) do
-        if not selectedRoles[role] then
+        if recommended == 0 then
+        
+        elseif not selectedRoles[role] then
             local c = ROLE_COLORS[role] or {1, 1, 1}
             local hex = string.format("|cFF%02X%02X%02X", math.floor(c[1] * 255 + 0.5), math.floor(c[2] * 255 + 0.5), math.floor(c[3] * 255 + 0.5))
             table.insert(warnings, hex .. role .. "|r")
@@ -643,6 +653,7 @@ whisperHandler:SetScript("OnEvent", function(self, event, msg, sender, ...)
     if selectedRoles.Tank then needRole = true; table.insert(neededRolesList, "Tank") end
     if selectedRoles.Healer then needRole = true; table.insert(neededRolesList, "Healer") end
     if selectedRoles.DPS then needRole = true; table.insert(neededRolesList, "DPS") end
+    if selectedRoles.Support then needRole = true; table.insert(neededRolesList, "Support") end
     local neededRolesStr = table.concat(neededRolesList, "/")
 
     local roleMatch = true
@@ -1260,9 +1271,9 @@ function LFM:Initialize(parentFrame)
     rolesLabel:SetTextColor(unpack(_tc("textMuted")))
 
     self.roleCheckboxes = {}
-    local roleTypes = {"Tank", "Healer", "DPS", "BC"}
-    local ROLE_COLORS = Shared and Shared.ROLE_COLORS or { Tank = {0.3, 0.5, 0.85}, Healer = {0.2, 0.8, 0.3}, DPS = {0.85, 0.3, 0.2}, BC = {1, 0.8, 0.1} }
-    local roleLabels = {Tank = "Tank", Healer = "Healer", DPS = "DPS", BC = "BC"}
+    local roleTypes = {"Tank", "Healer", "DPS", "Support", "BC"}
+    local ROLE_COLORS = Shared and Shared.ROLE_COLORS or { Tank = {0.3, 0.5, 0.85}, Healer = {0.2, 0.8, 0.3}, DPS = {0.85, 0.3, 0.2}, Support = {0.7, 0.4, 1.0}, BC = {1, 0.8, 0.1} }
+    local roleLabels = {Tank = "Tank", Healer = "Healer", DPS = "DPS", Support = "Support", BC = "BC"}
     local xOffset = 20
     for i, role in ipairs(roleTypes) do
         local checkbox = CreateFrame("CheckButton", "FrostSeekLFM_Role_" .. role, self.rolesFrame, "UICheckButtonTemplate")

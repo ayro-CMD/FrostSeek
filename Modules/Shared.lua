@@ -193,6 +193,8 @@ Shared.ROLE_COLORS = {
     Tank = {0.29, 0.64, 1.00},
     Healer = {0.27, 1.00, 0.40},
     DPS = {1.00, 0.33, 0.33},
+    Support = {0.70, 0.40, 1.00},
+    SUPPORT = {0.70, 0.40, 1.00},
 }
 
 function Shared.GetRoleColor(role)

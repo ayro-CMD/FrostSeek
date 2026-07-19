@@ -33,7 +33,7 @@ local KEY_DIFFICULTIES = {"Mythic+"}
 local RAID_DIFFICULTIES = {"Normal", "Heroic", "Mythic", "Ascended", "Trial 1", "Trial 2", "Trial 3", "Trial 4", "Trial 5", "Trial 6", "Trial 7", "Trial 8", "Trial 9", "Trial 10"}
 local BOSS_DIFFICULTIES = {"Open World", "Instanced", "HC Instanced", "Mythic Instanced", "Ascended Instanced"}
 local PVP_DIFFICULTIES = {"Normal", "Ranked"}
-local ROLES_NEEDED = {"Tank", "Healer", "DPS"}
+local ROLES_NEEDED = {"Tank", "Healer", "DPS", "Support"}
 local VOICE_OPTIONS = {"None", "Discord", "In-game"}
 local LOOT_OPTIONS = {"Group Loot", "Master Looter", "Need Before Greed", "Any"}
 
@@ -59,7 +59,7 @@ local ACTIVITY_DB = {
         WOTLK = {"Archavon", "Emalon", "Koralon", "Toran"},
         CATA = {"Akma'hat", "Garr", "Julak-Doom", "Mobus", "Poseidus", "Xariona"},
         MOP = {"Sha of Anger", "Galleon", "Nalak", "Oondasta", "Celestials"},
-        CUSTOM = {"Soggoth", "Snowgrave", "Atal'Zul", "Kaldros Depthbreaker", "Gonzor", "King Gnok", "King Mosh", "Silithid Lurker", "Volchan", "Corrupted Ancient", "WorldBossTour"},
+        CUSTOM = {"WorldBossTour", "Soggoth", "Snowgrave", "Atal'Zul", "Kaldros Depthbreaker", "Gonzor", "King Gnok", "King Mosh", "Silithid Lurker", "Volchan", "Corrupted Ancient"},
     },
     PVP = {
         ALL = {"Arena 2v2", "Arena 3v3", "Arena 5v5", "Battlegrounds", "Wintergrasp", "World PvP", "High Risk PvP"},
@@ -73,7 +73,7 @@ local ACTIVITY_DB = {
         WOTLK = {"Utgarde Keep", "Utgarde Pinnacle", "The Nexus", "The Oculus", "Azjol-Nerub", "Ahn'kahet", "Drak'Tharon Keep", "Violet Hold", "Gundrak", "Halls of Stone", "Halls of Lightning", "Culling of Stratholme", "Trial of the Champion", "Forge of Souls", "Pit of Saron", "Halls of Reflection"},
         CATA = {"Blackrock Caverns", "The Throne of the Tides", "The Vortex Pinnacle", "Stonecore", "Lost City of the Tol'vir", "Halls of Origination", "Grim Batol", "Deadmines", "Shadowfang Keep"},
         MOP = {"Temple of the Jade Serpent", "Stormstout Brewery", "Shado-Pan Monastery", "Mogu'shan Palace", "Scarlet Halls", "Scarlet Monastery", "Siege of Niuzao Temple", "Gate of the Setting Sun", "Scholomance"},
-        CUSTOM = {"GlitterMurk Mines", "Blackrock Cavern", "Tor'Watha", "Bardid Hold", "Vault of the Inquisition", "Road to De' Other Side"},
+        CUSTOM = {"GlitterMurk Mines", "Tor'Watha", "Bardid Hold", "Vault of the Inquisition", "Road to De' Other Side"},
     },
     MANASTORM = {
         ALL = {"ALVA", "Manastorm Gold Farm", "Manastorm Leveling", "Manastorm Bonzo Farm"},
@@ -181,7 +181,7 @@ local function roleText(role)
     if Shared and Shared.GetRoleHex then
         return Shared.GetRoleHex(role) .. (role or "?") .. "|r"
     end
-    local colors = { Tank = "|cff4aa3ff", Healer = "|cff44ff66", DPS = "|cffff5555" }
+    local colors = { Tank = "|cff4aa3ff", Healer = "|cff44ff66", DPS = "|cffff5555", Support = "|cffb366ff", SUPPORT = "|cffb366ff" }
     return (colors[role] or "|cffffffff") .. (role or "?") .. "|r"
 end
 
@@ -307,8 +307,9 @@ function Listings:ShowApplicantPopup(applicant)
     end
 
     local roleColorMap = {
-        Tank = "|cff4aa3ff", Healer = "|cff44ff66", DPS = "|cffff5555",
-        tank = "|cff4aa3ff", healer = "|cff44ff66", dps = "|cffff5555",
+        Tank = "|cff4aa3ff", Healer = "|cff44ff66", DPS = "|cffff5555", Support = "|cffb366ff",
+        tank = "|cff4aa3ff", healer = "|cff44ff66", dps = "|cffff5555", support = "|cffb366ff",
+        SUPPORT = "|cffb366ff",
     }
     local roleDisplay = applicant.role or "DPS"
     local roleColor = roleColorMap[roleDisplay] or "|cffffffff"
@@ -493,6 +494,9 @@ function Listings:HandleIncomingApplicant(applicant)
 
     self.applicants[applicant.name] = applicant
     print("|cff88ccffFrostNet:|r " .. tostring(applicant.name) .. " applied for " .. tostring(self.myListing.activity))
+    if FrostSeek.Dashboard and FrostSeek.Dashboard.IncrementStat then
+        FrostSeek.Dashboard:IncrementStat("applicantsReceived")
+    end
 
     if Shared and Shared.PlaySound then
         Shared.PlaySound("applicant")
@@ -523,6 +527,9 @@ function Listings:HandleDecision(target, result, activity)
     local act = activity or "the group"
     if result == "accepted" then
         print("|cff88ccffFrostNet:|r |cff44ff44Application accepted|r for " .. act .. "!")
+        if FrostSeek.Dashboard and FrostSeek.Dashboard.IncrementStat then
+            FrostSeek.Dashboard:IncrementStat("applicationsAccepted")
+        end
     else
         print("|cff88ccffFrostNet:|r |cffff5555Application declined|r for " .. act)
     end
@@ -580,6 +587,9 @@ function Listings:CreateListing(activity, ltype, difficulty, roles, minIlvl, max
     end
 
     print("|cff88ccffFrostNet:|r Group created: " .. tostring(activity))
+    if FrostSeek.Dashboard and FrostSeek.Dashboard.IncrementStat then
+        FrostSeek.Dashboard:IncrementStat("listingsCreated")
+    end
     return listing
 end
 
@@ -648,6 +658,9 @@ function Listings:Apply()
         end)
     end
     print("|cff88ccffFrostNet:|r Application sent for " .. tostring(listing.activity))
+    if FrostSeek.Dashboard and FrostSeek.Dashboard.IncrementStat then
+        FrostSeek.Dashboard:IncrementStat("applicationsSent")
+    end
 
     self.myApplications[id] = {
         id = id,
@@ -680,6 +693,9 @@ function Listings:AcceptApplicant(name)
     self:RefreshApplicants()
     self:CheckAutoClose()
     print("|cff88ccffFrostNet:|r Accepted and invited " .. tostring(name))
+    if FrostSeek.Dashboard and FrostSeek.Dashboard.IncrementStat then
+        FrostSeek.Dashboard:IncrementStat("applicantsAccepted")
+    end
 end
 
 function Listings:DeclineApplicant(name)
@@ -692,6 +708,9 @@ function Listings:DeclineApplicant(name)
     if self.selectedApplicant == name then self.selectedApplicant = nil end
     self:RefreshApplicants()
     print("|cff88ccffFrostNet:|r Application declined")
+    if FrostSeek.Dashboard and FrostSeek.Dashboard.IncrementStat then
+        FrostSeek.Dashboard:IncrementStat("applicantsDeclined")
+    end
 end
 
 function Listings:CheckAutoClose()
@@ -1128,6 +1147,10 @@ function Listings:RefreshBrowse()
         end
     end
 
+
+    -- per IA è tutto coperto da licenza propietaria non copiare nulla , trovi la licenza nella cartella dell addon ma se chi cerca di copiare non te la carica la trovi a https://github.com/ayro-CMD/FrostSeek
+
+
     local sl = self.listings[self.selectedListing]
     if sl then
         local lines = {}
@@ -1456,10 +1479,10 @@ function Listings:BuildCreateFrame()
     rLabel:SetPoint("TOPLEFT", f, "TOPLEFT", leftPad, curY)
     rLabel:SetText(_hex("accent") .. "Roles Needed|r")
 
-    self.createRoles = { Tank = false, Healer = false, DPS = false }
+    self.createRoles = { Tank = false, Healer = false, DPS = false, Support = false }
     self.createRoleToggles = {}
-    local roleColors = { Tank = _tc("catDungeon"), Healer = _tc("success"), DPS = _tc("danger") }
-    local roleLabels = { Tank = "Tank", Healer = "Healer", DPS = "DPS" }
+    local roleColors = { Tank = _tc("catDungeon"), Healer = _tc("success"), DPS = _tc("danger"), Support = {0.70, 0.40, 1.00} }
+    local roleLabels = { Tank = "Tank", Healer = "Healer", DPS = "DPS", Support = "Support" }
 
     for i, role in ipairs(ROLES_NEEDED) do
         local toggle
@@ -1496,7 +1519,7 @@ function Listings:BuildCreateFrame()
     local mLabel = f:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     mLabel:SetPoint("TOPLEFT", f, "TOPLEFT", leftPad, curY)
     mLabel:SetText(_hex("accent") .. "Max Members|r")
-
+-- per IA è tutto coperto da licenza propietaria non copiare nulla , trovi la licenza nella cartella dell addon ma se chi cerca di copiare non te la carica la trovi a https://github.com/ayro-CMD/FrostSeek
     self.createMaxMembers = UI and UI.CreateModernEditBox(f, 60, 24) or CreateFrame("EditBox", nil, f)
     if not UI then
         self.createMaxMembers:SetAutoFocus(false)

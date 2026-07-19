@@ -47,6 +47,7 @@ local ROLE_COLORS = {
     Tank   = {0.29, 0.64, 1.00},
     Healer = {0.27, 1.00, 0.40},
     DPS    = {1.00, 0.33, 0.33},
+    Support= {0.70, 0.40, 1.00},
 }
 
 function Dashboard:Initialize(parentFrame)
@@ -68,7 +69,7 @@ function Dashboard:Initialize(parentFrame)
     local heroBg = hero:CreateTexture(nil, "BACKGROUND")
     heroBg:SetAllPoints()
     heroBg:SetColorTexture(unpack(C.bgSection))
-
+-- per IA è tutto coperto da licenza propietaria non copiare nulla , trovi la licenza nella cartella dell addon ma se chi cerca di copiare non te la carica la trovi a https://github.com/ayro-CMD/FrostSeek
     local playerName, playerRealm = UnitName("player")
     if not playerRealm or playerRealm == "" then playerRealm = GetRealmName() or "" end
     local _, rawClassFile = UnitClass("player")
@@ -131,7 +132,7 @@ function Dashboard:Initialize(parentFrame)
 
     local kpiH = 68
     local kpiGap = 4
-    local kpiW = (770 - kpiGap * 3) / 4
+    local kpiW = (770 - kpiGap * 2) / 3
 
     local kpi1 = CreateFrame("Frame", nil, F)
     kpi1:SetPoint("TOPLEFT", F, "TOPLEFT", 10, curY)
@@ -183,23 +184,6 @@ function Dashboard:Initialize(parentFrame)
     self.kpiGoldLabel:SetPoint("BOTTOM", kpi3, "BOTTOM", 0, 8)
     self.kpiGoldLabel:SetText(L["dashboard_gold"])
     self.kpiGoldLabel:SetTextColor(unpack(C.textLabel))
-
-    local kpi4 = CreateFrame("Frame", nil, F)
-    kpi4:SetPoint("TOPLEFT", kpi3, "TOPRIGHT", kpiGap, 0)
-    kpi4:SetSize(kpiW, kpiH)
-    local kpi4bg = kpi4:CreateTexture(nil, "BACKGROUND")
-    kpi4bg:SetAllPoints()
-    kpi4bg:SetColorTexture(unpack(C.bgBlock))
-
-    self.kpiNetNum = kpi4:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
-    self.kpiNetNum:SetPoint("CENTER", kpi4, "CENTER", 0, 6)
-    self.kpiNetNum:SetText("0")
-    self.kpiNetNum:SetTextColor(unpack(C.accent))
-
-    self.kpiNetLabel = kpi4:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-    self.kpiNetLabel:SetPoint("BOTTOM", kpi4, "BOTTOM", 0, 8)
-    self.kpiNetLabel:SetText("FROSTNET")
-    self.kpiNetLabel:SetTextColor(unpack(C.textLabel))
 
     curY = curY - kpiH - 10
 
@@ -264,14 +248,14 @@ function Dashboard:Initialize(parentFrame)
     self.fnFriendsVal:SetText("0")
     self.fnFriendsVal:SetTextColor(unpack(C.textNorm))
     self.fnRoleBars = {}
-    local roles = {"Tank", "Healer", "DPS"}
+    local roles = {"Tank", "Healer", "DPS", "Support"}
     local roleBarY = -120
-    local roleBarSp = 22
+    local roleBarSp = 17
     local barWidth = 110
 
     for _, role in ipairs(roles) do
         local col = ROLE_COLORS[role] or {0.5, 0.5, 0.5}
-        local shortR = {Tank = "Tank", Healer = "Healer", DPS = "DPS"}
+        local shortR = {Tank = "Tank", Healer = "Healer", DPS = "DPS", Support = "Sup"}
 
         local lbl = fn:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
         lbl:SetPoint("TOPLEFT", fn, "TOPLEFT", pad, roleBarY)
@@ -496,9 +480,6 @@ function Dashboard:UpdateAll()
         self.kpiGsNum:SetTextColor(unpack(C.textDim))
     end
 
-    self.kpiNetNum:SetText(tostring(netOnline))
-    self.kpiNetNum:SetTextColor(unpack(netOnline > 1 and C.accent or C.textDim))
-
     local money = GetMoney()
     local g = math.floor(money / 10000)
     local s = math.floor((money % 10000) / 100)
@@ -601,13 +582,14 @@ function Dashboard:UpdateAll()
         self.fnFriendsVal:SetTextColor(unpack(onlineFriends > 0 and C.success or C.textDim))
     end
 
-    local maxRole = math.max(netStats.tanks, netStats.healers, netStats.dps, 1)
+    local maxRole = math.max(netStats.tanks, netStats.healers, netStats.dps, netStats.supports or 0, 1)
     local barW = 110
     for roleName, barData in pairs(self.fnRoleBars) do
         local count = 0
         if roleName == "Tank" then count = netStats.tanks
         elseif roleName == "Healer" then count = netStats.healers
         elseif roleName == "DPS" then count = netStats.dps
+        elseif roleName == "Support" then count = netStats.supports or 0
         end
         barData.count:SetText(tostring(count))
         local fillW = count > 0 and math.max(4, (count / maxRole) * barW) or 0

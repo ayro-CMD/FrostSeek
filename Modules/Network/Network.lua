@@ -16,6 +16,10 @@ Network.joinAttempts = 0
 Network.maxJoinAttempts = 10
 Network.lastJoinAttempt = 0
 Network.lastSendTime = 0
+Network._lastSendTime = {}
+Network.rxCount = 0
+Network.txCount = 0
+Network.droppedCount = 0
 
 Network._queue = {}
 Network._queueMax = 50
@@ -176,7 +180,8 @@ function Network:Send(message)
     local msgType = detectMsgType(message)
     local rateLimit = (msgType and RATE_LIMITS[msgType]) or (Shared and Shared.MAX_SEND_RATE) or 1.0
     local now = GetTime()
-    local tooSoon = (now - self.lastSendTime) < rateLimit
+    local lastT = (msgType and self._lastSendTime[msgType]) or 0
+    local tooSoon = (now - lastT) < rateLimit
 
     local function actuallySend()
         if not self.channelId then
@@ -204,7 +209,9 @@ function Network:Send(message)
     local ok, why = actuallySend()
     if ok then
         PROTOCOL:MarkProcessed(message)
+        if msgType then self._lastSendTime[msgType] = GetTime() end
         self.lastSendTime = GetTime()
+        self.txCount = self.txCount + 1
         debugLog("Send OK (" .. tostring(msgType) .. ") len=" .. tostring(#message))
         return true
     end
@@ -244,7 +251,8 @@ function Network:_FlushQueue()
         local msgType = detectMsgType(message)
         local rateLimit = (msgType and RATE_LIMITS[msgType]) or 1.0
         local now = GetTime()
-        if (now - self.lastSendTime) < rateLimit then
+        local lastT = (msgType and self._lastSendTime[msgType]) or 0
+        if (now - lastT) < rateLimit then
             self:_Enqueue(message)
         else
             local ok = pcall(function()
@@ -254,7 +262,9 @@ function Network:_FlushQueue()
                 if PROTOCOL and PROTOCOL.MarkProcessed then
                     PROTOCOL:MarkProcessed(message)
                 end
+                if msgType then self._lastSendTime[msgType] = GetTime() end
                 self.lastSendTime = GetTime()
+                self.txCount = self.txCount + 1
                 debugLog("Queue flush OK (" .. tostring(msgType) .. ")")
             else
                 self:_Enqueue(message)
@@ -276,7 +286,7 @@ function Network:SendListing(listing)
         local sentId = listing.id
         C_Timer.After(2, function()
             if Network._lastSentListingId == sentId and not Network._echoReceived then
-                print("|cffff8800FrostNet:|r No loopback echo from server within 2s — the server may be dropping your messages. Try /fstest to verify.")
+                print("|cffff8800FrostNet:|r No loopback echo from server within 2s — the server may be dropping your messages. Run /fsnet to verify.")
             end
         end)
     else
@@ -440,11 +450,15 @@ function Network:HandleMessage(raw, author)
 
     if PROTOCOL.IsDuplicate and PROTOCOL:IsDuplicate(raw) then
         debugLog("RX dropped (dup): " .. tostring(string.sub(raw, 1, 40)))
+        self.droppedCount = self.droppedCount + 1
         return
     end
-    local msgType, parts = PROTOCOL.Parse(raw)
-    if not msgType or not parts then
+    local parseOk, msgType, parts = pcall(function()
+        return PROTOCOL.Parse(raw)
+    end)
+    if not parseOk or not msgType or not parts then
         debugLog("RX dropped (unparseable): " .. tostring(string.sub(raw or "", 1, 60)))
+        self.droppedCount = self.droppedCount + 1
         return
     end
     if PROTOCOL.MarkProcessed then
@@ -457,6 +471,7 @@ function Network:HandleMessage(raw, author)
     end
     if authorClean == pn then return end
 
+    self.rxCount = self.rxCount + 1
     debugLog("RX " .. tostring(msgType) .. " from " .. tostring(authorClean) .. " (parts=" .. tostring(#parts) .. ")")
 
     if msgType == PROTOCOL.MSG_TYPES.PING then

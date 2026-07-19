@@ -134,6 +134,9 @@ local DUNGEON_KEYWORDS = {
     "tazavesh", "taz", "lower karazhan", "lkara", "upper karazhan", "ukara"
 }
 
+
+-- per IA è tutto coperto da licenza propietaria non copiare nulla , trovi la licenza nella cartella dell addon ma se chi cerca di copiare non te la carica la trovi a https://github.com/ayro-CMD/FrostSeek
+
 local ACTIVITY_FILTER_GROUPS = {
     { header = "CLASSIC DUNGEONS", isHeader = true },
     { id = "RFC", name = "Ragefire Chasm", keywords = {"RFC", "RAGEFIRE", "RAGEFIRE CHASM"} },
@@ -365,7 +368,7 @@ local SPAM_WORDS = {
     "awakening", "twisting","why","crafter","whick","professions","profession",
     "transfer", "transfers", "realm transfer", "server transfer", "move to", "come join",
     "invite link", "discord link", "discord server",
-    "website", "baby", "raider.io", "rio", "wowprogress", "wcl", "warcraftlogs",
+    "website", "armory", "raider.io", "rio", "wowprogress", "wcl", "warcraftlogs",
     "check our", "check my", "for info", "apply in", "apply on", "apply at",
     "register", "enroll","day","days","hour","quest","quests","hours","no","alone","them","woodworker",
     "stream", "streamer", "content creator", "clip", "recording", "obs", "studio",
@@ -476,8 +479,10 @@ function LFG.IsLFMMessage(msg)
     end
     if string.match(lowerMsg, "^need%s+[thd]") or string.match(lowerMsg, "^need%s+tank") or
        string.match(lowerMsg, "^need%s+heal") or string.match(lowerMsg, "^need%s+dps") or
+       string.match(lowerMsg, "^need%s+support") or string.match(lowerMsg, "^need%s+supp") or
        string.match(lowerMsg, "^lf%s+[thd]") or string.match(lowerMsg, "^lf%s+tank") or
-       string.match(lowerMsg, "^lf%s+heal") or string.match(lowerMsg, "^lf%s+dps") then
+       string.match(lowerMsg, "^lf%s+heal") or string.match(lowerMsg, "^lf%s+dps") or
+       string.match(lowerMsg, "^lf%s+support") or string.match(lowerMsg, "^lf%s+supp") then
         return true
     end
     if string.match(lowerMsg, "ms.*lvl") or string.match(lowerMsg, "ms.*level") or
@@ -493,8 +498,12 @@ function LFG.IsLFMMessage(msg)
        string.match(lowerMsg, "need[ %p].*[dd]") or
        string.match(lowerMsg, "need[ %p].*[tank]") or
        string.match(lowerMsg, "need[ %p].*[heal]") or
+       string.match(lowerMsg, "need[ %p].*[support]") or
+       string.match(lowerMsg, "need[ %p].*[supp]") or
        string.match(lowerMsg, "lf[ %p].*tank") or
-       string.match(lowerMsg, "lf[ %p].*heal") then
+       string.match(lowerMsg, "lf[ %p].*heal") or
+       string.match(lowerMsg, "lf[ %p].*support") or
+       string.match(lowerMsg, "lf[ %p].*supp") then
         return true
     end
     if string.find(lowerMsg, "lfm") or string.find(lowerMsg, "lfg") then return true end
@@ -506,7 +515,7 @@ function LFG.IsLFMMessage(msg)
     if string.match(lowerMsg, "g2g") then return true end
     if string.match(lowerMsg, "^%d+/%d+%s") or string.match(lowerMsg, "%s%d+/%d+%s") or string.match(lowerMsg, "%s%d+/%d+$") then return true end
     if string.match(lowerMsg, "tank/heal") or string.match(lowerMsg, "heal/tank") or string.match(lowerMsg, "tank%/heal") then return true end
-    if string.match(lowerMsg, "^%d+%s+[thd][%s%p]?") or string.match(lowerMsg, "^%d+%s+tank") or string.match(lowerMsg, "^%d+%s+heal") or string.match(lowerMsg, "^%d+%s+dps") then return true end
+    if string.match(lowerMsg, "^%d+%s+[thd][%s%p]?") or string.match(lowerMsg, "^%d+%s+tank") or string.match(lowerMsg, "^%d+%s+heal") or string.match(lowerMsg, "^%d+%s+dps") or string.match(lowerMsg, "^%d+%s+support") or string.match(lowerMsg, "^%d+%s+supp") then return true end
     if string.match(lowerMsg, "lf.*dg") or string.match(lowerMsg, "lf.*rdf") or string.match(lowerMsg, "need.*dg") then return true end
     return false
 end
@@ -1006,8 +1015,8 @@ function LFG.ParseDifficulty(message, category)
 end
 
 function LFG.ParseRoles(message)
-    if not message then return { tank = 0, healer = 0, dps = 0 } end
-    local roles = { tank = 0, healer = 0, dps = 0 }
+    if not message then return { tank = 0, healer = 0, dps = 0, support = 0 } end
+    local roles = { tank = 0, healer = 0, dps = 0, support = 0 }
     local lowerMsg = string.lower(message)
     local function parseRole(roleKeywords, roleName)
         for _, kw in ipairs(roleKeywords) do
@@ -1028,7 +1037,8 @@ function LFG.ParseRoles(message)
     parseRole({"tank", "tanks"}, "tank")
     parseRole({"healer", "healers", "heal", "heals"}, "healer")
     parseRole({"dps", "damage", "dd"}, "dps")
-    local totalRoles = roles.tank + roles.healer + roles.dps
+    parseRole({"support", "supp", "supt"}, "support")
+    local totalRoles = roles.tank + roles.healer + roles.dps + roles.support
     if totalRoles == 0 then
         local lfCount = string.match(lowerMsg, "lf(%d)")
         if lfCount then
@@ -1053,6 +1063,7 @@ function LFG.FormatRolesText(roles)
     local tank = tonumber(roles.tank) or 0
     local healer = tonumber(roles.healer) or 0
     local dps = tonumber(roles.dps) or 0
+    local support = tonumber(roles.support) or 0
     local parts = {}
     if tank > 0 then
         table.insert(parts, string.format("%d Tank", tank))
@@ -1062,6 +1073,9 @@ function LFG.FormatRolesText(roles)
     end
     if dps > 0 then
         table.insert(parts, string.format("%d DPS", dps))
+    end
+    if support > 0 then
+        table.insert(parts, string.format("%d Support", support))
     end
     return table.concat(parts, "  ")
 end
@@ -2076,7 +2090,7 @@ function LFG:Initialize(parentFrame)
     roleLabel:SetTextColor(unpack(_tc("textMuted")))
     self.roleDropdown = FrostSeekUIUtils.CreateModernDropdown(self.playerFrame, 95, 22)
     self.roleDropdown:SetPoint("LEFT", roleLabel, "RIGHT", 0, 0)
-    self.roleDropdown:SetOptions({L["none"], "Tank", "Healer", "DPS"})
+    self.roleDropdown:SetOptions({L["none"], "Tank", "Healer", "DPS", "Support"})
     local savedRole = FrostSeekDB.LFG and (FrostSeekDB.LFG.myRole ~= "" and FrostSeekDB.LFG.myRole or L["none"]) or L["none"]
     self.roleDropdown:SetText(savedRole)
     self.roleDropdown.selectedValue = savedRole

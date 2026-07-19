@@ -9,8 +9,8 @@ local _tc = Shared and Shared._tc or function(t) return {0.5,0.5,0.5} end
 local _hex = Shared and Shared._hex or function(t) return "|cFF888888" end
 
 local PING_INTERVAL = 55     
-local PRUNE_AFTER = 90       
-local REFRESH_INTERVAL = 10    
+local PRUNE_AFTER = 165
+local REFRESH_INTERVAL = 10
 
 Presence.onlineUsers = {}
 Presence.panel = nil
@@ -73,7 +73,18 @@ function Presence:HandlePresence(user)
     local pn = UnitName("player") or ""
     if user.name == pn then return end
 
+    local wasOnline = self.onlineUsers[user.name] ~= nil
     self.onlineUsers[user.name] = user
+
+    if not wasOnline and FrostSeekDB.Favorites and FrostSeekDB.Favorites[user.name] then
+        local role = user.role or ""
+        local level = user.level or ""
+        local msg = string.format("|cffb366ff[Favorite]|r |cff88ccff%s|r (%s %s) just came online", tostring(user.name), tostring(level), tostring(role))
+        print(msg)
+        if Shared and Shared.PlaySound then
+            Shared.PlaySound("popup")
+        end
+    end
 
     local myVersion = FrostSeek.VERSION or ""
     if user.version and user.version ~= "" and user.version ~= myVersion then
@@ -101,6 +112,26 @@ function Presence:HandlePresence(user)
 
     if FrostSeek.Dashboard and FrostSeek.Dashboard.UpdateAll then
         FrostSeek.Dashboard:UpdateAll()
+    end
+end
+
+function Presence.IsFavorite(name)
+    if not name then return false end
+    return FrostSeekDB.Favorites and FrostSeekDB.Favorites[name] == true
+end
+
+function Presence.ToggleFavorite(name)
+    if not name or name == "" then return end
+    if not FrostSeekDB.Favorites then FrostSeekDB.Favorites = {} end
+    if FrostSeekDB.Favorites[name] then
+        FrostSeekDB.Favorites[name] = nil
+        print("|cff88ccffFrostSeek:|r Removed |cffb366ff" .. name .. "|r from favorites")
+    else
+        FrostSeekDB.Favorites[name] = true
+        print("|cff88ccffFrostSeek:|r Added |cffb366ff" .. name .. "|r to favorites")
+    end
+    if Presence.panelVisible and Presence.panel and Presence.panel:IsShown() then
+        Presence:RefreshPanel()
     end
 end
 
@@ -170,6 +201,7 @@ function Presence:GetStats()
         tanks = 0,
         healers = 0,
         dps = 0,
+        supports = 0,
     }
 
     for _, u in ipairs(rows) do
@@ -177,6 +209,7 @@ function Presence:GetStats()
         if u.role == "Tank" then stats.tanks = stats.tanks + 1
         elseif u.role == "Healer" then stats.healers = stats.healers + 1
         elseif u.role == "DPS" then stats.dps = stats.dps + 1
+        elseif u.role == "Support" or u.role == "SUPPORT" then stats.supports = stats.supports + 1
         end
     end
 
@@ -185,14 +218,15 @@ end
 
 function Presence:GetRoleDistribution()
     local stats = self:GetStats()
-    local total = stats.tanks + stats.healers + stats.dps
+    local total = stats.tanks + stats.healers + stats.dps + stats.supports
     if total == 0 then
-        return { tank = 0, healer = 0, dps = 0 }
+        return { tank = 0, healer = 0, dps = 0, support = 0 }
     end
     return {
         tank = stats.tanks / total,
         healer = stats.healers / total,
         dps = stats.dps / total,
+        support = stats.supports / total,
     }
 end
 
@@ -401,9 +435,9 @@ function Presence:BuildPanel(parent)
     f.statsLeft:SetJustifyV("TOP")
 
     local barAreaX = 220
-    local barW = 160
-    local barH = 10
-    local barGap = 16
+    local barW = 130
+    local barH = 6
+    local barGap = 11
     local tankLabel = statsFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     tankLabel:SetPoint("TOPLEFT", statsFrame, "TOPLEFT", barAreaX, -6)
     tankLabel:SetText("|cff4aa3ffT|r")
@@ -463,6 +497,26 @@ function Presence:BuildPanel(parent)
     f.dpsCount:SetPoint("LEFT", f.dpsBarBg, "RIGHT", 4, 0)
     f.dpsCount:SetText("0")
     f.dpsCount:SetTextColor(unpack(_tc("textDim")))
+
+    local supportLabel = statsFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    supportLabel:SetPoint("TOPLEFT", statsFrame, "TOPLEFT", barAreaX, -6 - barGap * 3)
+    supportLabel:SetText("|cffb366ffS|r")
+    supportLabel:SetWidth(14)
+
+    f.supportBarBg = statsFrame:CreateTexture(nil, "BACKGROUND")
+    f.supportBarBg:SetPoint("LEFT", supportLabel, "RIGHT", 4, 0)
+    f.supportBarBg:SetSize(barW, barH)
+    f.supportBarBg:SetColorTexture(0.15, 0.15, 0.18, 0.6)
+
+    f.supportBarFill = statsFrame:CreateTexture(nil, "ARTWORK")
+    f.supportBarFill:SetPoint("LEFT", f.supportBarBg, "LEFT", 0, 0)
+    f.supportBarFill:SetSize(0, barH)
+    f.supportBarFill:SetColorTexture(0.70, 0.40, 1.00, 0.7)
+
+    f.supportCount = statsFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    f.supportCount:SetPoint("LEFT", f.supportBarBg, "RIGHT", 4, 0)
+    f.supportCount:SetText("0")
+    f.supportCount:SetTextColor(unpack(_tc("textDim")))
 
     local colY = statsY - statsH - 6
     local header = CreateFrame("Frame", nil, f)
@@ -578,7 +632,9 @@ function Presence:BuildPanel(parent)
                 if self.userData.role and self.userData.role ~= "" then
                     local rc = self.userData.role == "Tank" and {0.29, 0.64, 1.0} or
                                self.userData.role == "Healer" and {0.27, 1.0, 0.40} or
-                               self.userData.role == "DPS" and {1.0, 0.33, 0.33} or {1, 1, 1}
+                               self.userData.role == "DPS" and {1.0, 0.33, 0.33} or
+                               (self.userData.role == "Support" or self.userData.role == "SUPPORT") and {0.70, 0.40, 1.00} or
+                               {1, 1, 1}
                     GameTooltip:AddLine(L["lfg_role"] .. ": " .. self.userData.role, rc[1], rc[2], rc[3])
                 end
                 if self.userData.spec and self.userData.spec ~= "" then
@@ -598,6 +654,7 @@ function Presence:BuildPanel(parent)
                 end
                 GameTooltip:AddLine(" ")
                 GameTooltip:AddLine("Right-click to Whisper", 0.4, 1, 0.4)
+                GameTooltip:AddLine("Shift+Click to toggle Favorite", 0.7, 0.4, 1.0)
                 GameTooltip:Show()
             end
         end)
@@ -607,16 +664,20 @@ function Presence:BuildPanel(parent)
         end)
         r:RegisterForClicks("LeftButtonUp", "RightButtonUp")
         r:SetScript("OnClick", function(self, button)
-                if button == "RightButton" and self.userData and self.userData.name then
-                    local pn = UnitName("player") or ""
-                    if self.userData.name ~= pn then
-                        if FrostSeekCompat and FrostSeekCompat.OpenChat then
-                            FrostSeekCompat.OpenChat("/w " .. self.userData.name .. " ")
-                        elseif ChatFrame_OpenChat then
-                            ChatFrame_OpenChat("/w " .. self.userData.name .. " ")
-                        end
+            if button == "LeftButton" and IsShiftKeyDown() and self.userData and self.userData.name then
+                Presence.ToggleFavorite(self.userData.name)
+                return
+            end
+            if button == "RightButton" and self.userData and self.userData.name then
+                local pn = UnitName("player") or ""
+                if self.userData.name ~= pn then
+                    if FrostSeekCompat and FrostSeekCompat.OpenChat then
+                        FrostSeekCompat.OpenChat("/w " .. self.userData.name .. " ")
+                    elseif ChatFrame_OpenChat then
+                        ChatFrame_OpenChat("/w " .. self.userData.name .. " ")
                     end
                 end
+            end
         end)
 
         self.rows[i] = r
@@ -687,12 +748,12 @@ function Presence:RefreshPanel()
     if f.statsLeft then
         local lines = {}
         table.insert(lines, _hex("textDim") .. "Friends:|r " .. (stats.friends > 0 and "|cff44ff44" or "|cffffffff") .. tostring(stats.friends) .. "|r")
-        table.insert(lines, _hex("textDim") .. "With Role:|r " .. tostring(stats.tanks + stats.healers + stats.dps) .. "|" .. tostring(stats.total))
+        table.insert(lines, _hex("textDim") .. "With Role:|r " .. tostring(stats.tanks + stats.healers + stats.dps + stats.supports) .. "|" .. tostring(stats.total))
         f.statsLeft:SetText(table.concat(lines, "\n"))
     end
 
-    local maxRole = math.max(stats.tanks, stats.healers, stats.dps, 1)
-    local barW = 160
+    local maxRole = math.max(stats.tanks, stats.healers, stats.dps, stats.supports, 1)
+    local barW = 130
 
     if f.tankBarFill then
         f.tankBarFill:SetWidth(stats.tanks > 0 and math.max(4, (stats.tanks / maxRole) * barW) or 0)
@@ -708,6 +769,11 @@ function Presence:RefreshPanel()
         f.dpsBarFill:SetWidth(stats.dps > 0 and math.max(4, (stats.dps / maxRole) * barW) or 0)
         f.dpsCount:SetText(tostring(stats.dps))
         f.dpsCount:SetTextColor(unpack(stats.dps > 0 and _tc("textNorm") or _tc("textDim")))
+    end
+    if f.supportBarFill then
+        f.supportBarFill:SetWidth(stats.supports > 0 and math.max(4, (stats.supports / maxRole) * barW) or 0)
+        f.supportCount:SetText(tostring(stats.supports))
+        f.supportCount:SetTextColor(unpack(stats.supports > 0 and _tc("textNorm") or _tc("textDim")))
     end
 
     
@@ -751,10 +817,14 @@ function Presence:RefreshPanel()
             else
                 nameColor = GetClassHex(u.classFile)
             end
+            local favPrefix = ""
+            if FrostSeekDB.Favorites and FrostSeekDB.Favorites[u.name] then
+                favPrefix = "|cffb366ff*|r "
+            end
             if u.outdated then
-                row.name:SetText("|cffffcc00!|r " .. nameColor .. tostring(u.name or "?") .. "|r")
+                row.name:SetText(favPrefix .. "|cffffcc00!|r " .. nameColor .. tostring(u.name or "?") .. "|r")
             else
-                row.name:SetText(nameColor .. tostring(u.name or "?") .. "|r")
+                row.name:SetText(favPrefix .. nameColor .. tostring(u.name or "?") .. "|r")
             end
 
             if row.classIcon then
@@ -774,6 +844,7 @@ function Presence:RefreshPanel()
             if u.role == "Tank" then roleColor = "|cff4aa3ff"
             elseif u.role == "Healer" then roleColor = "|cff44ff66"
             elseif u.role == "DPS" then roleColor = "|cffff5555"
+            elseif u.role == "Support" or u.role == "SUPPORT" then roleColor = "|cffb366ff"
             elseif u.role == L["none"] or u.role == "" or not u.role then roleColor = "|cff888888"
             end
             row.role:SetText(roleColor .. displayRole .. "|r")
