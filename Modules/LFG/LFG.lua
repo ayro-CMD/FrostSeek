@@ -84,7 +84,7 @@ local WORLD_BOSS_KEYWORDS = {
     "soggoth", "sogoth", "azuregos", "kazzak", "doomwalker", "setis", "settis",
     "emeriss", "lethon", "taerar", "ysondre", "dream", "nightmare","Kaldros Depthbreaker","Kaldros.Depthbreaker",
     "snowgrave", "atal'zul", "atal.zul", "world tour", "worldboss tour", "world boss tour",
-    "sha of anger", "galleon", "salyis", "nalak", "oondasta", "celestials", "celestial",
+    "sha of anger", "galleon", "salyis", "nalak", "oondasta", "celestials", "celestial","Kaldros",
     "gonzor", "king gnok", "king mosh", "silithid lurker", "volchan", "corrupted ancient",
 }
 
@@ -102,7 +102,7 @@ local DUNGEON_KEYWORDS = {
     "rfc", "ragefire", "ragefire chasm", "dm", "deadmines", "vc", "wc", "wailing", "wailing caverns",
     "sfk", "shadowfang", "shadowfang keep", "stocks", "stockade", "bfd", "blackfathom", "blackfathom deeps",
     "gnomer", "gnomeregan", "rfk", "razorfen kraul", "sm", "scarlet", "scarlet monastery", "gy", "lib", "arm", "cath",
-    "rfd", "razorfen downs", "ulda", "uldaman", "zf", "zul'farrak", "mara", "maraudon",
+    "rfd", "razorfen downs", "ulda", "uldaman", "zf", "zul'farrak", "mara", "maraudon","Blackcock spire",
     "st", "sunken temple", "brd", "blackrock depths", "dire", "dire maul", "maul", "dme", "dmn", "dmw",
     "strat", "stratholme", "scholo", "scholomance", "lbrs", "lower blackrock spire", "ubrs", "upper blackrock spire",
     -- TBC Dungeons
@@ -131,7 +131,8 @@ local DUNGEON_KEYWORDS = {
     "et", "end time", "woe", "well of eternity", "hot", "hour of twilight",
     -- Ascension/CoA Dungeons
     "gmm", "glittermurk", "karazhan crypt", "glittermurk mines",
-    "kc", "vault", "vault of the inquisition", "roads", "road to de", "de' other side",
+    "kc", "vault", "vaults", "vault of the inquisition", "vaults of inquisition",
+    "roads", "road to de", "de' other side",
     "tor'watha", "tor watha","voult of the inquisition","voult",
     -- MoP Dungeons
     "tjs", "jade serpent", "temple of the jade serpent",
@@ -396,9 +397,9 @@ local SPAM_WORDS = {
     "raffle", "contest", "prize", "merch", "store", "shop", "buy now",
     "weakaura", "weakauras", "elvui", "tukui", "plater", "dbm", "bigwigs",
     "https", "discord.gg", "twitch.tv", "youtube",
-    "account", "heirloom",
+    "account", "heirloom","help","bazaar","token",
     "wtt","how","do","pets",
-    "farmers",
+    "farmers","chez","plf",
     "tSM", "mRP", "trp", "total rp",
     "gamble", "bet", "wager", "jackpot", "lottery", "lucky draw", "spin the wheel",
     "selling.*run", "gold.*run",
@@ -429,17 +430,49 @@ local SPAM_PHRASES = {
 
 local function IsSpamMessage(msg)
     local lowerMsg = string.lower(msg)
+    local shortSpamHits = 0
+    local longSpamHits = 0
     for _, word in ipairs(SPAM_WORDS) do
-        if string.find(lowerMsg, word, 1, true) then
-            return true
+        local matched
+        if string.find(word, " ") then
+            matched = string.find(lowerMsg, word, 1, true) ~= nil
+        else
+            matched = string.find(lowerMsg, "%f[%a]" .. word .. "%f[^%a]") ~= nil
+        end
+        if matched then
+            if string.len(word) < 5 then
+                shortSpamHits = shortSpamHits + 1
+            else
+                longSpamHits = longSpamHits + 1
+            end
         end
     end
     for _, phrase in ipairs(SPAM_PHRASES) do
         if string.find(lowerMsg, phrase, 1, true) then
-            return true
+            longSpamHits = longSpamHits + 1
         end
     end
-    return false
+    if longSpamHits >= 1 then
+        return true
+    end
+    local hasStrongLFG =
+        string.match(lowerMsg, "lf%d+m") ~= nil or
+        string.match(lowerMsg, "lf%d") ~= nil or
+        string.find(lowerMsg, "%f[%a]lfm%f[^%a]") ~= nil or
+        string.find(lowerMsg, "need%s+tank") ~= nil or
+        string.find(lowerMsg, "need%s+heal") ~= nil or
+        string.find(lowerMsg, "need%s+dps") ~= nil or
+        string.find(lowerMsg, "need%s+support") ~= nil or
+        string.find(lowerMsg, "1tank") ~= nil or
+        string.find(lowerMsg, "1heal") ~= nil or
+        string.find(lowerMsg, "1dps") ~= nil or
+        string.find(lowerMsg, "%dtank") ~= nil or
+        string.find(lowerMsg, "%dheal") ~= nil or
+        string.find(lowerMsg, "%ddps") ~= nil
+    if hasStrongLFG then
+        return shortSpamHits >= 3
+    end
+    return shortSpamHits >= 2
 end
 
 local function GetCustomKeywords(category)
@@ -1077,7 +1110,36 @@ function LFG.ParseRoles(message)
     return roles
 end
 
+local ROLE_TAG_COLOR = {
+    tank    = "|cff3a7bff",
+    healer  = "|cff2ecf3a",
+    dps     = "|cffe0432b",
+    support = "|cff9b4dff",
+}
+
 function LFG.FormatRolesText(roles)
+    if not roles then return "" end
+    local tank = tonumber(roles.tank) or 0
+    local healer = tonumber(roles.healer) or 0
+    local dps = tonumber(roles.dps) or 0
+    local support = tonumber(roles.support) or 0
+    local parts = {}
+    if tank > 0 then
+        table.insert(parts, ROLE_TAG_COLOR.tank .. "[T]|r")
+    end
+    if healer > 0 then
+        table.insert(parts, ROLE_TAG_COLOR.healer .. "[H]|r")
+    end
+    if dps > 0 then
+        table.insert(parts, ROLE_TAG_COLOR.dps .. "[D]|r")
+    end
+    if support > 0 then
+        table.insert(parts, ROLE_TAG_COLOR.support .. "[S]|r")
+    end
+    return table.concat(parts, " ")
+end
+
+local function FormatRolesFullText(roles)
     if not roles then return "" end
     local tank = tonumber(roles.tank) or 0
     local healer = tonumber(roles.healer) or 0
@@ -1098,6 +1160,7 @@ function LFG.FormatRolesText(roles)
     end
     return table.concat(parts, "  ")
 end
+LFG.FormatRolesFullText = FormatRolesFullText
 
 function LFG.ParseKeystoneInfo(message)
     if not message then return nil, nil end
@@ -1234,7 +1297,7 @@ function LFG.CreateLFGPopup(sender, message, dungeon, isHeroic, isRaid, isPvp, i
     local ar, ag, ab = accent[1], accent[2], accent[3]
 
     local UI = FrostSeekUIUtils
-    local W, H = 340, 78
+    local W, H = 340, 100
     local popup = CreateFrame("Frame", nil, UIParent)
     popup:SetSize(W, H)
     popup:SetFrameStrata("DIALOG")
@@ -1342,26 +1405,8 @@ function LFG.CreateLFGPopup(sender, message, dungeon, isHeroic, isRaid, isPvp, i
     local row1Y = -22
     local iconX = 10
 
-    popup.classIcon = popup:CreateTexture(nil, "ARTWORK")
-    popup.classIcon:SetSize(14, 14)
-    popup.classIcon:SetPoint("TOPLEFT", popup, "TOPLEFT", iconX, row1Y)
-    popup.classIcon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
-    do
-        local cf = nil
-        if sender and FrostSeek and FrostSeek.Presence and FrostSeek.Presence.onlineUsers then
-            local u = FrostSeek.Presence.onlineUsers[sender]
-            if u and u.classFile and u.classFile ~= "" then cf = u.classFile end
-        end
-        if cf and Shared and Shared.GetClassIcon then
-            popup.classIcon:SetTexture(Shared.GetClassIcon(cf))
-            popup.classIcon:Show()
-        else
-            popup.classIcon:Hide()
-        end
-    end
-
     local dungeonFS = popup:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    dungeonFS:SetPoint("TOPLEFT", popup, "TOPLEFT", iconX + 18, row1Y)
+    dungeonFS:SetPoint("TOPLEFT", popup, "TOPLEFT", iconX, row1Y)
     dungeonFS:SetPoint("RIGHT", popup, "RIGHT", -10, 0)
     dungeonFS:SetJustifyH("LEFT")
     local dungeonColorHex = catHex
@@ -1379,8 +1424,22 @@ function LFG.CreateLFGPopup(sender, message, dungeon, isHeroic, isRaid, isPvp, i
     dungeonFS:SetText(dungeonLine)
 
     local row2Y = -40
+    local roles = LFG.ParseRoles(message)
+    local roleTagStr = LFG.FormatRolesText(roles)
+    local roleFullStr = LFG.FormatRolesFullText(roles)
+    local rolesFS = popup:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    rolesFS:SetPoint("TOPLEFT", popup, "TOPLEFT", iconX, row2Y)
+    rolesFS:SetPoint("RIGHT", popup, "RIGHT", -10, 0)
+    rolesFS:SetJustifyH("LEFT")
+    if roleTagStr and roleTagStr ~= "" then
+        rolesFS:SetText("|cff88ccffLooking for:|r " .. roleTagStr)
+    else
+        rolesFS:SetText("|cff888888Looking for: anyone|r")
+    end
+
+    local row3Y = -58
     local msgFS = popup:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-    msgFS:SetPoint("TOPLEFT", popup, "TOPLEFT", iconX, row2Y)
+    msgFS:SetPoint("TOPLEFT", popup, "TOPLEFT", iconX, row3Y)
     msgFS:SetPoint("RIGHT", popup, "RIGHT", -10, 0)
     msgFS:SetJustifyH("LEFT")
     msgFS:SetWordWrap(false)
@@ -1683,20 +1742,26 @@ function LFG.InitRowPool(parent)
         catText:SetWidth(30)
         catText:SetJustifyH("LEFT")
         catText:SetText("")
+        local roleText = row:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+        roleText:SetPoint("LEFT", row, "LEFT", 192, 0)
+        roleText:SetWidth(70)
+        roleText:SetJustifyH("LEFT")
+        roleText:SetText("")
+        roleText:SetTextColor(unpack(_tc("textNorm")))
         local dungeonText = row:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-        dungeonText:SetPoint("LEFT", row, "LEFT", 198, 0)
+        dungeonText:SetPoint("LEFT", row, "LEFT", 266, 0)
         dungeonText:SetWidth(80)
         dungeonText:SetJustifyH("LEFT")
         dungeonText:SetText("")
         dungeonText:SetTextColor(unpack(_tc("textNorm")))
         local msgText = row:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-        msgText:SetPoint("LEFT", row, "LEFT", 290, 0)
+        msgText:SetPoint("LEFT", row, "LEFT", 350, 0)
         msgText:SetPoint("RIGHT", row, "RIGHT", -70, 0)
         msgText:SetJustifyH("LEFT")
         msgText:SetText("")
         msgText:SetTextColor(unpack(_tc("textPrimary")))
         local tooltipFrame = CreateFrame("Frame", nil, row)
-        tooltipFrame:SetPoint("LEFT", row, "LEFT", 290, 0)
+        tooltipFrame:SetPoint("LEFT", row, "LEFT", 350, 0)
         tooltipFrame:SetPoint("RIGHT", row, "RIGHT", -70, 0)
         tooltipFrame:SetHeight(ROW_HEIGHT)
         tooltipFrame:EnableMouse(true)
@@ -1744,6 +1809,7 @@ function LFG.InitRowPool(parent)
             nameText = nameText,
             timeText = timeText,
             catText = catText,
+            roleText = roleText,
             dungeonText = dungeonText,
             msgText = msgText,
             tooltipFrame = tooltipFrame,
@@ -1804,20 +1870,26 @@ function LFG.CreateRowForPool(parent, idx)
     catText:SetWidth(30)
     catText:SetJustifyH("LEFT")
     catText:SetText("")
+    local roleText = row:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    roleText:SetPoint("LEFT", row, "LEFT", 192, 0)
+    roleText:SetWidth(70)
+    roleText:SetJustifyH("LEFT")
+    roleText:SetText("")
+    roleText:SetTextColor(unpack(_tc("textNorm")))
     local dungeonText = row:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-    dungeonText:SetPoint("LEFT", row, "LEFT", 198, 0)
+    dungeonText:SetPoint("LEFT", row, "LEFT", 266, 0)
     dungeonText:SetWidth(80)
     dungeonText:SetJustifyH("LEFT")
     dungeonText:SetText("")
     dungeonText:SetTextColor(unpack(_tc("textNorm")))
     local msgText = row:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-    msgText:SetPoint("LEFT", row, "LEFT", 290, 0)
+    msgText:SetPoint("LEFT", row, "LEFT", 350, 0)
     msgText:SetPoint("RIGHT", row, "RIGHT", -70, 0)
     msgText:SetJustifyH("LEFT")
     msgText:SetText("")
     msgText:SetTextColor(unpack(_tc("textPrimary")))
     local tooltipFrame = CreateFrame("Frame", nil, row)
-    tooltipFrame:SetPoint("LEFT", row, "LEFT", 290, 0)
+    tooltipFrame:SetPoint("LEFT", row, "LEFT", 350, 0)
     tooltipFrame:SetPoint("RIGHT", row, "RIGHT", -70, 0)
     tooltipFrame:SetHeight(ROW_HEIGHT)
     tooltipFrame:EnableMouse(true)
@@ -1865,6 +1937,7 @@ function LFG.CreateRowForPool(parent, idx)
         nameText = nameText,
         timeText = timeText,
         catText = catText,
+        roleText = roleText,
         dungeonText = dungeonText,
         msgText = msgText,
         tooltipFrame = tooltipFrame,
@@ -1909,6 +1982,9 @@ function LFG.UpdateRecruitersList()
             end
         end
     end
+    table.sort(filteredSearches, function(a, b)
+        return (a.lastUpdate or 0) > (b.lastUpdate or 0)
+    end)
     if LFG.lfgCountText then
         LFG.lfgCountText:SetText(string.format(L["lfg_active_recruiters"], #filteredSearches))
     end
@@ -1950,6 +2026,10 @@ function LFG.UpdateRecruitersList()
                 poolRow.timeText:SetText(string.format("%dm", math.floor(timeSince/60)))
             end
             poolRow.catText:SetText(CATEGORY_TAG[record.category] or "|cFF00FF00D|r")
+            local roles = LFG.ParseRoles(record.message)
+            local roleStr = LFG.FormatRolesText(roles)
+            local roleFullStr = LFG.FormatRolesFullText(roles)
+            poolRow.roleText:SetText(roleStr)
             if record.dungeon and record.dungeon ~= "MISC" and record.dungeon ~= "KEYSTONE" and record.dungeon ~= "PVP" and record.dungeon ~= "MANASTORM" and record.dungeon ~= "WORLD_BOSS" then
                 poolRow.dungeonText:SetText(record.dungeon)
             else
@@ -1964,6 +2044,9 @@ function LFG.UpdateRecruitersList()
                 GameTooltip:AddLine("|cFF00FF00Full Message:|r", 0, 1, 0)
                 GameTooltip:AddLine(record.message or "", 1, 1, 1, true)
                 GameTooltip:AddLine(" ")
+                if roleFullStr and roleFullStr ~= "" then
+                    GameTooltip:AddLine("|cFF88CCFFLooking for:|r " .. roleFullStr, 0.9, 0.85, 0.4)
+                end
                 GameTooltip:AddLine("|cFF88CCFFTime:|r " .. string.format("%ds ago", timeSinceForTooltip), 0.8, 0.8, 0.8)
                 if record.dungeon and record.dungeon ~= "MISC" then
                     GameTooltip:AddLine("|cFF88CCFFDungeon:|r " .. record.dungeon, 0.8, 0.8, 0.8)
@@ -2122,8 +2205,8 @@ function LFG:Initialize(parentFrame)
     self.title:SetText("|cff88ccff" .. L["lfg_title"] .. "|r")
     self.title:SetTextColor(unpack(_tc("textAccent")))
     local filterBtn = CreateFrame("Button", "FrostSeekLFGFilterBtn", self.mainContainer)
-    filterBtn:SetSize(22, 22)
-    filterBtn:SetPoint("LEFT", self.title, "RIGHT", 8, 0)
+    filterBtn:SetSize(18, 18)
+    filterBtn:SetPoint("LEFT", self.title, "RIGHT", 10, 0)
     filterBtn.icon = filterBtn:CreateTexture(nil, "ARTWORK")
     filterBtn.icon:SetAllPoints()
     filterBtn.icon:SetTexture("Interface\\AddOns\\FrostSeek\\Media\\texture\\bottoni\\filtri.tga")
@@ -2257,12 +2340,16 @@ function LFG:Initialize(parentFrame)
     catHeader:SetPoint("LEFT", headerFrame, "LEFT", 158, 0)
     catHeader:SetText(L["col_type"])
     catHeader:SetTextColor(unpack(_tc("textAccent")))
+    local roleHeader = headerFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    roleHeader:SetPoint("LEFT", headerFrame, "LEFT", 192, 0)
+    roleHeader:SetText(L["col_role"])
+    roleHeader:SetTextColor(unpack(_tc("textAccent")))
     local dungeonHeader = headerFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-    dungeonHeader:SetPoint("LEFT", headerFrame, "LEFT", 198, 0)
+    dungeonHeader:SetPoint("LEFT", headerFrame, "LEFT", 266, 0)
     dungeonHeader:SetText(L["col_dungeon"])
     dungeonHeader:SetTextColor(unpack(_tc("textAccent")))
     local msgHeader = headerFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-    msgHeader:SetPoint("LEFT", headerFrame, "LEFT", 290, 0)
+    msgHeader:SetPoint("LEFT", headerFrame, "LEFT", 350, 0)
     msgHeader:SetText(L["col_message"])
     msgHeader:SetTextColor(unpack(_tc("textAccent")))
     local acceptHeader = headerFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
