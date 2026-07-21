@@ -55,7 +55,7 @@ function FrostSeek._v.g(name)
     return FrostSeek._v.w[name]
 end
 
-FrostSeek.VERSION = "2.1.3"
+FrostSeek.VERSION = "2.1.4"
 
 FrostSeekDB = FrostSeekDB or {}
 
