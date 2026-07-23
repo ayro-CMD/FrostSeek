@@ -107,25 +107,12 @@ function Presence:HandlePresence(user)
             Shared.PlaySound("popup")
         end
     end
-
+    
     local myVersion = FrostSeek.VERSION or ""
     if user.version and user.version ~= "" and user.version ~= myVersion then
         user.outdated = true
-        if not self.versionWarned[user.name] then
-            self.versionWarned[user.name] = true
-            print("|cffffcc00FrostNet:|r " .. tostring(user.name) .. " is using v" .. tostring(user.version) .. " (current: v" .. myVersion .. ")")
-        end
     else
         user.outdated = false
-    end
-
-    if user.version and user.version ~= "" and user.version ~= myVersion then
-        if self:CompareVersions(user.version, myVersion) > 0 then
-            if not self.newerVersionNotified then
-                self.newerVersionNotified = true
-                print("|cffff8800FrostNet:|r A newer version (v" .. tostring(user.version) .. ") is available! You are on v" .. myVersion .. ". Please update FrostSeek!")
-            end
-        end
     end
 
     if self.panelVisible and self.panel and self.panel:IsShown() then

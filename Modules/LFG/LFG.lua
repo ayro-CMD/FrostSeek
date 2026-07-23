@@ -387,7 +387,7 @@ local SPAM_WORDS = {
     "world first", "qualif","girl","small","boy","goth","gnome",
     "awakening", "twisting","why","crafter","whick","professions","profession",
     "transfer", "transfers", "realm transfer", "server transfer", "move to", "come join",
-    "invite link", "discord link", "discord server",
+    "invite link", "discord link", "discord server","WTB",
     "website", "armory", "raider.io", "rio", "wowprogress", "wcl", "warcraftlogs",
     "check our", "check my", "for info", "apply in", "apply on", "apply at",
     "register", "enroll","day","days","hour","quest","quests","hours","no","alone","them","woodworker",
