@@ -55,7 +55,7 @@ function FrostSeek._v.g(name)
     return FrostSeek._v.w[name]
 end
 
-FrostSeek.VERSION = "2.1.5"
+FrostSeek.VERSION = "2.1.6"
 
 FrostSeekDB = FrostSeekDB or {}
 
@@ -589,11 +589,13 @@ local CATEGORY_ICONS = {
     WORLD_BOSS  = ICON_BASE .. "giallo.tga",
     MANASTORM   = ICON_BASE .. "viola.tga",
     DUNGEON     = ICON_BASE .. "verde.tga",
+    QUEST       = ICON_BASE .. "azz.tga",
 }
 
 local ICON_PRIORITY = {
     KEYSTONE = 6, RAID = 5, PVP = 4,
     WORLD_BOSS = 3, MANASTORM = 2, DUNGEON = 1,
+    QUEST = 0,
 }
 
 local DEFAULT_ICON = ICON_BASE .. "multi.tga"
@@ -959,7 +961,7 @@ SlashCmdList["FSCLASS"] = function(msg)
     print("|cff888888To override: /fsclass set Templar|r")
     print("|cff888888To reset:    /fsclass reset|r")
 end
-
+--noah
 local _tk = FrostSeek._v.a("core", FrostSeek)
 
 local autoOpenHandled = false
