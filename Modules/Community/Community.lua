@@ -141,6 +141,7 @@ local RECRUIT_KEYWORDS = {
     -- Romanian
     "recrutam", "cautam membri", "alturati", "alturatu", "vineti",
     "breasla cauta", "breasla recruteaza", "recrutare",
+    --mimi
 }
 
 local LANG_HINTS = {

@@ -77,7 +77,9 @@ local RAID_KEYWORDS = {
     "dragon soul", "ds", "deathwing",
     "mogu'shan vaults", "msv", "heart of fear", "hof", "shek'zeer",
     "terrace of endless spring", "toes", "throne of thunder", "tot", "lei shen",
-    "siege of orgrimmar", "soo", "garrosh"
+    "siege of orgrimmar", "soo", "garrosh",
+    --warmane
+    "icc10","icc25","icc10n","icc25n","icc10hc","icc25hc","rs25n","rs25hc","rs10n","rs25n"
 }
 
 local WORLD_BOSS_KEYWORDS = {
@@ -381,14 +383,14 @@ local SPAM_WORDS = {
     "active members", "mature players", "friendly guild", "pve guild", "pvp guild", "leveling guild",
     "social guild", "g looking", "is looking for", "guild event", "community night","help","boost",
     "wts", "wtb", "sell", "selling", "buy", "gdkp", "carry service","anybody","lockboxes",
-    "boosting service", "pilot", "piloted", "price", "cheap", "offer",
+    "boosting service", "pilot", "piloted", "price", "cheap", "offer","addon","frame",
     "service", "cache", "nuked", "ksh", "keystone master","florida","grass",
     "mdi", "server first", "top guild", "best guild","gf","which","every",
-    "world first", "qualif","girl","small","boy","goth","gnome",
+    "world first", "qualif","girl","small","boy","goth","gnome","testing","dont",
     "awakening", "twisting","why","crafter","whick","professions","profession",
     "transfer", "transfers", "realm transfer", "server transfer", "move to", "come join",
-    "invite link", "discord link", "discord server","WTB",
-    "website", "armory", "raider.io", "rio", "wowprogress", "wcl", "warcraftlogs",
+    "invite link", "discord link", "discord server","WTB","days","sandles","damnit",
+    "website", "hipe", "raider.io", "rio", "wowprogress", "wcl", "warcraftlogs",
     "check our", "check my", "for info", "apply in", "apply on", "apply at",
     "register", "enroll","day","days","hour","quest","quests","hours","no","alone","them","woodworker",
     "stream", "streamer", "content creator", "clip", "recording", "obs", "studio",
@@ -396,11 +398,11 @@ local SPAM_WORDS = {
     "donate", "donation", "support me", "follow", "subscribe", "giveaway",
     "raffle", "contest", "prize", "merch", "store", "shop", "buy now",
     "weakaura", "weakauras", "elvui", "tukui", "plater", "dbm", "bigwigs",
-    "https", "discord.gg", "twitch.tv", "youtube",
-    "account", "heirloom","help","bazaar","token",
-    "wtt","how","do","pets",
-    "farmers","chez","plf",
-    "tSM", "mRP", "trp", "total rp",
+    "https", "discord.gg", "twitch.tv", "youtube", "but", "ahead",
+    "account", "heirloom","help","bazaar","token","don't", "shit",
+    "wtt","how","do","pets","stress","test","here","xd",
+    "farmers","chez","plf","test","pasticcio","nearby","never",
+    "tSM", "mRP", "trp", "total rp","?","other",
     "gamble", "bet", "wager", "jackpot", "lottery", "lucky draw", "spin the wheel",
     "selling.*run", "gold.*run",
     "alchemy", "alch", "blacksmithing", "bs", "enchanting", "ench", "engineering", "eng", "inscription",
@@ -517,7 +519,7 @@ local function wholeWordFind(text, word)
     if not text or not word then return false end
     return string.find(text, "%f[%a%d]" .. word .. "%f[^%a%d]") ~= nil
 end
-
+--shynga
 function LFG.IsLFMMessage(msg)
     if not msg then return false end
     local lowerMsg = string.lower(msg)
@@ -2297,8 +2299,8 @@ function LFG:Initialize(parentFrame)
     recruitersBg:SetAllPoints()
     recruitersBg:SetColorTexture(unpack(_tc("bgRowOdd")))
     self.lfgTabs = {}
-    local lfgTabTypes = {"ALL", "DUNGEON", "RAID", "WORLD_BOSS", "PVP", "MANASTORM", "KEYSTONE", "MISC"}
-    local lfgTabNames = {"All", L["col_dungeon"], "Raid", "WBoss", "PvP", "Mana", "Key", "Misc"}
+    local lfgTabTypes = {"ALL", "DUNGEON", "RAID", "WORLD_BOSS", "PVP", "MANASTORM", "KEYSTONE"}
+    local lfgTabNames = {"All", L["col_dungeon"], "Raid", "WBoss", "PvP", "Mana", "Key"}
     for i, tabName in ipairs(lfgTabNames) do
         local tab = CreateFrame("Button", nil, self.recruitersFrame)
         tab:SetSize(70, 22)

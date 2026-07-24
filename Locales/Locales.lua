@@ -49,6 +49,7 @@ local STRINGS = {
     ["cat_manastorm"] = "Manastorm",
     ["cat_keystone"] = "Keystone",
     ["cat_misc"] = "Misc",
+    ["cat_quest"] = "Quest",
     ["cat_all"] = "All",
 
     ["diff_normal"] = "N",

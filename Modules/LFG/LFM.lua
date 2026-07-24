@@ -1473,11 +1473,11 @@ function LFM:Initialize(parentFrame)
     end)
 
     self.spamFrame = CreateFrame("Frame", nil, self.mainContainer)
-    self.spamFrame:SetSize(740, 28)
+    self.spamFrame:SetSize(740, 52)
     self.spamFrame:SetPoint("TOP", self.messageFrame, "BOTTOM", 0, -4)
 
     local spamLabel = self.spamFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-    spamLabel:SetPoint("LEFT", self.spamFrame, "LEFT", 10, 0)
+    spamLabel:SetPoint("LEFT", self.spamFrame, "LEFT", 10, 12)
     spamLabel:SetText(L["lfm_spam"] .. ":")
     spamLabel:SetTextColor(0.6, 0.8, 1)
 
@@ -1513,7 +1513,7 @@ function LFM:Initialize(parentFrame)
     self.spamStatusText:Hide()
 
     local chLabel = self.spamFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-    chLabel:SetPoint("RIGHT", self.spamFrame, "RIGHT", -290, 0)
+    chLabel:SetPoint("LEFT", self.spamFrame, "LEFT", 10, -12)
     chLabel:SetText(L["lfm_channel"] .. ":")
     chLabel:SetTextColor(unpack(_tc("textMuted")))
 
@@ -1527,11 +1527,11 @@ function LFM:Initialize(parentFrame)
 
     self.spamChannelButtons = {}
     self.spamChannelLabels = {}
-    for i = 1, 5 do
+    for i = 1, 10 do
         local chSlotName = GetChannelSlotName(i)
         local btnLabel = chSlotName and string.sub(chSlotName, 1, 5) or tostring(i)
         local btn = CreateSmallToggle(self.spamFrame, btnLabel,
-            740 - 270 + (i-1) * 40, 0, 34, 20,
+            80 + (i-1) * 40, -12, 34, 20,
             function(active)
                 spamChannels[i] = active
                 if not FrostSeekDB.LFM.spamChannels then FrostSeekDB.LFM.spamChannels = {} end
@@ -1566,7 +1566,7 @@ function LFM:Initialize(parentFrame)
     end
 
     self.refreshChannelTimer = C_Timer.NewTicker(5, function()
-        for i = 1, 5 do
+        for i = 1, 10 do
             local btn = self.spamChannelButtons[i]
             if btn then
                 local chSlotName = GetChannelSlotName(i)

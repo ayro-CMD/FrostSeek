@@ -46,12 +46,13 @@ local LISTING_EXPIRE = 300
 local APP_PENDING_EXPIRE = 300
 local browseScrollFrame = nil
 
-local ACTIVITY_TYPES = {"Dungeon", "Raid", "World Boss", "Key", "Event", "PvP", "Manastorm"}
+local ACTIVITY_TYPES = {"Dungeon", "Raid", "World Boss", "Key", "Event", "PvP", "Manastorm", "Quest"}
 local EXPANSIONS = {"Classic", "TBC", "WotLK", "Cata", "MoP", "Custom"}
 local DIFFICULTIES = {"Normal", "Heroic", "Mythic"}
 local EVENT_DIFFICULTIES = {"Normal"}
 local MANASTORM_DIFFICULTIES = {"Normal"}
 local KEY_DIFFICULTIES = {"Mythic+"}
+local QUEST_DIFFICULTIES = {"Normal", "Group", "Daily", "Weekly", "Chain"}
 local RAID_DIFFICULTIES = {"Normal", "Heroic", "Mythic", "Ascended", "Trial 1", "Trial 2", "Trial 3", "Trial 4", "Trial 5", "Trial 6", "Trial 7", "Trial 8", "Trial 9", "Trial 10"}
 local BOSS_DIFFICULTIES = {"Open World", "Instanced", "HC Instanced", "Mythic Instanced", "Ascended Instanced"}
 local PVP_DIFFICULTIES = {"Normal", "Ranked"}
@@ -100,6 +101,9 @@ local ACTIVITY_DB = {
     MANASTORM = {
         ALL = {"ALVA", "Manastorm Gold Farm", "Manastorm Leveling", "Manastorm Bonzo Farm"},
     },
+    QUEST = {
+        ALL = {"Group Quest", "Daily Quest", "Weekly Quest", "Chain Quest", "Raid Quest", "PvP Quest", "Reputation Quest", "Event Quest", "Story Quest", "World Quest"},
+    },
 }
 
 local TYPE_ICONS = {
@@ -110,6 +114,7 @@ local TYPE_ICONS = {
     Event = "Interface\\AddOns\\FrostSeek\\Media\\texture\\icon\\custom\\custom.tga",
     Manastorm = "Interface\\AddOns\\FrostSeek\\Media\\texture\\icon\\custom\\alva.tga",
     PvP = "Interface\\AddOns\\FrostSeek\\Media\\texture\\icon\\custom\\pandino.tga",
+    Quest = "Interface\\AddOns\\FrostSeek\\Media\\texture\\icon\\custom\\custom.tga",
 }
 
 local TYPE_COLORS = {
@@ -120,6 +125,7 @@ local TYPE_COLORS = {
     Event = "|cffff9a33",
     Manastorm = "|cffaa66ff",
     PvP = "|cffff5555",
+    Quest = "|cffffd966",
 }
 
 local function GetRelevantExpansions()
@@ -148,7 +154,7 @@ local function GetActivitiesForType(expansion, ltype)
     local typeKey = string.upper(ltype)
     local db = ACTIVITY_DB[typeKey]
     if not db then return {} end
-    if typeKey == "PVP" or typeKey == "EVENT" or typeKey == "MANASTORM" then
+    if typeKey == "PVP" or typeKey == "EVENT" or typeKey == "MANASTORM" or typeKey == "QUEST" then
         return db.ALL or {}
     end
     if typeKey == "KEY" then
@@ -274,6 +280,7 @@ function Listings:HandleIncomingListing(listing)
                     listing.type == "Dungeon" and "DUNGEON" or
                     listing.type == "Event" and "MANASTORM" or
                     listing.type == "Manastorm" and "MANASTORM" or
+                    listing.type == "Quest" and "QUEST" or
                     "DUNGEON"
         FrostSeek.SetMinimapCategory(cat)
         C_Timer.After(30, function()
@@ -763,6 +770,7 @@ function Listings:PassFilter(listing)
     if self.filter == "Keys" and listing.type ~= "Key" then return false end
     if self.filter == "Events" and listing.type ~= "Event" and listing.type ~= "World Boss" then return false end
     if self.filter == "Manastorm" and listing.type ~= "Manastorm" then return false end
+    if self.filter == "Quests" and listing.type ~= "Quest" then return false end
 
     if self.searchText and self.searchText ~= "" then
         local hay = string.lower((listing.activity or "") .. " " .. (listing.leader or "") .. " " .. (listing.note or ""))
@@ -900,12 +908,12 @@ function Listings:BuildBrowseFrame()
     f:SetAllPoints(F)
     self.browseFrame = f
 
-    local filters = {"All", "Dungeons", "Raids", "Keys", "Events", "Manastorm"}
+    local filters = {"All", "Dungeons", "Raids", "Keys", "Events", "Manastorm", "Quests"}
     self.filterButtons = {}
     for i, ft in ipairs(filters) do
         local btn = CreateFrame("Button", nil, f)
-        btn:SetSize(75, 22)
-        btn:SetPoint("TOPLEFT", f, "TOPLEFT", (i - 1) * 80, 0)
+        btn:SetSize(65, 22)
+        btn:SetPoint("TOPLEFT", f, "TOPLEFT", (i - 1) * 70, 0)
         btn.bg = btn:CreateTexture(nil, "BACKGROUND")
         btn.bg:SetAllPoints()
         btn.bg:SetColorTexture(unpack(_tc("bgBlock")))
@@ -1668,6 +1676,9 @@ function Listings:BuildCreateFrame()
                 Listings.createDiff:SetText("Normal")
             elseif ltype == "Manastorm" then
                 Listings.createDiff:SetOptions(MANASTORM_DIFFICULTIES)
+                Listings.createDiff:SetText("Normal")
+            elseif ltype == "Quest" then
+                Listings.createDiff:SetOptions(QUEST_DIFFICULTIES)
                 Listings.createDiff:SetText("Normal")
             else
                 Listings.createDiff:SetOptions(DIFFICULTIES)
