@@ -376,7 +376,7 @@ local SPAM_WORDS = {
     "pocket", "sadgirl","issue","when","enchanter","israel","nazi","mejor","feminista","braincells","breastfeed","bbw","comunista","cocaine","why",
     "drugs","fascista","fascist","vox","mundial","spain","anyone","know","you","staff","ticket","golf","player","players","worldforged","certain",
     "guild", "community", "recruit", "recruiting", "recru", "roster", "lf members", "lf guild","what","is","this","high","do",
-    "guild lf", "new guild", "gm is", "leader is", "our guild", "us on","america","ginvite","el retard","?",
+    "guild lf", "new guild", "gm is", "leader is", "our guild", "us on","america","ginvite","el retard",
     "application", "roster spot", "core group", "core team","layers","have","deutsche","gilde","complicate",
     "hardcore guild", "casual guild", "semi-hardcore", "mythic raiding", "raid team", "static group",
     "looking for members", "looking for guild", "looking for a guild", "guild is looking","call","ppl",
