@@ -140,21 +140,21 @@ local RECRUIT_KEYWORDS = {
     "privetstvuyem", "priglashaem", "rekrutatsiya", "gilda ishchet",
     -- Romanian
     "recrutam", "cautam membri", "alturati", "alturatu", "vineti",
-    "breasla cauta", "breasla recruteaza", "recrutare",
+    "breasla cauta", "breasla recruteaza", "recrutare","romani",
     --mimi
 }
 
 local LANG_HINTS = {
-    it = { "reclutiamo", "arruoliamo", "cerchiamo", "unisciti", "unitevi", "gilda", "membri", "siamo", "abbiamo", "venite" },
-    es = { "reclutamos", "buscamos", "únete", "unete", "uníos", "hermandad", "miembros", "somos", "tenemos", "venid" },
-    pt = { "recrutamos", "procuramos", "junte", "guilda", "membros", "somos", "temos", "venham" },
-    de = { "rekrutieren", "wir", "suchen", "tritt", "tretet", "gilde", "mitglieder", "haben", "kommt" },
-    fr = { "recrutons", "rejoignez", "cherchons", "guilde", "membres", "sommes", "avons", "venez" },
-    en = { "recruit", "recruiting", "looking", "join", "guild", "members", "we are", "have", "come" },
-    pl = { "rekrutujemy", "szukamy", "dolacz", "gildia", "czlonkow", "zapraszamy", "przywitaj", "gildie", "rekrutacja", "do nas" },
-    cs = { "rekrutujeme", "hledame", "pripojte", "guilda", "clenu", "zveme", "vitejte", "rekrutace", "hleda", "k nam" },
-    ru = { "rekrytiryem", "ishchem", "prisoedinyaytes", "gildiyu", "chlenov", "priglashaem", "privetstvuyem", "rekrutatsiya", "gilda", "k nam" },
-    ro = { "recrutam", "cautam", "alturati", "alturatu", "vineti", "breasla", "membri", "suntem", "avem", "alaturi" },
+    it = { "reclutiamo", "arruoliamo", "cerchiamo", "unisciti", "unitevi", "gilda", "membri", "siamo", "abbiamo", "venite", "[IT]" },
+    es = { "reclutamos", "buscamos", "únete", "unete", "uníos", "hermandad", "miembros", "somos", "tenemos", "venid", "[ES]" },
+    pt = { "recrutamos", "procuramos", "junte", "guilda", "membros", "somos", "temos", "venham", "[PT]", "[BR]", "[PT/BR]" },
+    de = { "rekrutieren", "wir", "suchen", "tritt", "tretet", "gilde", "mitglieder", "haben", "kommt", "[DE]" },
+    fr = { "recrutons", "rejoignez", "cherchons", "guilde", "membres", "sommes", "avons", "venez", "[FR]" },
+    en = { "recruit", "recruiting", "looking", "join", "guild", "members", "we are", "have", "come", "[EN]" },
+    pl = { "rekrutujemy", "szukamy", "dolacz", "gildia", "czlonkow", "zapraszamy", "przywitaj", "gildie", "rekrutacja", "do nas", "[PL]" },
+    cs = { "rekrutujeme", "hledame", "pripojte", "guilda", "clenu", "zveme", "vitejte", "rekrutace", "hleda", "k nam", "[CZ]" },
+    ru = { "rekrytiryem", "ishchem", "prisoedinyaytes", "gildiyu", "chlenov", "priglashaem", "privetstvuyem", "rekrutatsiya", "gilda", "k nam", "[RU]" },
+    ro = { "recrutam", "cautam", "alturati", "alturatu", "vineti", "breasla", "membri", "suntem", "avem", "alaturi","recruteaza","[Ro]" },
 }
 
 local LANG_LABELS = {
@@ -469,6 +469,7 @@ local EVENT_EXPIRE_SECONDS = {
     ["Never"]   = 0,
 }
 local EVENT_CHANNEL = "FSK-EVT"
+local EVENT_CHANNEL_SLOT = 13
 local EVENT_PREFIX = "FSKE1"
 local EVENT_QUERY_PREFIX = "FSKEQ"
 local EVENT_RESPONSE_PREFIX = "FSKER"
@@ -660,7 +661,12 @@ local function EventSend(payload)
         pcall(function() SendChatMessage(payload, "CHANNEL", nil, id) end)
         return true
     end
-    pcall(function() JoinChannelByName(EVENT_CHANNEL) end)
+    local Compat = _G.FrostSeekCompat
+    if Compat and Compat.ChannelAPI and Compat.ChannelAPI.JoinChannel then
+        pcall(function() Compat.ChannelAPI.JoinChannel(EVENT_CHANNEL, nil, EVENT_CHANNEL_SLOT) end)
+    else
+        pcall(function() JoinChannelByName(EVENT_CHANNEL, nil, nil, EVENT_CHANNEL_SLOT) end)
+    end
     return false
 end
 
@@ -831,7 +837,12 @@ local function EventInstallListener()
             pcall(function() Community:RefreshEventBoard() end)
         end
     end)
-    pcall(function() JoinChannelByName(EVENT_CHANNEL) end)
+    local Compat = _G.FrostSeekCompat
+    if Compat and Compat.ChannelAPI and Compat.ChannelAPI.JoinChannel then
+        pcall(function() Compat.ChannelAPI.JoinChannel(EVENT_CHANNEL, nil, EVENT_CHANNEL_SLOT) end)
+    else
+        pcall(function() JoinChannelByName(EVENT_CHANNEL, nil, nil, EVENT_CHANNEL_SLOT) end)
+    end
     C_Timer.NewTicker(300, function()
         EventClearExpired(true)
     end)

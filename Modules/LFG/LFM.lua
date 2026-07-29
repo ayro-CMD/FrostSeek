@@ -163,6 +163,7 @@ local LFM_ACTIVITIES = {
         { name = "Bardid Hold", template = "LFM Bardid Hold {roles}", keywords = {"Bardid Hold", "BH"} },
         { name = "Vault of the Inquisition", template = "LFM Vault {difficulty} {roles}", keywords = {"vault", "inquisition"} },
         { name = "Road to De' Other Side", template = "LFM Other Side {difficulty} {roles}", keywords = {"Road to De' Other Side"} },
+        { name = "RDF", template = "LFM RDF {difficulty} {roles}", keywords = {"rdf", "random dungeon finder"} },
     },
     MANASTORM = {
         { name = "ALVA", template = "LFM ALVA Boss {roles}", keywords = {"alva", "boss"} },
@@ -212,7 +213,7 @@ local LFM_ACTIVITIES = {
 local DIFFICULTIES = {
     RAIDS = {"Normal", "Heroic", "Mythic", "Ascended", "Trial 1", "Trial 2", "Trial 3", "Trial 4", "Trial 5", "Trial 6", "Trial 7", "Trial 8", "Trial 9", "Trial 10"},
     DUNGEONS = {"Normal", "Heroic", "Mythic"},
-    WORLD_BOSS = {"Open World", "Instanced", "HC Instanced", "Mythic Instanced", "Ascended Instanced"},
+    WORLD_BOSS = {"Open World", "Instanced", "HC Instanced", "Mythic Instanced", "Ascended Instanced", "D1", "D2", "D3", "D4", "D5", "D6", "D7", "D8", "D9", "D10"},
     KEYSTONE = {"Mythic+"},
 }
 
@@ -435,6 +436,26 @@ local function ValidateGroupComposition()
     return nil
 end
 
+local LFM_ADDON_CHANNEL_BLACKLIST = {
+    ["FSK"]          = true,
+    [" FSK"]         = true,
+    ["FrostSeek"]    = true,
+    ["FrostNet"]     = true,
+    ["BLFG"]         = true,
+    ["BBLC25C"]      = true,
+    ["HGE"]          = true,
+}
+
+local function IsLFMAddonChannel(channelName)
+    if not channelName or channelName == "" then return false end
+    local trimmed = string.match(channelName, "^%s*(.-)%s*$") or channelName
+    if trimmed == "" then return false end
+    local key = string.upper(trimmed)
+    if LFM_ADDON_CHANNEL_BLACKLIST[key] then return true end
+    if LFM_ADDON_CHANNEL_BLACKLIST[" " .. key] then return true end
+    return false
+end
+
 local function SendLFMMessage(message, channel)
     if not message or message == "" then return false end
 
@@ -461,12 +482,17 @@ local function SendLFMMessage(message, channel)
             end
 
             if realId and chName and tostring(chName) ~= "" then
-                local ok2, err = pcall(function()
-                    SendChatMessage(message, "CHANNEL", nil, realId)
-                end)
-                if not ok2 then
-                    print("|cffff0000FrostSeek LFM:|r Failed to send on channel " .. tostring(chName) .. ": " .. tostring(err))
+                if IsLFMAddonChannel(tostring(chName)) then
+                    print("|cffff0000FrostSeek LFM:|r Skipped addon channel '" .. tostring(chName) .. "' (slot " .. channelNum .. ")")
                     success = false
+                else
+                    local ok2, err = pcall(function()
+                        SendChatMessage(message, "CHANNEL", nil, realId)
+                    end)
+                    if not ok2 then
+                        print("|cffff0000FrostSeek LFM:|r Failed to send on channel " .. tostring(chName) .. ": " .. tostring(err))
+                        success = false
+                    end
                 end
             else
                 print("|cffff0000FrostSeek LFM:|r Channel slot " .. channelNum .. " not found! Open chat channels to populate the list.")
@@ -842,7 +868,8 @@ function UpdateActivityList()
 
     for i, activity in ipairs(filteredActivities) do
         local btn = CreateFrame("Button", nil, LFM.activitiesContent)
-        btn:SetSize(700, 26)
+        local rowW = (LFM.activitiesContent and LFM.activitiesContent:GetWidth()) or 700
+        btn:SetSize(rowW, 26)
         btn:SetPoint("TOPLEFT", LFM.activitiesContent, "TOPLEFT", 2, yOffset)
 
         local bg = btn:CreateTexture(nil, "BACKGROUND")
@@ -1262,9 +1289,12 @@ end
 function LFM:Initialize(parentFrame)
     self.frame = CreateFrame("Frame", nil, parentFrame)
     self.frame:SetAllPoints(parentFrame)
+    local CW = math.max(700, (parentFrame:GetWidth() or 800) - 20)
+    local IW = CW - 20
+    local AW = IW - 40
 
     self.mainContainer = CreateFrame("Frame", nil, self.frame)
-    self.mainContainer:SetSize(760, 520)
+    self.mainContainer:SetSize(CW, 520)
     self.mainContainer:SetPoint("TOP", self.frame, "TOP", 0, -5)
     self.mainContainer:EnableMouse(true)
     self.mainContainer:SetScript("OnMouseDown", function()
@@ -1283,7 +1313,7 @@ function LFM:Initialize(parentFrame)
     self.desc:SetTextColor(unpack(_tc("textMuted")))
 
     self.rolesFrame = CreateFrame("Frame", nil, self.mainContainer)
-    self.rolesFrame:SetSize(740, 26)
+    self.rolesFrame:SetSize(IW, 26)
     self.rolesFrame:SetPoint("TOP", self.desc, "BOTTOM", 0, -6)
 
     local rolesLabel = self.rolesFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
@@ -1350,7 +1380,7 @@ function LFM:Initialize(parentFrame)
     end
 
     self.searchFrame = CreateFrame("Frame", nil, self.mainContainer)
-    self.searchFrame:SetSize(740, 26)
+    self.searchFrame:SetSize(IW, 26)
     self.searchFrame:SetPoint("TOP", self.rolesFrame, "BOTTOM", 0, -4)
 
     local searchLabel = self.searchFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
@@ -1375,7 +1405,7 @@ function LFM:Initialize(parentFrame)
     end)
 
     self.categoriesFrame = CreateFrame("Frame", nil, self.mainContainer)
-    self.categoriesFrame:SetSize(740, 26)
+    self.categoriesFrame:SetSize(IW, 26)
     self.categoriesFrame:SetPoint("TOP", self.searchFrame, "BOTTOM", 0, -4)
 
     local categoryTabs = {
@@ -1434,7 +1464,7 @@ function LFM:Initialize(parentFrame)
     end
 
     self.activitiesFrame = CreateFrame("Frame", nil, self.mainContainer)
-    self.activitiesFrame:SetSize(740, 200)
+    self.activitiesFrame:SetSize(IW, 200)
     self.activitiesFrame:SetPoint("TOP", self.categoriesFrame, "BOTTOM", 0, -6)
 
     local activitiesBg = self.activitiesFrame:CreateTexture(nil, "BACKGROUND")
@@ -1446,11 +1476,11 @@ function LFM:Initialize(parentFrame)
     self.activitiesScrollFrame:SetPoint("BOTTOMRIGHT", -25, 5)
 
     self.activitiesContent = CreateFrame("Frame", nil, self.activitiesScrollFrame)
-    self.activitiesContent:SetSize(700, 200)
+    self.activitiesContent:SetSize(AW, 200)
     self.activitiesScrollFrame:SetScrollChild(self.activitiesContent)
 
     self.messageFrame = CreateFrame("Frame", nil, self.mainContainer)
-    self.messageFrame:SetSize(740, 32)
+    self.messageFrame:SetSize(IW, 32)
     self.messageFrame:SetPoint("TOP", self.activitiesFrame, "BOTTOM", 0, -6)
 
     local messageLabel = self.messageFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
@@ -1473,7 +1503,7 @@ function LFM:Initialize(parentFrame)
     end)
 
     self.spamFrame = CreateFrame("Frame", nil, self.mainContainer)
-    self.spamFrame:SetSize(740, 52)
+    self.spamFrame:SetSize(IW, 52)
     self.spamFrame:SetPoint("TOP", self.messageFrame, "BOTTOM", 0, -4)
 
     local spamLabel = self.spamFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
@@ -1517,10 +1547,33 @@ function LFM:Initialize(parentFrame)
     chLabel:SetText(L["lfm_channel"] .. ":")
     chLabel:SetTextColor(unpack(_tc("textMuted")))
 
+    local ADDON_CHANNEL_BLACKLIST = {
+        ["FSK"]          = true,
+        [" FSK"]         = true,
+        ["FrostSeek"]    = true,
+        ["FrostNet"]     = true,
+        ["BLFG"]         = true,
+        ["BBLC25C"]      = true,
+        ["HGE"]          = true,
+    }
+
+    local function IsAddonChannel(channelName)
+        if not channelName or channelName == "" then return false end
+        local trimmed = string.match(channelName, "^%s*(.-)%s*$") or channelName
+        if trimmed == "" then return false end
+        local key = string.upper(trimmed)
+        if ADDON_CHANNEL_BLACKLIST[key] then return true end
+        local keyWithSpace = " " .. key
+        if ADDON_CHANNEL_BLACKLIST[keyWithSpace] then return true end
+        return false
+    end
+
     local function GetChannelSlotName(slotIndex)
         local ok, id, name = pcall(function() return GetChannelName(slotIndex) end)
         if ok and type(id) == "number" and id > 0 and name and tostring(name) ~= "" then
-            return tostring(name)
+            local chName = tostring(name)
+            if IsAddonChannel(chName) then return nil end
+            return chName
         end
         return nil
     end
@@ -1605,7 +1658,7 @@ function LFM:Initialize(parentFrame)
     end)
 
     self.autoInviteFrame = CreateFrame("Frame", nil, self.mainContainer)
-    self.autoInviteFrame:SetSize(740, 28)
+    self.autoInviteFrame:SetSize(IW, 28)
     self.autoInviteFrame:SetPoint("TOP", self.spamFrame, "BOTTOM", 0, -4)
 
     local aiLabel = self.autoInviteFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
@@ -1679,7 +1732,7 @@ function LFM:Initialize(parentFrame)
     aiDesc:SetTextColor(unpack(_tc("textDim")))
 
     self.controlsFrame = CreateFrame("Frame", nil, self.mainContainer)
-    self.controlsFrame:SetSize(740, 32)
+    self.controlsFrame:SetSize(IW, 32)
     self.controlsFrame:SetPoint("BOTTOM", self.mainContainer, "BOTTOM", 0, 8)
 
     self.sendAllBtn = CreateModernButton(self.controlsFrame, 76, 22, L["lfm_send_all"], _tc("warning"))

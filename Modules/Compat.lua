@@ -344,26 +344,36 @@ end
 
 FrostSeekCompat.ChannelAPI = {}
 
-function FrostSeekCompat.ChannelAPI.JoinChannel(channelName, password)
+function FrostSeekCompat.ChannelAPI.JoinChannel(channelName, password, slot)
     if not channelName then return false end
     password = password or nil
+    slot = slot or nil
 
     local ok, err = pcall(function()
         if JoinChannelByName then
-            
+
             if FrostSeekCompat.Is335() then
-                JoinChannelByName(channelName, password)
+                pcall(function()
+                    if slot then
+                        JoinChannelByName(channelName, password, nil, slot)
+                    else
+                        JoinChannelByName(channelName, password)
+                    end
+                end)
             else
-                
-                JoinChannelByName(channelName, password, nil, 1)
+                if slot then
+                    JoinChannelByName(channelName, password, nil, slot)
+                else
+                    JoinChannelByName(channelName, password, nil, 1)
+                end
             end
         elseif JoinPermanentChannel then
             JoinPermanentChannel(channelName, password)
         else
-            
+
             local info = C_ChatInfo and C_ChatInfo.GetChannelInfoFromIdentifier and C_ChatInfo.GetChannelInfoFromIdentifier(channelName)
             if info then
-                
+
             end
         end
     end)

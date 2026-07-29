@@ -55,7 +55,7 @@ function FrostSeek._v.g(name)
     return FrostSeek._v.w[name]
 end
 
-FrostSeek.VERSION = "2.1.6"
+FrostSeek.VERSION = "2.1.7"
 
 FrostSeekDB = FrostSeekDB or {}
 
@@ -241,6 +241,31 @@ end
 
 EnsureSettingsIntegrity()
 
+function FrostSeek.IsAddonDisabled()
+    return FrostSeekDB and FrostSeekDB.LFG and
+        FrostSeekDB.LFG.disableLFG == true and
+        FrostSeekDB.LFG.disablePopups == true
+end
+
+function FrostSeek.SetAddonDisabled(disabled)
+    if not FrostSeekDB or not FrostSeekDB.LFG then return end
+    disabled = disabled and true or false
+    FrostSeekDB.LFG.disableLFG = disabled
+    FrostSeekDB.LFG.disablePopups = disabled
+
+    local lfg = FrostSeek.Modules and FrostSeek.Modules.lfg
+    if lfg and lfg.UpdateToggleVisual then
+        lfg.UpdateToggleVisual(not disabled)
+    end
+
+    FrostSeek.UpdateMinimapDisabledOverlay()
+end
+
+function FrostSeek.ToggleAddonDisabled()
+    FrostSeek.SetAddonDisabled(not FrostSeek.IsAddonDisabled())
+    return FrostSeek.IsAddonDisabled()
+end
+
 local _themeRef = FrostSeekTheme
 
 FrostSeek.Config = {
@@ -265,7 +290,7 @@ local MainFrame = FrostSeek.MainFrame
 
 MainFrame:Hide()
 
-MainFrame:SetWidth(800)
+MainFrame:SetWidth(960)
 MainFrame:SetHeight(630)
 MainFrame:SetPoint("CENTER")
 MainFrame:SetFrameStrata("HIGH")
@@ -539,17 +564,25 @@ miniButton:SetScript("OnDragStop", function(self)
 end)
 
 miniButton:SetScript("OnClick", function(self, button)
+    if button == "LeftButton" and IsControlKeyDown() then
+        local nowDisabled = FrostSeek.ToggleAddonDisabled()
+        if nowDisabled then
+            print("|cff88ccffFrostSeek:|r LFG + Popups |cffff4444disabled|r |cff888888(Ctrl+Click again to re-enable)|r")
+        else
+            print("|cff88ccffFrostSeek:|r LFG + Popups |cff44ff44enabled|r")
+        end
+        if GameTooltip:IsOwned(self) then
+            self:GetScript("OnEnter")(self)
+        end
+        return
+    end
+
     if button == "LeftButton" then
         if MainFrame:IsShown() and FrostSeek.ActiveTab == "lfg" then
             MainFrame:Hide()
         else
             MainFrame:Show()
             FrostSeek:SwitchTab("lfg")
-        end
-    elseif button == "RightButton" then
-        
-        if FrostSeek.Presence and FrostSeek.Presence.TogglePanel then
-            FrostSeek.Presence:TogglePanel(MainFrame)
         end
     end
 end)
@@ -561,16 +594,23 @@ miniButton:SetScript("OnEnter", function(self)
     if FrostSeek.Presence and FrostSeek.Presence.GetOnlineCount then
         onlineCount = FrostSeek.Presence:GetOnlineCount()
     end
-    if activeCat then
+    local isDisabled = FrostSeek.IsAddonDisabled()
+    if isDisabled then
+        GameTooltip:SetText("|cff88ccffFrostSeek|r |cffff4444[LFG+Popups OFF]|r", 0.8, 0.9, 1)
+        GameTooltip:AddLine("|cffff4444LFG radar and popups are disabled.|r", 1, 0.3, 0.3, true)
+        GameTooltip:AddLine("|cff888888FrostNet and LFM are still active.|r", 0.7, 0.7, 0.7, true)
+        GameTooltip:AddLine(" ", 1, 1, 1)
+        GameTooltip:AddLine("|cff88ccffCtrl + Click|r to re-enable", 0.7, 0.85, 1, true)
+    elseif activeCat then
         GameTooltip:SetText("FrostSeek - |cff88ccffNew " .. activeCat .. "|r", 0.8, 0.9, 1)
     else
         GameTooltip:SetText("FrostSeek", 0.8, 0.9, 1)
     end
-    if onlineCount > 1 then
+    if not isDisabled and onlineCount > 1 then
         GameTooltip:AddLine("|cff88ccffFrostNet:|r " .. tostring(onlineCount) .. " online", 0.53, 0.8, 1)
     end
     GameTooltip:AddLine("Left Click: Open LFG", 1, 1, 1)
-    GameTooltip:AddLine("Right Click: FrostNet Online", 0.53, 0.8, 1)
+    GameTooltip:AddLine("|cff88ccffCtrl + Click:|r " .. (isDisabled and "Enable LFG+Popups" or "Disable LFG+Popups"), 1, 0.6, 0.3)
     GameTooltip:AddLine("Drag: Move button", 0.8, 0.8, 0.8)
     GameTooltip:Show()
 end)
@@ -628,6 +668,14 @@ local function GetHighestPriorityCategory()
 end
 
 local function UpdateMinimapVisual()
+    if FrostSeek.IsAddonDisabled() then
+        miniButton:SetNormalTexture(ICON_BASE .. "red.tga")
+        FrostSeek._activeMinimapCategory = nil
+        blinkFrame:Hide()
+        miniButton:SetAlpha(1)
+        return
+    end
+
     local bestCat = GetHighestPriorityCategory()
     if bestCat and CATEGORY_ICONS[bestCat] then
         miniButton:SetNormalTexture(CATEGORY_ICONS[bestCat])
@@ -643,6 +691,12 @@ local function UpdateMinimapVisual()
         miniButton:SetAlpha(1)
     end
 end
+
+function FrostSeek.UpdateMinimapDisabledOverlay()
+    if not miniButton then return end
+    UpdateMinimapVisual()
+end
+FrostSeek.UpdateMinimapDisabledOverlay()
 
 function FrostSeek.SetMinimapCategory(category)
     if not category then return end
@@ -754,6 +808,28 @@ SlashCmdList["FSOPTIONS"] = function()
     FrostSeek:SwitchTab("options")
 end
 
+SLASH_FSDISABLE1 = "/fsdisable"
+SlashCmdList["FSDISABLE"] = function()
+    FrostSeek.SetAddonDisabled(true)
+    print("|cff88ccffFrostSeek:|r LFG + Popups |cffff4444disabled|r")
+end
+
+SLASH_FSENABLE1 = "/fsenable"
+SlashCmdList["FSENABLE"] = function()
+    FrostSeek.SetAddonDisabled(false)
+    print("|cff88ccffFrostSeek:|r LFG + Popups |cff44ff44enabled|r")
+end
+
+SLASH_FSTOGGLE1 = "/fstoggle"
+SlashCmdList["FSTOGGLE"] = function()
+    local nowDisabled = FrostSeek.ToggleAddonDisabled()
+    if nowDisabled then
+        print("|cff88ccffFrostSeek:|r LFG + Popups |cffff4444disabled|r")
+    else
+        print("|cff88ccffFrostSeek:|r LFG + Popups |cff44ff44enabled|r")
+    end
+end
+
 SLASH_FSDEBUG1 = "/fsdebug"
 SlashCmdList["FSDEBUG"] = function()
     print("|cff88ccff========== FROSTSEEK DEBUG ==========|r")
@@ -766,6 +842,9 @@ SlashCmdList["FSDEBUG"] = function()
     print("uiScale = " .. tostring(FrostSeekDB.Settings.uiScale))
     print("MainFrame scale = " .. tostring(MainFrame:GetScale()))
     print("MainFrame is shown = " .. tostring(MainFrame:IsShown()))
+    print("LFG.disableLFG    = " .. tostring(FrostSeekDB.LFG and FrostSeekDB.LFG.disableLFG))
+    print("LFG.disablePopups = " .. tostring(FrostSeekDB.LFG and FrostSeekDB.LFG.disablePopups))
+    print("Quick-disabled (LFG+Popups OFF) = " .. tostring(FrostSeek.IsAddonDisabled()))
 
     print("|cff88ccffModules:|r")
     for name, module in pairs(FrostSeek.Modules) do

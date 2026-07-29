@@ -154,7 +154,8 @@ function Dashboard:Initialize(parentFrame)
 
     local kpiH = 68
     local kpiGap = 4
-    local kpiW = (770 - kpiGap * 2) / 3
+    local totalW = (F:GetWidth() or 800) - 20
+    local kpiW = (totalW - kpiGap * 2) / 3
 
     local kpi1 = CreateFrame("Frame", nil, F)
     kpi1:SetPoint("TOPLEFT", F, "TOPLEFT", 10, curY)
@@ -218,7 +219,7 @@ function Dashboard:Initialize(parentFrame)
 
     local splitGap = 8
     local splitH = 210
-    local halfW = (770 - splitGap) / 2
+    local halfW = (totalW - splitGap) / 2
 
     local fn = CreateFrame("Frame", nil, F)
     fn:SetPoint("TOPLEFT", F, "TOPLEFT", 10, curY)

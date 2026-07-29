@@ -1,5 +1,5 @@
 FrostSeek — Idiot-Proof Guide (English)
-Welcome to FrostSeek, the addon that helps you find a group (LFG) and find members (LFM) in World of Warcraft — Ascension, 3.3.5 and classic servers.
+Welcome to FrostSeek, the addon that helps you find a group (LFG) and find members (LFM) in World of Warcraft.
 This guide is written for people who have never used an addon before. Read one section at a time and you'll be fine.
 ---
 1) Installation (1 minute)
@@ -146,7 +146,7 @@ Change theme from Options → General → Select Theme. After changing theme you
 ---
 9) Minimap Button — The icon on the minimap
 Left-click → opens/closes FrostSeek on the LFG tab
-Right-click → opens the FrostNet "Online" panel (see who's connected)
+Ctrl + Left-click → quick disable of LFG + Popups (button turns red). Repeat to re-enable. FrostNet and LFM stay active.
 Drag → move the button around the minimap
 The icon changes color based on detected activity:
 🟢 Green → Dungeon
@@ -184,6 +184,9 @@ Options → Advanced → Clear All Data → confirm → `/reload`
 11) Quick commands — Summary table
 Command	What it does
 `/fs`	Opens/closes FrostSeek
+`/fsdisable`	Quick disable LFG + Popups (same as Ctrl+Click minimap)
+`/fsenable`	Re-enable LFG + Popups
+`/fstoggle`	Toggle LFG + Popups on/off
 `/fslfg`	Opens on LFG tab
 `/fslfm`	Opens on LFM tab
 `/fscommunity`	Opens on Community tab

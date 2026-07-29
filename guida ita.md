@@ -146,7 +146,7 @@ Cambia tema da Options → General → Select Theme. Dopo aver cambiato tema ser
 ---
 9) Minimap Button — L'icona sulla minimap
 Click sinistro → apre/chiude FrostSeek sul tab LFG
-Click destro → apre il pannello "Online" di FrostNet (vedi chi è connesso)
+Ctrl + Click sinistro → disabilita in un colpo solo LFG + Popups (pulsante rosso). Ripeti per riattivare. FrostNet e LFM restano attivi.
 Trascina → sposta il pulsante attorno alla minimap
 L'icona cambia colore in base all'attività rilevata:
 🟢 Verde → Dungeon
@@ -184,6 +184,9 @@ Options → Advanced → Clear All Data → conferma → `/reload`
 11) Comandi rapidi — Tabella riassuntiva
 Comando	Cosa fa
 `/fs`	Apre/chiude FrostSeek
+`/fsdisable`	Disabilita LFG + Popups (stesso del Ctrl+Click minimap)
+`/fsenable`	Riattiva LFG + Popups
+`/fstoggle`	Altera LFG + Popups acceso/spento
 `/fslfg`	Apre sul tab LFG
 `/fslfm`	Apre sul tab LFM
 `/fscommunity`	Apre sul tab Community

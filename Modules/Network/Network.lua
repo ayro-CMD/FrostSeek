@@ -26,6 +26,7 @@ local Network = {}
 local _tk = FrostSeek and FrostSeek._v and FrostSeek._v.a("network", Network)
 
 local CHANNEL = "FSK"
+local CHANNEL_SLOT = 12
 local PROTOCOL = FrostSeek and FrostSeek.Protocol
 local Compat = FrostSeekCompat
 local Shared = _G.FrostSeekShared
@@ -110,16 +111,24 @@ function Network:JoinChannel()
     if now - self.lastJoinAttempt < 5 then return end
     self.lastJoinAttempt = now
     self.joinAttempts = self.joinAttempts + 1
-    pcall(function()
-        if JoinChannelByName then
-            JoinChannelByName(CHANNEL)
-        elseif JoinPermanentChannel then
-            JoinPermanentChannel(CHANNEL)
-        end
-    end)
+
+    local joinedViaCompat = false
     if Compat and Compat.ChannelAPI and Compat.ChannelAPI.JoinChannel then
-        pcall(function() Compat.ChannelAPI.JoinChannel(CHANNEL) end)
+        joinedViaCompat = pcall(function()
+            Compat.ChannelAPI.JoinChannel(CHANNEL, nil, CHANNEL_SLOT)
+        end)
     end
+
+    if not joinedViaCompat then
+        pcall(function()
+            if JoinChannelByName then
+                JoinChannelByName(CHANNEL, nil, nil, CHANNEL_SLOT)
+            elseif JoinPermanentChannel then
+                JoinPermanentChannel(CHANNEL)
+            end
+        end)
+    end
+
     C_Timer.After(3, function()
         self.channelId = getChannelId(CHANNEL)
         if self.channelId then
@@ -129,7 +138,7 @@ function Network:JoinChannel()
             if not self.wasConnected then
                 self.wasConnected = true
                 if Shared then Shared.PlaySound("connect") end
-                print("|cff88ccffFrostNet:|r Connected to channel |cffffffff" .. CHANNEL .. "|r")
+                print("|cff88ccffFrostNet:|r Connected to channel |cffffffff" .. CHANNEL .. "|r (slot " .. tostring(CHANNEL_SLOT) .. ")")
             end
             if not wasConn then self:ScheduleRebroadcast() end
         else

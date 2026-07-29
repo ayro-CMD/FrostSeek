@@ -54,7 +54,7 @@ local MANASTORM_DIFFICULTIES = {"Normal"}
 local KEY_DIFFICULTIES = {"Mythic+"}
 local QUEST_DIFFICULTIES = {"Normal", "Group", "Daily", "Weekly", "Chain"}
 local RAID_DIFFICULTIES = {"Normal", "Heroic", "Mythic", "Ascended", "Trial 1", "Trial 2", "Trial 3", "Trial 4", "Trial 5", "Trial 6", "Trial 7", "Trial 8", "Trial 9", "Trial 10"}
-local BOSS_DIFFICULTIES = {"Open World", "Instanced", "HC Instanced", "Mythic Instanced", "Ascended Instanced"}
+local BOSS_DIFFICULTIES = {"Open World", "Instanced", "HC Instanced", "Mythic Instanced", "Ascended Instanced", "D1", "D2", "D3", "D4", "D5", "D6", "D7", "D8", "D9", "D10"}
 local PVP_DIFFICULTIES = {"Normal", "Ranked"}
 local ROLES_NEEDED = {"Tank", "Healer", "DPS", "Support"}
 local VOICE_OPTIONS = {"None", "Discord", "In-game"}
@@ -67,7 +67,7 @@ local ACTIVITY_DB = {
         WOTLK = {"Utgarde Keep", "Utgarde Pinnacle", "The Nexus", "The Oculus", "Azjol-Nerub", "Ahn'kahet", "Drak'Tharon Keep", "Violet Hold", "Gundrak", "Halls of Stone", "Halls of Lightning", "Culling of Stratholme", "Trial of the Champion", "Forge of Souls", "Pit of Saron", "Halls of Reflection"},
         CATA = {"Blackrock Caverns", "The Throne of the Tides", "The Vortex Pinnacle", "Stonecore", "Lost City of the Tol'vir", "Halls of Origination", "Grim Batol", "Deadmines (Heroic)", "Shadowfang Keep (Heroic)", "Zul'Gurub", "Zul'Aman", "End Time", "Well of Eternity", "Hour of Twilight"},
         MOP = {"Temple of the Jade Serpent", "Stormstout Brewery", "Shado-Pan Monastery", "Mogu'shan Palace", "Scarlet Halls", "Scarlet Monastery", "Siege of Niuzao Temple", "Gate of the Setting Sun", "Scholomance", "Darkheart Thicket", "Violet Hold"},
-        CUSTOM = {"GlitterMurk Mines", "Blackrock Cavern", "Tor'Watha", "Bardid Hold", "Vault of the Inquisition", "Road to De' Other Side"},
+        CUSTOM = {"GlitterMurk Mines", "Blackrock Cavern", "Tor'Watha", "Bardid Hold", "Vault of the Inquisition", "Road to De' Other Side", "RDF"},
     },
     RAID = {
         CLASSIC = {"Molten Core", "Onyxia", "Blackwing Lair", "Zul'Gurub", "Ruins of Ahn'Qiraj", "Temple of Ahn'Qiraj", "Naxxramas"},

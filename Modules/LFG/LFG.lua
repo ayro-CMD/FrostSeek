@@ -376,16 +376,16 @@ local SPAM_WORDS = {
     "pocket", "sadgirl","issue","when","enchanter","israel","nazi","mejor","feminista","braincells","breastfeed","bbw","comunista","cocaine","why",
     "drugs","fascista","fascist","vox","mundial","spain","anyone","know","you","staff","ticket","golf","player","players","worldforged","certain",
     "guild", "community", "recruit", "recruiting", "recru", "roster", "lf members", "lf guild","what","is","this","high","do",
-    "guild lf", "new guild", "gm is", "leader is", "we are", "our guild", "us on","america","ginvite",
-    "application", "roster spot", "core group", "core team","we","layers","have","deutsche","gilde",
+    "guild lf", "new guild", "gm is", "leader is", "our guild", "us on","america","ginvite",
+    "application", "roster spot", "core group", "core team","layers","have","deutsche","gilde",
     "hardcore guild", "casual guild", "semi-hardcore", "mythic raiding", "raid team", "static group",
-    "looking for members", "looking for guild", "looking for a guild", "guild is looking", "we are looking",
+    "looking for members", "looking for guild", "looking for a guild", "guild is looking",
     "active members", "mature players", "friendly guild", "pve guild", "pvp guild", "leveling guild",
     "social guild", "g looking", "is looking for", "guild event", "community night","help","boost",
     "wts", "wtb", "sell", "selling", "buy", "gdkp", "carry service","anybody","lockboxes",
     "boosting service", "pilot", "piloted", "price", "cheap", "offer","addon","frame",
-    "service", "cache", "nuked", "ksh", "keystone master","florida","grass",
-    "mdi", "server first", "top guild", "best guild","gf","which","every",
+    "service", "cache", "nuked", "ksh", "keystone master","florida","grass","plf","guilde",
+    "mdi", "server first", "top guild", "best guild","gf","which","every","recrute",
     "world first", "qualif","girl","small","boy","goth","gnome","testing","dont",
     "awakening", "twisting","why","crafter","whick","professions","profession",
     "transfer", "transfers", "realm transfer", "server transfer", "move to", "come join",
@@ -404,7 +404,7 @@ local SPAM_WORDS = {
     "farmers","chez","plf","test","pasticcio","nearby","never",
     "tSM", "mRP", "trp", "total rp","?","other",
     "gamble", "bet", "wager", "jackpot", "lottery", "lucky draw", "spin the wheel",
-    "selling.*run", "gold.*run",
+    "selling.*run", "gold.*run","where is","24/7",
     "alchemy", "alch", "blacksmithing", "bs", "enchanting", "ench", "engineering", "eng", "inscription",
     "jewelcrafting", "jc", "leatherworking", "lw", "tailoring", "skinning", "mining",
     "herbalism", "herb", "herbalist", "first aid", "fishing", "archaeology", "arch",
@@ -633,32 +633,45 @@ function LFG.ClassifyMessage(msg)
         end
     end
 
+    local function DetectMythicDungeon(msg)
+        if not msg then return false end
+        if wholeWordFind(msg, "mythic") then return true end
+        if wholeWordFind(msg, "m+") then return true end
+        if string.match(msg, "%sm(%d+)") then return true end     
+        if string.match(msg, "^m(%d+)") then return true end   
+        if string.match(msg, "%[m%d*%]") then return true end    
+        if string.match(msg, "%[mythic%]") then return true end 
+        return false
+    end
+
     local RDF_INDICATORS = {"rdf", "lfd", "random dungeon", "random heroic", "rhc", "heroic random", "daily heroic", "daily dungeon"}
     for _, rdfKw in ipairs(RDF_INDICATORS) do
         if wholeWordFind(lowerMsg, rdfKw) then
             local isHeroic = wholeWordFind(lowerMsg, "hc") or
                              wholeWordFind(lowerMsg, "heroic") or
                              wholeWordFind(lowerMsg, "rhc")
+            local isMythic = DetectMythicDungeon(lowerMsg)
             for _, d in ipairs(DUNGEON_KEYWORDS) do
                 if wholeWordFind(lowerMsg, d) then
-                    return "DUNGEON", string.upper(d), isHeroic, false, false, false, false
+                    return "DUNGEON", string.upper(d), isHeroic, isMythic, false, false, false
                 end
             end
-            return "DUNGEON", "RDF", isHeroic, false, false, false, false
+            return "DUNGEON", "RDF", isHeroic, isMythic, false, false, false
         end
     end
-    
+
     if wholeWordFind(lowerMsg, "dg") then
         local isHeroic = wholeWordFind(lowerMsg, "hc") or
                          wholeWordFind(lowerMsg, "heroic") or
                          string.match(lowerMsg, " h[%s%p]") or
                          string.match(lowerMsg, " h$")
+        local isMythic = DetectMythicDungeon(lowerMsg)
         for _, d in ipairs(DUNGEON_KEYWORDS) do
             if wholeWordFind(lowerMsg, d) then
-                return "DUNGEON", string.upper(d), isHeroic, false, false, false, false
+                return "DUNGEON", string.upper(d), isHeroic, isMythic, false, false, false
             end
         end
-        return "DUNGEON", "RDF", isHeroic, false, false, false, false
+        return "DUNGEON", "RDF", isHeroic, isMythic, false, false, false
     end
     for _, d in ipairs(DUNGEON_KEYWORDS) do
         if wholeWordFind(lowerMsg, d) then
@@ -666,7 +679,8 @@ function LFG.ClassifyMessage(msg)
                              wholeWordFind(lowerMsg, "heroic") or
                              string.match(lowerMsg, " h[%s%p]") or
                              string.match(lowerMsg, " h$")
-            return "DUNGEON", string.upper(d), isHeroic, false, false, false, false
+            local isMythic = DetectMythicDungeon(lowerMsg)
+            return "DUNGEON", string.upper(d), isHeroic, isMythic, false, false, false
         end
     end
     local customCategoryMap = {
@@ -886,6 +900,7 @@ function LFG.RecordActiveSearch(sender, message, channel)
             record.dungeon = dungeon
             record.category = category
             record.isHeroic = isHeroic
+            record.isMythic = isMythic
             record.isRaid = isRaid
             record.isPvp = isPvp
             record.isKeystone = isKeystone
@@ -893,7 +908,7 @@ function LFG.RecordActiveSearch(sender, message, channel)
             record.isWorldBoss = isWorldBoss
                     record.channel = channel
             if LFG.UpdateRecruitersList then LFG.UpdateRecruitersList() end
-            LFG.CreateLFGPopup(sender, message, dungeon, isHeroic, isRaid, isPvp, isKeystone, isManastorm, category)
+            LFG.CreateLFGPopup(sender, message, dungeon, isHeroic, isMythic, isRaid, isPvp, isKeystone, isManastorm, category)
             return
         end
     end
@@ -903,6 +918,7 @@ function LFG.RecordActiveSearch(sender, message, channel)
         dungeon = dungeon,
         category = category,
         isHeroic = isHeroic,
+        isMythic = isMythic,
         isRaid = isRaid,
         isPvp = isPvp,
         isKeystone = isKeystone,
@@ -913,7 +929,7 @@ function LFG.RecordActiveSearch(sender, message, channel)
         startTime = now,
     })
     if LFG.UpdateRecruitersList then LFG.UpdateRecruitersList() end
-    LFG.CreateLFGPopup(sender, message, dungeon, isHeroic, isRaid, isPvp, isKeystone, isManastorm, category)
+    LFG.CreateLFGPopup(sender, message, dungeon, isHeroic, isMythic, isRaid, isPvp, isKeystone, isManastorm, category)
 end
 
 function LFG.RecordFromListing(listing)
@@ -1000,7 +1016,10 @@ end
 
 function LFG.GroupMatchesCategory(group, category)
     if not group then return false end
-    if category == "ALL" then return true end
+    if category == "ALL" then
+        if group.category == "MISC" then return false end
+        return true
+    end
     return group.category == category
 end
 
@@ -1266,7 +1285,7 @@ function LFG.RepositionPopups()
     end
 end
 
-function LFG.CreateLFGPopup(sender, message, dungeon, isHeroic, isRaid, isPvp, isKeystone, isManastorm, category)
+function LFG.CreateLFGPopup(sender, message, dungeon, isHeroic, isMythic, isRaid, isPvp, isKeystone, isManastorm, category)
     if category == "MISC" then return end
     if FrostSeekDB.LFG.disablePopups then return end
     if FrostSeekDB.LFG.disableLFG then return end
@@ -1376,9 +1395,15 @@ function LFG.CreateLFGPopup(sender, message, dungeon, isHeroic, isRaid, isPvp, i
             diffTag = difficulty
             diffColor = "|cffcccccc"
         end
+    elseif isMythic then
+        diffTag = L["diff_mythic"]
+        diffColor = "|cffff44ff"
     elseif isHeroic then
         diffTag = L["diff_heroic"]
         diffColor = "|cff44cc44"
+    elseif category == "DUNGEON" or category == "RAID" then
+        diffTag = L["diff_normal"]
+        diffColor = "|cffcccccc"
     end
 
     local catHex = string.format("%02x%02x%02x", math.floor(ar*255), math.floor(ag*255), math.floor(ab*255))
@@ -1690,9 +1715,10 @@ LFG.ShowPlayerContextMenu = ShowPlayerContextMenu
 
 function LFG.InitRowPool(parent)
     rowPool = {}
+    local rowW = parent:GetWidth() or 740
     for i = 1, MAX_DISPLAY_ROWS do
         local row = CreateFrame("Frame", nil, parent)
-        row:SetSize(740, ROW_HEIGHT)
+        row:SetSize(rowW, ROW_HEIGHT)
         if i == 1 then
             row:SetPoint("TOP", parent, "TOP", 0, -2)
         else
@@ -1825,7 +1851,8 @@ end
 function LFG.CreateRowForPool(parent, idx)
     local prev = rowPool[idx - 1]
     local row = CreateFrame("Frame", nil, parent)
-    row:SetSize(740, ROW_HEIGHT)
+    local rowW = parent:GetWidth() or 740
+    row:SetSize(rowW, ROW_HEIGHT)
     if prev then
         row:SetPoint("TOP", prev.frame, "BOTTOM", 0, 0)
     else
@@ -2033,7 +2060,55 @@ function LFG.UpdateRecruitersList()
             local roleFullStr = LFG.FormatRolesFullText(roles)
             poolRow.roleText:SetText(roleStr)
             if record.dungeon and record.dungeon ~= "MISC" and record.dungeon ~= "KEYSTONE" and record.dungeon ~= "PVP" and record.dungeon ~= "MANASTORM" and record.dungeon ~= "WORLD_BOSS" then
-                poolRow.dungeonText:SetText(record.dungeon)
+                
+                local diffLabel = LFG.ParseDifficulty(record.message, record.category)
+                local diffTag, diffColor
+                if diffLabel then
+                    local dl = diffLabel:lower()
+                    if dl:find("ascended") or dl:find("asc") then
+                        local num = dl:match("ascended%s*(%d+)") or dl:match("asc%s*(%d+)") or ""
+                        diffTag = L["diff_ascended"] .. (num ~= "" and num or "")
+                        diffColor = "|cffaa44ff"
+                    elseif dl:find("trial") then
+                        local num = dl:match("trial%s*(%d+)") or ""
+                        diffTag = L["diff_trial"] .. (num ~= "" and num or "")
+                        diffColor = "|cffff8800"
+                    elseif dl:find("mythic") then
+                        local num = dl:match("mythic%s*(%d+)") or dl:match("m%s*(%d+)") or ""
+                        diffTag = L["diff_mythic"] .. (num ~= "" and num or "")
+                        diffColor = "|cffff44ff"
+                    elseif dl:find("heroic") or dl:find("hc") then
+                        diffTag = L["diff_heroic"]
+                        diffColor = "|cff44cc44"
+                    elseif dl:find("ranked") then
+                        diffTag = L["diff_ranked"]
+                        diffColor = "|cffff4444"
+                    elseif dl:find("instanced") then
+                        --shynga
+                        diffTag = diffLabel
+                        diffColor = "|cffff8800"
+                    elseif dl:find("open world") then
+                        diffTag = L["diff_normal"]
+                        diffColor = "|cffcccccc"
+                    else
+                        diffTag = diffLabel
+                        diffColor = "|cffcccccc"
+                    end
+                elseif record.isMythic then
+                    diffTag = L["diff_mythic"]
+                    diffColor = "|cffff44ff"
+                elseif record.isHeroic then
+                    diffTag = L["diff_heroic"]
+                    diffColor = "|cff44cc44"
+                elseif record.category == "DUNGEON" or record.category == "RAID" or record.category == "WORLD_BOSS" then
+                    diffTag = L["diff_normal"]
+                    diffColor = "|cffcccccc"
+                end
+                local dungeonDisplay = record.dungeon
+                if diffTag and diffTag ~= "" then
+                    dungeonDisplay = dungeonDisplay .. " " .. diffColor .. "[" .. diffTag .. "]|r"
+                end
+                poolRow.dungeonText:SetText(dungeonDisplay)
             else
                 poolRow.dungeonText:SetText("")
             end
@@ -2100,15 +2175,19 @@ end
 function LFG:Initialize(parentFrame)
     self.frame = CreateFrame("Frame", nil, parentFrame)
     self.frame:SetAllPoints(parentFrame)
+
+    local CW = math.max(700, (parentFrame:GetWidth() or 800) - 20)
+    local IW = CW - 20
+
     self.mainContainer = CreateFrame("Frame", nil, self.frame)
-    self.mainContainer:SetSize(760, 500)
+    self.mainContainer:SetSize(CW, 500)
     self.mainContainer:SetPoint("TOP", self.frame, "TOP", 0, -5)
     self.mainContainer:EnableMouse(true)
     self.mainContainer:SetScript("OnMouseDown", function()
         CloseAllDropdowns()
     end)
     self.playerFrame = CreateFrame("Frame", nil, self.mainContainer)
-    self.playerFrame:SetSize(740, 35)
+    self.playerFrame:SetSize(IW, 35)
     self.playerFrame:SetPoint("TOP", self.mainContainer, "TOP", 0, -5)
     local playerBg = self.playerFrame:CreateTexture(nil, "BACKGROUND")
     playerBg:SetPoint("TOPLEFT", 1, -1)
@@ -2266,7 +2345,7 @@ function LFG:Initialize(parentFrame)
     self.lfgCountText:SetText(string.format(L["lfg_active_recruiters"], 0))
     self.lfgCountText:SetTextColor(unpack(_tc("textAccent")))
     self.searchFrame = CreateFrame("Frame", nil, self.mainContainer)
-    self.searchFrame:SetSize(740, 26)
+    self.searchFrame:SetSize(IW, 26)
     self.searchFrame:SetPoint("TOP", self.lfgCountText, "BOTTOM", 0, -4)
     local searchLabel = self.searchFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     searchLabel:SetPoint("LEFT", self.searchFrame, "LEFT", 10, 0)
@@ -2293,7 +2372,7 @@ function LFG:Initialize(parentFrame)
         LFG.UpdateRecruitersList()
     end)
     self.recruitersFrame = CreateFrame("Frame", nil, self.mainContainer)
-    self.recruitersFrame:SetSize(740, 360)
+    self.recruitersFrame:SetSize(IW, 360)
     self.recruitersFrame:SetPoint("TOP", self.searchFrame, "BOTTOM", 0, -8)
     local recruitersBg = self.recruitersFrame:CreateTexture(nil, "BACKGROUND")
     recruitersBg:SetAllPoints()
@@ -2328,7 +2407,7 @@ function LFG:Initialize(parentFrame)
         self.lfgTabs[lfgTabTypes[i]] = tab
     end
     local headerFrame = CreateFrame("Frame", nil, self.recruitersFrame)
-    headerFrame:SetSize(740, 18)
+    headerFrame:SetSize(IW, 18)
     headerFrame:SetPoint("TOPRIGHT", self.recruitersFrame, "TOPRIGHT", -24, -40)
     local nameHeader = headerFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     nameHeader:SetPoint("LEFT", headerFrame, "LEFT", 18, 0)
@@ -2360,12 +2439,12 @@ function LFG:Initialize(parentFrame)
     acceptHeader:SetTextColor(unpack(_tc("textAccent")))
     local separator = self.recruitersFrame:CreateTexture(nil, "BACKGROUND")
     separator:SetPoint("TOP", headerFrame, "BOTTOM", 0, -2)
-    separator:SetSize(740, 1)
+    separator:SetSize(IW, 1)
     separator:SetColorTexture(unpack(_tc("separator")))
     local LIST_HEIGHT = 260
     MAX_DISPLAY_ROWS = math.floor(LIST_HEIGHT / ROW_HEIGHT)
     self.recruitersList = CreateFrame("Frame", nil, self.recruitersFrame)
-    self.recruitersList:SetSize(740, LIST_HEIGHT)
+    self.recruitersList:SetSize(IW, LIST_HEIGHT)
     self.recruitersList:SetPoint("TOP", headerFrame, "BOTTOM", 0, -8)
     self.recruitersList:SetPoint("RIGHT", self.recruitersFrame, "RIGHT", -24, 0)
 
@@ -2374,7 +2453,7 @@ function LFG:Initialize(parentFrame)
     self.recruitersScrollFrame:SetPoint("BOTTOMRIGHT", self.recruitersList, "BOTTOMRIGHT", 0, 0)
 
     local scrollChild = CreateFrame("Frame", nil, self.recruitersScrollFrame)
-    scrollChild:SetSize(740, LIST_HEIGHT)
+    scrollChild:SetSize(IW, LIST_HEIGHT)
     self.recruitersScrollFrame:SetScrollChild(scrollChild)
     self.recruitersList.scrollChild = scrollChild
 
@@ -2393,7 +2472,7 @@ function LFG:Initialize(parentFrame)
     self.scrollIndicator:SetText("")
     self.scrollIndicator:SetTextColor(unpack(_tc("textDim")))
     self.controlsFrame = CreateFrame("Frame", nil, self.mainContainer)
-    self.controlsFrame:SetSize(740, 30)
+    self.controlsFrame:SetSize(IW, 30)
     self.controlsFrame:SetPoint("BOTTOM", self.mainContainer, "BOTTOM", 0, 5)
     self.refreshBtn = FrostSeekUIUtils.CreateModernButton(self.controlsFrame, 70, 22, L["refresh"], _tc("primary"))
     self.refreshBtn:SetPoint("LEFT", self.controlsFrame, "LEFT", 10, -30)

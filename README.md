@@ -19,6 +19,12 @@ Real-time player stats, average ilvl, role info, and module status overview.
 ⚙️ Settings
 7 categories: General, LFG, Popups, Word Filter, Custom Messages, UI, Advanced. Minimap button, position saving, UI scale, debug mode.
 
+🖱️ Minimap Button Shortcuts
+- Left Click → Open FrostSeek on the LFG tab
+- Ctrl + Click → Quick toggle to disable LFG + Popups (button turns red). Repeat to re-enable. FrostNet and LFM stay active.
+- Drag → Move the button around the minimap
+- Slash equivalents: `/fsdisable`, `/fsenable`, `/fstoggle`
+
 📥 Installation
 
 1. Download the latest Release
