@@ -30,6 +30,12 @@ local Listings = {}
 local _tk = FrostSeek and FrostSeek._v and FrostSeek._v.a("listings", Listings)
 
 local L = FrostSeek.L
+local Lf = FrostSeek.Lf or function(k, ...) return string.format(k, ...) end
+
+local function LPrint(key, ...)
+    local body = select("#", ...) > 0 and Lf(key, ...) or L[key]
+    print("|cff88ccffFrostNet:|r " .. tostring(body))
+end
 
 Listings.listings = {}
 Listings.applicants = {}
@@ -50,7 +56,7 @@ local ACTIVITY_TYPES = {"Dungeon", "Raid", "World Boss", "Key", "Event", "PvP", 
 local EXPANSIONS = {"Classic", "TBC", "WotLK", "Cata", "MoP", "Custom"}
 local EVENT_EXPANSIONS = {"Classic", "TBC", "WotLK", "Cata", "MoP", "Ascension", "Custom"}
 local DIFFICULTIES = {"Normal", "Heroic", "Mythic"}
-local EVENT_DIFFICULTIES = {"Normal"}
+local EVENT_DIFFICULTIES = {"Normal", "Heroic", "Mythic", "Custom"}
 local MANASTORM_DIFFICULTIES = {"Normal"}
 local KEY_DIFFICULTIES = {"Mythic+"}
 local QUEST_DIFFICULTIES = {"Normal", "Group", "Daily", "Weekly", "Chain"}
@@ -97,8 +103,8 @@ local ACTIVITY_DB = {
     CATA = {"Darkmoon Faire", "Elemental Invasion", "Day of the Dead", "Firelands Invasion"},
     MOP = {"Pandaren Festival", "Brewmoon Festival", "Shadowpan Showdown", "Celestial Tournament"},
     ASCENSION = {"The ShadowEye", "Bullet Romper", "Wonka Wonka", "Vertical Ascent", "Duck Hunt", "Rainbow Race", "A.B.Y.S.S."},
-    CUSTOM = {"FrostSeek Event", "Winter Veil Special", "PvP Tournament"},
-    ALL = {"Custom"},
+    CUSTOM = {"FrostSeek Event", "Winter Veil Special", "PvP Tournament", "Ascension MiniGame"},
+    ALL = {"MiniGame", "Custom"},
 },
     KEY = {
         CLASSIC = {"Deadmines", "Wailing Caverns", "Ragefire Chasm", "Shadowfang Keep", "Blackrock Depths", "Blackfathom Deeps", "Scholomance", "Lower Blackrock Spire", "Upper Blackrock Spire", "Dire Maul East", "Dire Maul North", "Dire Maul West", "The Stockade", "Gnomeregan", "Razorfen Kraul", "Scarlet Monastery", "Razorfen Downs", "Uldaman", "Zul'Farrak", "Maraudon", "Stratholme"},
@@ -294,7 +300,7 @@ function Listings:HandleIncomingListing(listing)
     end
 
     if isNew and self:PassFilter(listing) and listing.leader ~= playerName() then
-        print("|cff88ccffFrostNet:|r New group from |cffffffff" .. tostring(listing.leader) .. "|r — " .. tostring(listing.activity or "?") .. (listing.difficulty and listing.difficulty ~= "" and (" (" .. listing.difficulty .. ")") or ""))
+        LPrint("net_listing_new", tostring(listing.leader), tostring(listing.activity or "?"), (listing.difficulty and listing.difficulty ~= "" and (" (" .. listing.difficulty .. ")") or ""))
         if Shared and Shared.PlaySound then
             Shared.PlaySound("listing")
         end
@@ -550,7 +556,7 @@ function Listings:HandleIncomingApplicant(applicant)
     if not self.myListing or applicant.listingId ~= self.myListing.id then return end
 
     self.applicants[applicant.name] = applicant
-    print("|cff88ccffFrostNet:|r " .. tostring(applicant.name) .. " applied for " .. tostring(self.myListing.activity))
+    LPrint("net_applicant_received", tostring(applicant.name), tostring(self.myListing.activity))
     if FrostSeek.Dashboard and FrostSeek.Dashboard.IncrementStat then
         FrostSeek.Dashboard:IncrementStat("applicantsReceived")
     end
@@ -584,12 +590,12 @@ function Listings:HandleDecision(target, result, activity)
     if target ~= playerName() then return end
     local act = activity or "the group"
     if result == "accepted" then
-        print("|cff88ccffFrostNet:|r |cff44ff44Application accepted|r for " .. act .. "!")
+        LPrint("net_app_accepted", act)
         if FrostSeek.Dashboard and FrostSeek.Dashboard.IncrementStat then
             FrostSeek.Dashboard:IncrementStat("applicationsAccepted")
         end
     else
-        print("|cff88ccffFrostNet:|r |cffff5555Application declined|r for " .. act)
+        LPrint("net_app_declined", act)
     end
 
     for id, app in pairs(self.myApplications) do
@@ -614,7 +620,7 @@ function Listings:CreateListing(activity, ltype, difficulty, roles, minIlvl, max
         self.listings[oldId] = nil
         self.applicants = {}
         self.selectedApplicant = nil
-        print("|cff88ccffFrostNet:|r Previous listing removed (only one group allowed at a time)")
+        LPrint("net_listing_only_one")
     end
 
     local id = FrostSeek.Protocol.GenerateId()
@@ -644,7 +650,7 @@ function Listings:CreateListing(activity, ltype, difficulty, roles, minIlvl, max
         Network:SendListing(listing)
     end
 
-    print("|cff88ccffFrostNet:|r Group created: " .. tostring(activity))
+    LPrint("net_listing_created", tostring(activity))
     if FrostSeek.Dashboard and FrostSeek.Dashboard.IncrementStat then
         FrostSeek.Dashboard:IncrementStat("listingsCreated")
     end
@@ -667,9 +673,9 @@ function Listings:CancelListing(reason)
         self.selectedApplicant = nil
 
         if reason == "full" then
-            print("|cff88ccffFrostNet:|r Group full, listing removed for " .. activity)
+            LPrint("net_listing_full", activity)
         else
-            print("|cff88ccffFrostNet:|r Listing removed for " .. activity)
+            LPrint("net_listing_removed", activity)
         end
         self:RefreshBrowse()
     end
@@ -678,7 +684,7 @@ function Listings:CancelListing(reason)
         doCancel()
     else
         if Shared and Shared.ConfirmDialog then
-            Shared.ConfirmDialog("Remove Listing", "Are you sure you want to remove your listing for " .. activity .. "?", doCancel)
+            Shared.ConfirmDialog(L["listings_remove_listing"], (L["listings_confirm_remove"] or "Are you sure?"):format(tostring(activity)), doCancel)
         else
             doCancel()
         end
@@ -688,14 +694,14 @@ end
 function Listings:Apply()
     local id = self.selectedListing
     if not id then
-        print("|cff88ccffFrostNet:|r Select a group before applying")
+        LPrint("net_select_group")
         return
     end
     local listing = self.listings[id]
     if not listing then return end
 
     if listing.leader == playerName() then
-        print("|cff88ccffFrostNet:|r You cannot apply to your own group!")
+        LPrint("net_cant_apply_own")
         return
     end
 
@@ -715,7 +721,7 @@ function Listings:Apply()
             SendChatMessage("[FrostSeek] I applied for: " .. tostring(listing.activity), "WHISPER", nil, listing.leader)
         end)
     end
-    print("|cff88ccffFrostNet:|r Application sent for " .. tostring(listing.activity))
+    LPrint("net_app_sent", tostring(listing.activity))
     if FrostSeek.Dashboard and FrostSeek.Dashboard.IncrementStat then
         FrostSeek.Dashboard:IncrementStat("applicationsSent")
     end
@@ -750,7 +756,7 @@ function Listings:AcceptApplicant(name)
     if self.selectedApplicant == name then self.selectedApplicant = nil end
     self:RefreshApplicants()
     self:CheckAutoClose()
-    print("|cff88ccffFrostNet:|r Accepted and invited " .. tostring(name))
+    LPrint("net_app_accepted_invited", tostring(name))
     if FrostSeek.Dashboard and FrostSeek.Dashboard.IncrementStat then
         FrostSeek.Dashboard:IncrementStat("applicantsAccepted")
     end
@@ -766,7 +772,7 @@ function Listings:DeclineApplicant(name)
     self.applicants[name] = nil
     if self.selectedApplicant == name then self.selectedApplicant = nil end
     self:RefreshApplicants()
-    print("|cff88ccffFrostNet:|r Application declined")
+    LPrint("net_app_declined_sent")
     if FrostSeek.Dashboard and FrostSeek.Dashboard.IncrementStat then
         FrostSeek.Dashboard:IncrementStat("applicantsDeclined")
     end
@@ -1109,7 +1115,8 @@ function Listings:BuildBrowseFrame()
         end
     end)
 
-    self.frostnetBtn = UI and UI.CreateModernButton(self.detailPanel, 100, 26, "FrostNet", _tc("accent")) or CreateFrame("Button", nil, self.detailPanel, "UIPanelButtonTemplate")
+
+    self.frostnetBtn = UI and UI.CreateModernButton(self.detailPanel, 100, 26, L["frostnet_title"], _tc("accent")) or CreateFrame("Button", nil, self.detailPanel, "UIPanelButtonTemplate")
     if not UI then
         self.frostnetBtn:SetSize(100, 26)
         self.frostnetBtn:SetText(L["frostnet_title"])
@@ -1120,6 +1127,28 @@ function Listings:BuildBrowseFrame()
             FrostSeek.Presence:TogglePanel(FrostSeek.MainFrame)
         end
     end)
+
+    self.joinVoiceBtn = UI and UI.CreateModernButton(self.detailPanel, 100, 26, L["voice_join"], _tc("accent")) or CreateFrame("Button", nil, self.detailPanel, "UIPanelButtonTemplate")
+    if not UI then
+        self.joinVoiceBtn:SetSize(100, 26)
+        self.joinVoiceBtn:SetText("|cff88ccff" .. (L["voice_join"] or "Join Voice") .. "|r")
+    end
+
+    self.joinVoiceBtn:SetPoint("BOTTOMRIGHT", self.frostnetBtn, "BOTTOMLEFT", -8, 0)
+    self.joinVoiceBtn:SetScript("OnClick", function()
+        local VB = FrostSeek and FrostSeek.VoiceBridge
+        if not VB then return end
+        local l = Listings.listings[Listings.selectedListing]
+        if not l then return end
+        local decoded = VB.DecodeVoiceField(l.voice)
+        if decoded and decoded.url then
+            VB:Set(l.leader, decoded.url)
+            VB:JoinVoice(l.leader)
+        else
+            VB:JoinVoice(l.leader)
+        end
+    end)
+    self.joinVoiceBtn:Hide()
 
     self:RefreshFilterButtons()
 end
@@ -1226,7 +1255,18 @@ function Listings:RefreshBrowse()
             table.insert(lines, _hex("textDim") .. "Min iLvl:|r " .. sl.minItemLevel .. "+")
         end
         if sl.voice and sl.voice ~= "None" then
-            table.insert(lines, _hex("textDim") .. "Voice:|r " .. tostring(sl.voice))
+            local VB = FrostSeek and FrostSeek.VoiceBridge
+            local voiceDisplay = tostring(sl.voice)
+            if VB then
+                local decoded = VB.DecodeVoiceField(sl.voice)
+                if decoded then
+                    voiceDisplay = decoded.channel
+                    if decoded.url then
+                        VB:Set(sl.leader, decoded.url)
+                    end
+                end
+            end
+            table.insert(lines, _hex("textDim") .. "Voice:|r " .. voiceDisplay)
         end
         if sl.loot and sl.loot ~= "Group Loot" then
             table.insert(lines, _hex("textDim") .. "Loot:|r " .. tostring(sl.loot))
@@ -1236,8 +1276,20 @@ function Listings:RefreshBrowse()
         end
         table.insert(lines, _hex("textDim") .. "Published:|r " .. ageText(sl.created))
         self.detailText:SetText(table.concat(lines, "\n"))
+
+        if self.joinVoiceBtn then
+            local VB = FrostSeek and FrostSeek.VoiceBridge
+            local hasVoiceLink = false
+            if VB then
+                local decoded = VB.DecodeVoiceField(sl.voice)
+                if decoded and decoded.url then hasVoiceLink = true end
+                if not hasVoiceLink and VB:Get(sl.leader) then hasVoiceLink = true end
+            end
+            self.joinVoiceBtn:SetShown(hasVoiceLink)
+        end
     else
         self.detailText:SetText(_hex("textDim") .. "Select a group to see details|r")
+        if self.joinVoiceBtn then self.joinVoiceBtn:Hide() end
     end
 end
 
@@ -1347,7 +1399,7 @@ function Listings:BuildApplicationsFrame()
             Listings:RefreshApplications()
         end
         if Shared and Shared.ConfirmDialog then
-            Shared.ConfirmDialog(L["listings_clear_history"], "Clear all non-pending application history?", doClear)
+            Shared.ConfirmDialog(L["listings_clear_history"], L["listings_clear_history_confirm"], doClear)
         else
             doClear()
         end
@@ -1433,7 +1485,7 @@ function Listings:WithdrawApplication(id)
     if not id or not self.myApplications[id] then return end
     self.myApplications[id].status = "withdrawn"
     self.myApplications[id].decidedAt = time()
-    print("|cff88ccffFrostNet:|r Application withdrawn for " .. tostring(self.myApplications[id].activity))
+    LPrint("net_app_withdrawn", tostring(self.myApplications[id].activity))
     self:RefreshApplications()
 end
 
@@ -1451,7 +1503,7 @@ function Listings:BuildCreateFrame()
 
     local tLabel = f:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     tLabel:SetPoint("TOPLEFT", f, "TOPLEFT", leftPad, curY)
-    tLabel:SetText(_hex("accent") .. "Type|r")
+    tLabel:SetText(_hex("accent") .. L["label_type"] .. "|r")
 
     self.createType = UI and UI.CreateModernDropdown(f, 200, 24) or CreateFrame("Frame", nil, f)
     if not UI then
@@ -1466,7 +1518,7 @@ function Listings:BuildCreateFrame()
 
     local eLabel = f:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     eLabel:SetPoint("TOPLEFT", f, "TOPLEFT", leftPad, curY)
-    eLabel:SetText(_hex("accent") .. "Expansion|r")
+    eLabel:SetText(_hex("accent") .. L["label_expansion"] .. "|r")
 
     self.createExpansion = UI and UI.CreateModernDropdown(f, 200, 24) or CreateFrame("Frame", nil, f)
     if not UI then
@@ -1481,7 +1533,7 @@ function Listings:BuildCreateFrame()
 
     local aLabel = f:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     aLabel:SetPoint("TOPLEFT", f, "TOPLEFT", leftPad, curY)
-    aLabel:SetText(_hex("accent") .. "Activity|r")
+    aLabel:SetText(_hex("accent") .. L["label_activity"] .. "|r")
 
     self.createActivity = UI and UI.CreateModernDropdown(f, inputW, 24) or CreateFrame("Frame", nil, f)
     if not UI then
@@ -1499,7 +1551,7 @@ function Listings:BuildCreateFrame()
 
     local dLabel = f:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     dLabel:SetPoint("TOPLEFT", f, "TOPLEFT", leftPad, curY)
-    dLabel:SetText(_hex("accent") .. "Difficulty|r")
+    dLabel:SetText(_hex("accent") .. L["label_difficulty"] .. "|r")
 
     self.createDiff = UI and UI.CreateModernDropdown(f, 200, 24) or CreateFrame("Frame", nil, f)
     if not UI then
@@ -1514,7 +1566,7 @@ function Listings:BuildCreateFrame()
 
     local kLabel = f:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     kLabel:SetPoint("TOPLEFT", f, "TOPLEFT", leftPad, curY)
-    kLabel:SetText(_hex("accent") .. "Key Level|r")
+    kLabel:SetText(_hex("accent") .. L["label_key_level"] .. "|r")
     self.createKeyLevelLabel = kLabel
 
     self.createKeyLevel = UI and UI.CreateModernEditBox(f, 60, 24) or CreateFrame("EditBox", nil, f)
@@ -1534,7 +1586,7 @@ function Listings:BuildCreateFrame()
 
     local rLabel = f:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     rLabel:SetPoint("TOPLEFT", f, "TOPLEFT", leftPad, curY)
-    rLabel:SetText(_hex("accent") .. "Roles Needed|r")
+    rLabel:SetText(_hex("accent") .. L["label_roles_needed"] .. "|r")
 
     self.createRoles = { Tank = false, Healer = false, DPS = false, Support = false }
     self.createRoleToggles = {}
@@ -1575,7 +1627,7 @@ function Listings:BuildCreateFrame()
 
     local mLabel = f:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     mLabel:SetPoint("TOPLEFT", f, "TOPLEFT", leftPad, curY)
-    mLabel:SetText(_hex("accent") .. "Max Members|r")
+    mLabel:SetText(_hex("accent") .. L["label_max_members"] .. "|r")
 
     self.createMaxMembers = UI and UI.CreateModernEditBox(f, 60, 24) or CreateFrame("EditBox", nil, f)
     if not UI then
@@ -1592,7 +1644,7 @@ function Listings:BuildCreateFrame()
 
     local iLabel = f:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     iLabel:SetPoint("TOPLEFT", f, "TOPLEFT", leftPad, curY)
-    iLabel:SetText(_hex("accent") .. "Min iLvl|r")
+    iLabel:SetText(_hex("accent") .. L["label_min_ilvl"] .. "|r")
 
     self.createMinIlvl = UI and UI.CreateModernEditBox(f, 80, 24) or CreateFrame("EditBox", nil, f)
     if not UI then
@@ -1608,7 +1660,7 @@ function Listings:BuildCreateFrame()
 
     local vLabel = f:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     vLabel:SetPoint("TOPLEFT", f, "TOPLEFT", leftPad, curY)
-    vLabel:SetText(_hex("accent") .. "Voice Chat|r")
+    vLabel:SetText(_hex("accent") .. L["label_voice_chat"] .. "|r")
 
     self.createVoice = UI and UI.CreateModernDropdown(f, 150, 24) or CreateFrame("Frame", nil, f)
     if not UI then
@@ -1619,11 +1671,19 @@ function Listings:BuildCreateFrame()
         self.createVoice:SetOptions(VOICE_OPTIONS)
         self.createVoice:SetText(L["none"])
     end
+
+    local vHint = f:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    vHint:SetPoint("TOPLEFT", f, "TOPLEFT", leftPad + labelW + 160, curY + 4)
+    vHint:SetText(_hex("textDim") .. "(set your Discord link in the Profile tab)|r")
+    vHint:SetWidth(400)
+    vHint:SetJustifyH("LEFT")
+    self.createVoiceHint = vHint
+
     curY = curY - rowH
 
     local lLabel = f:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     lLabel:SetPoint("TOPLEFT", f, "TOPLEFT", leftPad, curY)
-    lLabel:SetText(_hex("accent") .. "Loot Method|r")
+    lLabel:SetText(_hex("accent") .. L["label_loot_method"] .. "|r")
 
     self.createLoot = UI and UI.CreateModernDropdown(f, 200, 24) or CreateFrame("Frame", nil, f)
     if not UI then
@@ -1638,7 +1698,7 @@ function Listings:BuildCreateFrame()
 
     local nLabel = f:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     nLabel:SetPoint("TOPLEFT", f, "TOPLEFT", leftPad, curY)
-    nLabel:SetText(_hex("accent") .. "Note|r")
+    nLabel:SetText(_hex("accent") .. L["label_note"] .. "|r")
 
     self.createNote = UI and UI.CreateModernEditBox(f, 400, 24) or CreateFrame("EditBox", nil, f)
     if not UI then
@@ -1651,7 +1711,7 @@ function Listings:BuildCreateFrame()
     self.createNote:SetScript("OnEscapePressed", function(self) self:ClearFocus() end)
     curY = curY - rowH - 10
 
-    self.createBtn = UI and UI.CreateModernButton(f, 160, 30, "Publish Group") or CreateFrame("Button", nil, f, "UIPanelButtonTemplate")
+    self.createBtn = UI and UI.CreateModernButton(f, 160, 30, L["listings_publish_group"]) or CreateFrame("Button", nil, f, "UIPanelButtonTemplate")
     if not UI then
         self.createBtn:SetSize(160, 30)
         self.createBtn:SetText("|cff44ff44" .. L["listings_publish_group"] .. "|r")
@@ -1744,7 +1804,7 @@ end
 function Listings:SubmitCreate()
     local activity = self.createActivity and self.createActivity.GetText and self.createActivity:GetText() or ""
     if activity == "" then
-        print("|cff88ccffFrostNet:|r Select an activity!")
+        print("|cff88ccffFrostNet:|r " .. (L["net_select_activity"] or "Select an activity!"))
         return
     end
 
@@ -1757,10 +1817,17 @@ function Listings:SubmitCreate()
     end
     local maxM = self.createMaxMembers and tonumber(self.createMaxMembers:GetText()) or 5
     local minIlvl = self.createMinIlvl and self.createMinIlvl:GetText() or ""
-    local voice = self.createVoice and self.createVoice.GetText and self.createVoice:GetText() or "None"
+    local voiceChannel = self.createVoice and self.createVoice.GetText and self.createVoice:GetText() or "None"
     local note = self.createNote and self.createNote:GetText() or ""
     local keyData = ltype == "Key" and keyLvl or ""
     local loot = self.createLoot and self.createLoot.GetText and self.createLoot:GetText() or "Group Loot"
+
+    local pn = UnitName("player") or ""
+    local VB = FrostSeek and FrostSeek.VoiceBridge
+    local voice = voiceChannel
+    if VB and pn ~= "" then
+        voice = VB.EncodeVoiceField(voiceChannel, pn)
+    end
 
     local rolesList = {}
     if self.createRoles then
@@ -1841,7 +1908,7 @@ function Listings:BuildMyListingFrame()
             if r.applicantName then Listings:AcceptApplicant(r.applicantName) end
         end)
 
-        r.declineBtn = UI and UI.CreateModernButton(r, 55, 20, "No") or CreateFrame("Button", nil, r, "UIPanelButtonTemplate")
+        r.declineBtn = UI and UI.CreateModernButton(r, 55, 20, L["no"]) or CreateFrame("Button", nil, r, "UIPanelButtonTemplate")
         if not UI then
             r.declineBtn:SetSize(55, 20)
             r.declineBtn:SetText(L["no"])
@@ -1855,7 +1922,7 @@ function Listings:BuildMyListingFrame()
         r:Hide()
     end
 
-    self.cancelBtn = UI and UI.CreateModernButton(f, 140, 28, "Remove Listing") or CreateFrame("Button", nil, f, "UIPanelButtonTemplate")
+    self.cancelBtn = UI and UI.CreateModernButton(f, 140, 28, L["listings_remove_listing"]) or CreateFrame("Button", nil, f, "UIPanelButtonTemplate")
     if not UI then
         self.cancelBtn:SetSize(140, 28)
         self.cancelBtn:SetText("|cffff5555" .. L["listings_remove_listing"] .. "|r")

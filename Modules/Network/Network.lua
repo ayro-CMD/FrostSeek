@@ -30,6 +30,26 @@ local CHANNEL_SLOT = 12
 local PROTOCOL = FrostSeek and FrostSeek.Protocol
 local Compat = FrostSeekCompat
 local Shared = _G.FrostSeekShared
+local L = FrostSeek and FrostSeek.L or function(k) return k end
+local function LPrint(key, ...)
+    local body = select("#", ...) > 0 and FrostSeek.Lf and FrostSeek.Lf(key, ...) or L[key]
+    print("|cff88ccffFrostNet:|r " .. tostring(body))
+end
+
+local HasAddonMessageAPI = false
+local AddonMessageChannel = "FrostSeek"
+do
+    local ok = pcall(function()
+        if C_ChatInfo and C_ChatInfo.SendAddonMessage and C_ChatInfo.RegisterAddonMessagePrefix then
+            local registered = C_ChatInfo.RegisterAddonMessagePrefix(AddonMessageChannel)
+            HasAddonMessageAPI = registered ~= false
+        end
+    end)
+    if not ok then HasAddonMessageAPI = false end
+end
+
+Network.usesAddonMessageAPI = HasAddonMessageAPI
+Network.addonMessagePrefix = AddonMessageChannel
 
 Network.channelId = nil
 Network.channelName = CHANNEL
@@ -43,6 +63,8 @@ Network._lastSendTime = {}
 Network.rxCount = 0
 Network.txCount = 0
 Network.droppedCount = 0
+Network._lastHeartbeat = 0       
+Network.HEARTBEAT_INTERVAL = 60  
 
 Network._queue = {}
 Network._queueMax = 50
@@ -54,11 +76,16 @@ local RATE_LIMITS = {
     DECISION = 0.3,
     PING = 1.0,
     PONG = 1.0,
+    HB = 1.0,      
+    REPORT = 0.5,  
 }
 
 local function debugLog(msg)
     if FrostSeekDB and FrostSeekDB.Settings and FrostSeekDB.Settings.debugMode then
         print("|cffffcc00[FSK-DBG]|r " .. tostring(msg))
+    end
+    if FrostSeek and FrostSeek.Logger and FrostSeek.Logger.Debug then
+        FrostSeek.Logger.Debug("[net] " .. tostring(msg))
     end
 end
 Network._debug = debugLog
@@ -138,7 +165,7 @@ function Network:JoinChannel()
             if not self.wasConnected then
                 self.wasConnected = true
                 if Shared then Shared.PlaySound("connect") end
-                print("|cff88ccffFrostNet:|r Connected to channel |cffffffff" .. CHANNEL .. "|r (slot " .. tostring(CHANNEL_SLOT) .. ")")
+                LPrint("net_connected", CHANNEL, tostring(CHANNEL_SLOT))
             end
             if not wasConn then self:ScheduleRebroadcast() end
         else
@@ -171,13 +198,13 @@ function Network:RefreshChannel()
             if not self.wasConnected then
                 self.wasConnected = true
                 if Shared then Shared.PlaySound("connect") end
-                print("|cff88ccffFrostNet:|r Connected to channel |cffffffff" .. CHANNEL .. "|r")
+                LPrint("net_connected", CHANNEL, tostring(CHANNEL_SLOT))
             end
         end
     else
         if self.isConnected then
             self.isConnected = false
-            print("|cffff5555FrostNet:|r Disconnected from channel |cffffffff" .. CHANNEL .. "|r, will retry...")
+            LPrint("net_disconnected", CHANNEL)
         end
     end
 end
@@ -215,6 +242,16 @@ function Network:Send(message)
     local tooSoon = (now - lastT) < rateLimit
 
     local function actuallySend()
+        if HasAddonMessageAPI then
+            local ok, err = pcall(function()
+                C_ChatInfo.SendAddonMessage(AddonMessageChannel, message, "GUILD")
+            end)
+            if not ok then
+                debugLog("SendAddonMessage error: " .. tostring(err))
+                return false, "addon_msg_error"
+            end
+            return true
+        end
         if not self.channelId then
             self:RefreshChannel()
         end
@@ -317,14 +354,14 @@ function Network:SendListing(listing)
         local sentId = listing.id
         C_Timer.After(2, function()
             if Network._lastSentListingId == sentId and not Network._echoReceived then
-                print("|cffff8800FrostNet:|r No loopback echo from server within 2s — the server may be dropping your messages. Run /fsnet to verify.")
+            LPrint("net_no_loopback")
             end
         end)
     else
         if not self.channelId then
-            print("|cffff8800FrostNet:|r Channel not connected yet — your group is queued and will be published automatically when FSK reconnects.")
+            LPrint("net_publish_queued")
         else
-            print("|cffff8800FrostNet:|r Group publish deferred (rate-limit), will retry in ~2s.")
+            LPrint("net_publish_ratelimited")
         end
     end
     return ok
@@ -365,6 +402,16 @@ function Network:SendPong()
     return self:Send(msg)
 end
 
+function Network:SendHeartbeat()
+    if not PROTOCOL then return false end
+    if not PROTOCOL.SerializeHeartbeat then return false end
+    local pn = UnitName("player") or ""
+    if pn == "" then return false end
+    local msg = PROTOCOL.SerializeHeartbeat(pn)
+    if not msg then return false end
+    return self:Send(msg)
+end
+
 C_Timer.NewTicker(10, function()
     Network:RefreshChannel()
 end)
@@ -378,6 +425,16 @@ C_Timer.NewTicker(60, function()
     if not Network.isConnected then
         Network.joinAttempts = 0
         Network:JoinChannel()
+    end
+end)
+
+C_Timer.NewTicker(Network.HEARTBEAT_INTERVAL, function()
+    if not FrostSeek or not FrostSeek._v or not FrostSeek._v.c(_tk) then return end
+    if Network.isConnected or HasAddonMessageAPI then
+        Network:SendHeartbeat()
+    end
+    if PROTOCOL and PROTOCOL.CleanupSenderBuckets then
+        PROTOCOL:CleanupSenderBuckets()
     end
 end)
 
@@ -406,11 +463,21 @@ eventFrame:RegisterEvent("CHAT_MSG_CHANNEL")
 eventFrame:RegisterEvent("CHANNEL_UI_UPDATE")
 eventFrame:RegisterEvent("CHAT_MSG_CHANNEL_NOTICE")
 
-eventFrame:SetScript("OnEvent", function(_, event, ...)
+if HasAddonMessageAPI then
+    eventFrame:RegisterEvent("CHAT_MSG_ADDON")
+end
+
+local rawHandler = function(_, event, ...)
     if not FrostSeek or not FrostSeek._v or not FrostSeek._v.c(_tk) then return end
 
     if event == "PLAYER_LOGIN" then
         Network:JoinChannel()
+    elseif event == "CHAT_MSG_ADDON" then
+        local prefix, message, channelType, sender = ...
+        if prefix ~= AddonMessageChannel then return end
+        if not message or message == "" then return end
+        Network:HandleMessage(message, sender or "?")
+        return
     elseif event == "CHAT_MSG_CHANNEL_NOTICE" then
         local message, _, _, _, _, _, _, _, channelName = ...
         if message == "YOU_CHANGED" or message == "YOU_JOINED" or message == "CHANNEL_JOIN" or message == "CHANNEL_COUNT_UPDATE" then
@@ -446,7 +513,7 @@ eventFrame:SetScript("OnEvent", function(_, event, ...)
             end
         end
         if not isFSK and text then
-            if string.sub(text, 1, 4) == "FSK1" then
+            if string.sub(text, 1, 4) == "FSK2" or string.sub(text, 1, 4) == "FSK1" then
                 isFSK = true
             end
         end
@@ -457,7 +524,13 @@ eventFrame:SetScript("OnEvent", function(_, event, ...)
     elseif event == "CHANNEL_UI_UPDATE" then
         Network:RefreshChannel()
     end
-end)
+end
+
+if FrostSeek and FrostSeek.SafeHandler then
+    eventFrame:SetScript("OnEvent", FrostSeek.SafeHandler(rawHandler))
+else
+    eventFrame:SetScript("OnEvent", rawHandler)
+end
 
 function Network:HandleMessage(raw, author)
     if not PROTOCOL then
@@ -491,6 +564,14 @@ function Network:HandleMessage(raw, author)
         debugLog("RX dropped (unparseable): " .. tostring(string.sub(raw or "", 1, 60)))
         self.droppedCount = self.droppedCount + 1
         return
+    end
+    if PROTOCOL.CheckSenderRate then
+        local allowed = PROTOCOL:CheckSenderRate(parts)
+        if not allowed then
+            debugLog("RX dropped (sender flooding): " .. tostring(string.sub(raw, 1, 60)))
+            self.droppedCount = self.droppedCount + 1
+            return
+        end
     end
     if PROTOCOL.MarkProcessed then
         PROTOCOL:MarkProcessed(raw)
@@ -556,6 +637,18 @@ function Network:HandleMessage(raw, author)
         if target then
             if FrostSeek.Listings and FrostSeek.Listings.HandleDecision then
                 FrostSeek.Listings:HandleDecision(target, result, activity)
+            end
+        end
+
+    elseif msgType == PROTOCOL.MSG_TYPES.HEARTBEAT then
+        if PROTOCOL.ParseHeartbeat then
+            local hb = PROTOCOL.ParseHeartbeat(parts)
+            if hb and hb.name and hb.name ~= "" and hb.name ~= pn then
+                if FrostSeek.Presence and FrostSeek.Presence.HandleHeartbeat then
+                    FrostSeek.Presence:HandleHeartbeat(hb.name, hb.seen)
+                elseif FrostSeek.Presence and FrostSeek.Presence.HandlePong then
+                    FrostSeek.Presence:HandlePong(hb.name, hb.seen)
+                end
             end
         end
     end

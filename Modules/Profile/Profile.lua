@@ -28,6 +28,7 @@ local _tk = FrostSeek and FrostSeek._v and FrostSeek._v.a("profile", Profile)
 local Shared = _G.FrostSeekShared
 local _tc = Shared and Shared._tc or function(t) return {0.5,0.5,0.5} end
 local _hex = Shared and Shared._hex or function(t) return "|cFF888888" end
+local L = FrostSeek and FrostSeek.L or setmetatable({}, {__index = function(_, k) return k end})
 
 local function EnsureProfileDB()
     if not FrostSeekDB then
@@ -155,8 +156,8 @@ function Profile:Initialize(parentFrame)
 
     local title = F:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
     title:SetPoint("TOPLEFT", F, "TOPLEFT", pad, curY)
-    title:SetText("|cff88ccffYour Profile|r")
-    curY = curY - 35
+    title:SetText("|cff88ccff" .. L["profile_your_profile"] .. "|r")
+    curY = curY - 30
 
     local autoInfo = F:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     autoInfo:SetPoint("TOPLEFT", F, "TOPLEFT", pad, curY)
@@ -174,7 +175,7 @@ function Profile:Initialize(parentFrame)
 
     local roleLabel = F:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     roleLabel:SetPoint("TOPLEFT", F, "TOPLEFT", pad, curY)
-    roleLabel:SetText(_hex("accent") .. "Role|r")
+    roleLabel:SetText(_hex("accent") .. L["profile_role"] .. "|r")
     curY = curY - 22
 
     local roleButtons = {}
@@ -252,7 +253,7 @@ function Profile:Initialize(parentFrame)
 
     local specLabel = F:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     specLabel:SetPoint("TOPLEFT", F, "TOPLEFT", pad, curY)
-    specLabel:SetText(_hex("accent") .. "Spec / Secondary Role|r")
+    specLabel:SetText(_hex("accent") .. L["profile_spec_secondary"] .. "|r")
     curY = curY - 22
 
     if FrostSeek and FrostSeek.UI and FrostSeek.UI.CreateModernEditBox then
@@ -278,7 +279,7 @@ function Profile:Initialize(parentFrame)
 
     local discLabel = F:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     discLabel:SetPoint("TOPLEFT", F, "TOPLEFT", pad, curY)
-    discLabel:SetText(_hex("accent") .. "Discord Ready|r")
+    discLabel:SetText(_hex("accent") .. L["profile_discord_ready"] .. "|r")
     curY = curY - 22
 
     local discToggle = CreateFrame("Button", nil, F)
@@ -335,7 +336,7 @@ function Profile:Initialize(parentFrame)
 
     local wispLabel = F:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     wispLabel:SetPoint("LEFT", discLabel, "RIGHT", 175, 0)
-    wispLabel:SetText(_hex("accent") .. "Whisper Leader on Apply|r")
+    wispLabel:SetText(_hex("accent") .. L["options_whisper_on_apply"] .. "|r")
 
     if not FrostSeekDB.Settings then FrostSeekDB.Settings = {} end
     if FrostSeekDB.Settings.applyWhisper == nil then FrostSeekDB.Settings.applyWhisper = false end
@@ -384,7 +385,7 @@ function Profile:Initialize(parentFrame)
         self.hoverTex:Show()
         self.border:SetColorTexture(unpack(_tc("borderHover")))
         GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
-        GameTooltip:SetText("Whisper Leader on Apply", 0.8, 0.9, 1)
+        GameTooltip:SetText(L["options_whisper_on_apply"], 0.8, 0.9, 1)
         GameTooltip:AddLine("When applying to a group, also send a [FrostSeek] whisper to the leader.", 0.8, 0.8, 0.8, true)
         GameTooltip:AddLine("Useful if the leader does not run FrostSeek; the FSK APP message alone is enough for addon users.", 0.6, 0.6, 0.6, true)
         GameTooltip:Show()
@@ -404,7 +405,7 @@ function Profile:Initialize(parentFrame)
 
     local noteLabel = F:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     noteLabel:SetPoint("TOPLEFT", F, "TOPLEFT", pad, curY)
-    noteLabel:SetText(_hex("accent") .. "Application Notes|r")
+    noteLabel:SetText(_hex("accent") .. L["profile_application_notes"] .. "|r")
     curY = curY - 22
 
     if FrostSeek and FrostSeek.UI and FrostSeek.UI.CreateModernEditBox then
@@ -427,17 +428,86 @@ function Profile:Initialize(parentFrame)
         p.note = self:GetText() or ""
     end)
     self.noteEdit:SetScript("OnEscapePressed", function(self) self:ClearFocus() end)
-    curY = curY - 65
+    curY = curY - 55
+
+    local VB = FrostSeek and FrostSeek.VoiceBridge
+
+    local voiceUrlLabel = F:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    voiceUrlLabel:SetPoint("TOPLEFT", F, "TOPLEFT", pad, curY)
+    voiceUrlLabel:SetText(_hex("accent") .. L["profile_voice_url_inline"] .. "|r")
+    self.voiceUrlLabel = voiceUrlLabel
+    curY = curY - 18
+
+    if FrostSeek and FrostSeek.UI and FrostSeek.UI.CreateModernEditBox then
+        self.voiceUrlEdit = FrostSeek.UI.CreateModernEditBox(F, 360, 24)
+    else
+        self.voiceUrlEdit = CreateFrame("EditBox", nil, F)
+        self.voiceUrlEdit:SetAutoFocus(false)
+        self.voiceUrlEdit:SetFontObject("GameFontNormalSmall")
+        self.voiceUrlEdit:SetWidth(360)
+        self.voiceUrlEdit:SetHeight(24)
+    end
+    self.voiceUrlEdit:SetPoint("TOPLEFT", F, "TOPLEFT", pad, curY)
+    if VB then
+        local pn = UnitName("player") or ""
+        local existing = VB:Get(pn)
+        if existing then self.voiceUrlEdit:SetText(existing) end
+    end
+    self.voiceUrlEdit:SetScript("OnEscapePressed", function(self) self:ClearFocus() end)
+
+    if FrostSeek and FrostSeek.UI and FrostSeek.UI.CreateModernButton then
+        self.voiceSaveBtn = FrostSeek.UI.CreateModernButton(F, 110, 24, "Save", _tc("accent"))
+    else
+        self.voiceSaveBtn = CreateFrame("Button", nil, F, "UIPanelButtonTemplate")
+        self.voiceSaveBtn:SetSize(110, 24)
+        self.voiceSaveBtn:SetText("|cff44ff44" .. L["save"] .. "|r")
+    end
+    self.voiceSaveBtn:SetPoint("TOPLEFT", F, "TOPLEFT", pad + 370, curY)
+    self.voiceSaveBtn:SetScript("OnClick", function()
+        if not VB then
+            print("|cffff5555FrostSeek:|r VoiceBridge module not loaded.")
+            return
+        end
+        local url = Profile.voiceUrlEdit and Profile.voiceUrlEdit.GetText and Profile.voiceUrlEdit:GetText() or ""
+        local pn = UnitName("player") or ""
+        if url and url ~= "" then
+            local ok = VB:Set(pn, url)
+            if not ok then return end
+        else
+            VB:Remove(pn)
+            print("|cff88ccffFrostSeek:|r Voice link removed for " .. tostring(pn))
+        end
+    end)
+
+    if FrostSeek and FrostSeek.UI and FrostSeek.UI.CreateModernButton then
+        self.voiceTestBtn = FrostSeek.UI.CreateModernButton(F, 90, 24, "Test", _tc("accent"))
+    else
+        self.voiceTestBtn = CreateFrame("Button", nil, F, "UIPanelButtonTemplate")
+        self.voiceTestBtn:SetSize(90, 24)
+        self.voiceTestBtn:SetText("|cff88ccff" .. L["voice_test"] .. "|r")
+    end
+    self.voiceTestBtn:SetPoint("TOPLEFT", F, "TOPLEFT", pad + 490, curY)
+    self.voiceTestBtn:SetScript("OnClick", function()
+        if not VB then return end
+        local pn = UnitName("player") or ""
+        local url = Profile.voiceUrlEdit and Profile.voiceUrlEdit.GetText and Profile.voiceUrlEdit:GetText() or ""
+        if url and url ~= "" then
+            VB:Set(pn, url)
+        end
+        VB:JoinVoice(pn)
+    end)
+
+    curY = curY - 28
 
     local previewLabel = F:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     previewLabel:SetPoint("TOPLEFT", F, "TOPLEFT", pad, curY)
-    previewLabel:SetText(_hex("accent") .. "Profile Preview|r")
-    curY = curY - 22
+    previewLabel:SetText(_hex("accent") .. L["profile_preview"] .. "|r")
+    curY = curY - 20
 
     self.preview = F:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     self.preview:SetPoint("TOPLEFT", F, "TOPLEFT", pad, curY)
     self.preview:SetWidth(740)
-    self.preview:SetHeight(100)
+    self.preview:SetHeight(45)
     self.preview:SetJustifyH("LEFT")
     self.preview:SetJustifyV("TOP")
 
@@ -477,7 +547,7 @@ function Profile:UpdateDiscordToggle()
         if dt.border then dt.border:SetColorTexture(0.3, 0.7, 0.4, 0.9) end
         if dt.accent then dt.accent:SetColorTexture(0.3, 0.7, 0.4, 0.9) end
         if dt.text then
-            dt.text:SetText("|cff44ff44Yes|r")
+            dt.text:SetText("|cff44ff44" .. L["profile_discord_ready_yes"] .. "|r")
             dt.text:SetTextColor(unpack(_tc("textPrimary")))
         end
     else
@@ -485,7 +555,7 @@ function Profile:UpdateDiscordToggle()
         if dt.border then dt.border:SetColorTexture(unpack(_tc("border"))) end
         if dt.accent then dt.accent:SetColorTexture(unpack(_tc("accentBar"))) end
         if dt.text then
-            dt.text:SetText("|cffff5555No|r")
+            dt.text:SetText("|cffff5555" .. L["profile_discord_ready_no"] .. "|r")
             dt.text:SetTextColor(unpack(_tc("textMuted")))
         end
     end

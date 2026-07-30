@@ -24,9 +24,13 @@ local FrostSeek = _G.FrostSeek
 
 local Protocol = {}
 local _tk = FrostSeek and FrostSeek._v and FrostSeek._v.a("protocol", Protocol)
-
-local PREFIX = "FSK1"
+local PREFIX = "FSK2"
+local LEGACY_PREFIX = "FSK1"
 local SEP = "~"
+
+Protocol.VERSION = 2
+Protocol.PREFIX = PREFIX
+Protocol.LEGACY_PREFIX = LEGACY_PREFIX
 
 Protocol.MSG_TYPES = {
     LIST = "LIST",
@@ -35,12 +39,24 @@ Protocol.MSG_TYPES = {
     PONG = "PONG",
     REMOVE = "REMOVE",
     DECISION = "DECISION",
+    HEARTBEAT = "HB",
 }
 
 Protocol._dedupCache = {}
-Protocol._dedupMaxAge = 120
+Protocol._dedupMaxAge = 300
 Protocol._lastCleanup = 0
 Protocol.MAX_WIRE = 250
+Protocol._senderBuckets = {}
+Protocol._senderWindow = 60   
+Protocol._senderMaxEvents = {
+    LIST = 8,   
+    APP = 12,
+    REMOVE = 8,
+    DECISION = 15,
+    PING = 3,
+    PONG = 3,
+    HEARTBEAT = 2,
+}
 
 local function clean(s)
     s = tostring(s or "")
@@ -95,17 +111,93 @@ local function playerLevel()
     return tostring(UnitLevel("player") or 60)
 end
 
+local function stripPrefix(raw)
+    if not raw then return raw end
+    if string.sub(raw, 1, string.len(PREFIX)) == PREFIX then
+        return string.sub(raw, string.len(PREFIX) + 1)
+    end
+    if string.sub(raw, 1, string.len(LEGACY_PREFIX)) == LEGACY_PREFIX then
+        return string.sub(raw, string.len(LEGACY_PREFIX) + 1)
+    end
+    return raw
+end
+
 local function DedupKey(raw)
     if not raw then return nil end
-    local stripped = raw
-    if string.sub(stripped, 1, string.len(PREFIX)) == PREFIX then
-        stripped = string.sub(stripped, string.len(PREFIX) + 1)
-    end
+    local stripped = stripPrefix(raw)
     local parts = split(stripped)
     if parts and parts[2] == Protocol.MSG_TYPES.LIST and #parts >= 11 then
         return parts[2] .. SEP .. (parts[3] or "") .. SEP .. (parts[11] or "")
     end
     return string.sub(stripped, 1, 80)
+end
+
+local function SenderOf(parts)
+    if not parts or #parts < 3 then return nil end
+    local t = parts[2]
+    if t == Protocol.MSG_TYPES.LIST then return parts[7]
+    elseif t == Protocol.MSG_TYPES.APP then return parts[4]
+    elseif t == Protocol.MSG_TYPES.PING then return parts[3]
+    elseif t == Protocol.MSG_TYPES.PONG then return parts[3]
+    elseif t == Protocol.MSG_TYPES.HEARTBEAT then return parts[3]
+    elseif t == Protocol.MSG_TYPES.DECISION then return parts[3]
+    end
+    return nil
+end
+
+function Protocol:CheckSenderRate(parts)
+    local sender = SenderOf(parts)
+    if not sender or sender == "" then return true end
+    local msgType = parts[2]
+    local max = Protocol._senderMaxEvents[msgType]
+    if not max then return true end
+
+    local now = time()
+    local bucket = Protocol._senderBuckets[sender]
+    if not bucket then
+        bucket = {}
+        Protocol._senderBuckets[sender] = bucket
+    end
+    local entries = bucket[msgType]
+    if not entries then
+        entries = {}
+        bucket[msgType] = entries
+    end
+
+    local i = 1
+    while i <= #entries do
+        if (now - entries[i]) > Protocol._senderWindow then
+            table.remove(entries, i)
+        else
+            i = i + 1
+        end
+    end
+    if #entries >= max then
+        return false 
+    end
+    entries[#entries + 1] = now
+    return true
+end
+
+function Protocol:CleanupSenderBuckets()
+    local now = time()
+    for sender, bucket in pairs(Protocol._senderBuckets) do
+        local hasAny = false
+        for _, entries in pairs(bucket) do
+            local i = 1
+            while i <= #entries do
+                if (now - entries[i]) > Protocol._senderWindow then
+                    table.remove(entries, i)
+                else
+                    i = i + 1
+                end
+            end
+            if #entries > 0 then hasAny = true end
+        end
+        if not hasAny then
+            Protocol._senderBuckets[sender] = nil
+        end
+    end
 end
 
 local function CleanupDedupCache()
@@ -126,6 +218,11 @@ function Protocol:IsDuplicate(raw)
         return true
     end
     return false
+end
+
+function Protocol:IsLegacyMessage(raw)
+    if not raw or type(raw) ~= "string" then return false end
+    return string.sub(raw, 1, string.len(LEGACY_PREFIX)) == LEGACY_PREFIX
 end
 
 function Protocol:MarkProcessed(raw)
@@ -309,9 +406,17 @@ end
 
 function Protocol.Parse(raw)
     if not raw or type(raw) ~= "string" then return nil, nil end
+    local isOurs = false
     if string.sub(raw, 1, string.len(PREFIX)) == PREFIX then
+        isOurs = true
+    elseif string.sub(raw, 1, string.len(LEGACY_PREFIX)) == LEGACY_PREFIX then
+        isOurs = true
+    else
+        return nil, nil
+    end
+    if isOurs then
         local parts = split(raw)
-        if parts and #parts >= 2 and parts[1] == PREFIX then
+        if parts and #parts >= 2 and (parts[1] == PREFIX or parts[1] == LEGACY_PREFIX) then
             local msgType = parts[2]
             return msgType, parts
         end
@@ -324,6 +429,7 @@ function Protocol:IsAddonSpam(text)
     local s = text
     local ls = string.lower(s)
     if string.sub(s, 1, string.len(PREFIX)) == PREFIX then return false end
+    if string.sub(s, 1, string.len(LEGACY_PREFIX)) == LEGACY_PREFIX then return false end
     if string.sub(s, 1, 3) == "LC1" then return true end
     if string.sub(s, 1, 3) == "LC2" then return true end
     if string.sub(s, 1, 3) == "LC3" then return true end
@@ -337,11 +443,18 @@ function Protocol:IsAddonSpam(text)
     return false
 end
 
+local PLAYER_NAME_PATTERN = "^[%a][%a']*$" 
 function Protocol.IsValidListing(l)
     if not l then return false end
     if not l.id or l.id == "" then return false end
     if not l.activity or l.activity == "" then return false end
     if not l.leader or l.leader == "" then return false end
+    local leader = tostring(l.leader)
+    if #leader > 12 then return false end
+    if not string.match(leader, PLAYER_NAME_PATTERN) then return false end
+    local act = tostring(l.activity)
+    if #act > 80 then return false end
+    if string.find(act, "[%c]", 1) then return false end
     return true
 end
 
@@ -349,6 +462,9 @@ function Protocol.IsValidApplicant(a)
     if not a then return false end
     if not a.name or a.name == "" then return false end
     if not a.listingId or a.listingId == "" then return false end
+    local name = tostring(a.name)
+    if #name > 12 then return false end
+    if not string.match(name, PLAYER_NAME_PATTERN) then return false end
     return true
 end
 
@@ -361,7 +477,24 @@ function Protocol.GenerateId()
         end)
     end
     local pn = (UnitName and UnitName("player")) or "x"
-    return "fsk_" .. tostring(pn) .. "_" .. tostring(math.random(100000, 999999)) .. "_" .. tostring(now()) .. "_" .. tostring(math.floor((GetTime and GetTime() or 0) * 1000) % 100000)
+    return "fsk2_" .. tostring(pn) .. "_" .. tostring(math.random(100000, 999999)) .. "_" .. tostring(now()) .. "_" .. tostring(math.floor((GetTime and GetTime() or 0) * 1000) % 100000)
+end
+
+function Protocol.SerializeHeartbeat(name)
+    return table.concat({
+        PREFIX,
+        Protocol.MSG_TYPES.HEARTBEAT,
+        clean(name or playerName()),
+        tostring(now()),
+    }, SEP)
+end
+
+function Protocol.ParseHeartbeat(p)
+    if not p or #p < 3 then return nil end
+    return {
+        name = p[3],
+        seen = tonumber(p[4]) or now(),
+    }
 end
 
 Protocol.PREFIX = PREFIX

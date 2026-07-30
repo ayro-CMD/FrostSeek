@@ -1022,6 +1022,35 @@ function LFG.RecordFromListing(listing)
     if LFG.UpdateRecruitersList then LFG.UpdateRecruitersList() end
 end
 
+LFG.DifficultyFilter = nil
+
+local DIFFICULTY_FILTERS = {
+    DUNGEON = {
+        { label = "Normal",  match = function(d) return not d or d:lower():find("normal") end },
+        { label = "Heroic",  match = function(d) return d and (d:lower():find("heroic") or d:lower():find("hc")) end },
+        { label = "Mythic",  match = function(d) return d and d:lower():find("mythic") end },
+    },
+    RAID = {
+        { label = "Normal",   match = function(d) return not d or d:lower():find("normal") end },
+        { label = "Heroic",   match = function(d) return d and (d:lower():find("heroic") or d:lower():find("hc")) end },
+        { label = "Mythic",   match = function(d) return d and d:lower():find("mythic") end },
+        { label = "Ascended", match = function(d) return d and (d:lower():find("ascended") or d:lower():find("asc")) end },
+        { label = "Trial",    match = function(d) return d and d:lower():find("trial") end },
+    },
+    WORLD_BOSS = {
+        { label = "Normal",   match = function(d) return not d or d:lower():find("open world") or d:lower():find("normal") end },
+        { label = "HC",       match = function(d) return d and (d:lower():find("hc instanced") or d:lower():find("heroic")) end },
+        { label = "Mythic",   match = function(d) return d and d:lower():find("mythic") end },
+        { label = "Ascended", match = function(d) return d and (d:lower():find("ascended") or d:lower():find("asc")) end },
+    },
+    MANASTORM = {
+        { label = "Leveling", match = function(d) return d and (d:lower():find("leveling") or d:lower():find("level")) end },
+        { label = "Gold Farm", match = function(d) return d and (d:lower():find("gold farm") or d:lower():find("goldfarm")) end },
+        { label = "ALVA",     match = function(d) return d and d:lower():find("alva") end },
+    },
+   
+}
+
 function LFG.GroupMatchesCategory(group, category)
     if not group then return false end
     if category == "ALL" then
@@ -1804,7 +1833,7 @@ function LFG.InitRowPool(parent)
         local tooltipBg = tooltipFrame:CreateTexture(nil, "BACKGROUND")
         tooltipBg:SetAllPoints()
         tooltipBg:SetColorTexture(0, 0, 0, 0)
-        local acceptBtn = FrostSeekUIUtils.CreateModernButton(row, 60, 20, "Accept", _tc("catDungeon"))
+        local acceptBtn = FrostSeekUIUtils.CreateModernButton(row, 60, 20, L["listings_accept"], _tc("catDungeon"))
         acceptBtn:SetPoint("RIGHT", row, "RIGHT", -8, 0)
         acceptBtn:SetScript("OnClick", function()
             local pr = rowPool[i]
@@ -1933,7 +1962,7 @@ function LFG.CreateRowForPool(parent, idx)
     local tooltipBg = tooltipFrame:CreateTexture(nil, "BACKGROUND")
     tooltipBg:SetAllPoints()
     tooltipBg:SetColorTexture(0, 0, 0, 0)
-    local acceptBtn = FrostSeekUIUtils.CreateModernButton(row, 60, 20, "Accept", _tc("catDungeon"))
+    local acceptBtn = FrostSeekUIUtils.CreateModernButton(row, 60, 20, L["listings_accept"], _tc("catDungeon"))
     acceptBtn:SetPoint("RIGHT", row, "RIGHT", -8, 0)
     acceptBtn:SetScript("OnClick", function()
         local pr = rowPool[idx]
@@ -2001,20 +2030,35 @@ function LFG.UpdateRecruitersList()
     end
     local filteredSearches = {}
     local searchLower = lfgSearchText and string.lower(lfgSearchText) or ""
+    local diffFilter = LFG.DifficultyFilter
+    local diffFilters = diffFilter and DIFFICULTY_FILTERS[LFG.CurrentCategory or ""] or nil
+    local activeDiffMatch = nil
+    if diffFilters and diffFilter then
+        for _, f in ipairs(diffFilters) do
+            if f.label == diffFilter then activeDiffMatch = f.match; break end
+        end
+    end
     for _, search in ipairs(activeSearches) do
         if LFG.GroupMatchesCategory(search, LFG.CurrentCategory or "ALL") then
-            if searchLower == "" then
-                table.insert(filteredSearches, search)
-            else
-                local msgLower = string.lower(search.message or "")
-                local playerLower = string.lower(search.player or "")
-                local dungeonLower = string.lower(search.dungeon or "")
-                local catLower = string.lower(search.category or "")
-                if string.find(msgLower, searchLower, 1, true)
-                    or string.find(playerLower, searchLower, 1, true)
-                    or string.find(dungeonLower, searchLower, 1, true)
-                    or string.find(catLower, searchLower, 1, true) then
+            local passesDiff = true
+            if activeDiffMatch then
+                local diffLabel = LFG.ParseDifficulty(search.message, search.category)
+                passesDiff = activeDiffMatch(diffLabel)
+            end
+            if passesDiff then
+                if searchLower == "" then
                     table.insert(filteredSearches, search)
+                else
+                    local msgLower = string.lower(search.message or "")
+                    local playerLower = string.lower(search.player or "")
+                    local dungeonLower = string.lower(search.dungeon or "")
+                    local catLower = string.lower(search.category or "")
+                    if string.find(msgLower, searchLower, 1, true)
+                        or string.find(playerLower, searchLower, 1, true)
+                        or string.find(dungeonLower, searchLower, 1, true)
+                        or string.find(catLower, searchLower, 1, true) then
+                        table.insert(filteredSearches, search)
+                    end
                 end
             end
         end
@@ -2160,6 +2204,7 @@ end
 
 function LFG.ChangeCategory(category)
     LFG.CurrentCategory = category
+    LFG.DifficultyFilter = nil
     if LFG.recruitersScrollFrame then
         LFG.recruitersScrollFrame:SetVerticalScroll(0)
     end
@@ -2177,6 +2222,7 @@ function LFG.ChangeCategory(category)
             end
         end
     end
+    if LFG.UpdateDiffFilterVisibility then LFG.UpdateDiffFilterVisibility() end
     if LFG.UpdateRecruitersList then LFG.UpdateRecruitersList() end
 end
 
@@ -2212,7 +2258,7 @@ function LFG:Initialize(parentFrame)
     playerAccent:SetColorTexture(unpack(_tc("accentBar")))
     self.playerInfoText = self.playerFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     self.playerInfoText:SetPoint("LEFT", self.playerFrame, "LEFT", 10, 0)
-    self.playerInfoText:SetText("Loading player info...")
+    self.playerInfoText:SetText(L["loading"])
     self.playerInfoText:SetTextColor(unpack(_tc("textPrimary")))
     local toggleWidth, toggleHeight = 40, 22
     local knobSize = 18
@@ -2278,7 +2324,7 @@ function LFG:Initialize(parentFrame)
     LFG.UpdateToggleVisual = UpdateToggleVisual
     local roleLabel = self.playerFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     roleLabel:SetPoint("RIGHT", self.playerFrame, "RIGHT", -100, 0)
-    roleLabel:SetText("Role:")
+    roleLabel:SetText(L["lfg_role"] .. ":")
     roleLabel:SetTextColor(unpack(_tc("textMuted")))
     self.roleDropdown = FrostSeekUIUtils.CreateModernDropdown(self.playerFrame, 95, 22)
     self.roleDropdown:SetPoint("LEFT", roleLabel, "RIGHT", 0, 0)
@@ -2370,7 +2416,7 @@ function LFG:Initialize(parentFrame)
             LFG.UpdateRecruitersList()
         end)
     end)
-    local clearSearchBtn = FrostSeekUIUtils.CreateModernButton(self.searchFrame, 45, 18, "Clear", _tc("border"))
+    local clearSearchBtn = FrostSeekUIUtils.CreateModernButton(self.searchFrame, 45, 18, L["clear"], _tc("border"))
     clearSearchBtn:SetPoint("LEFT", self.lfgSearchBox, "RIGHT", 5, 0)
     clearSearchBtn:SetScript("OnClick", function()
         self.lfgSearchBox:SetText("")
@@ -2379,6 +2425,55 @@ function LFG:Initialize(parentFrame)
         if lfgSearchDebounce and lfgSearchDebounce.Cancel then lfgSearchDebounce:Cancel() end
         LFG.UpdateRecruitersList()
     end)
+
+    self.diffFilterButtons = {}
+    local allDiffLabels = {"Normal", "Heroic", "HC", "Mythic", "Ascended", "Trial", "Leveling", "Gold Farm", "ALVA"}
+    for _, label in ipairs(allDiffLabels) do
+        local btn = FrostSeekUIUtils.CreateModernButton(self.searchFrame, 55, 18, label, _tc("border"))
+        btn:Hide()
+        btn:SetScript("OnClick", function()
+            if LFG.DifficultyFilter == label then
+                LFG.DifficultyFilter = nil
+            else
+                LFG.DifficultyFilter = label
+            end
+            LFG.UpdateDiffFilterVisuals()
+            LFG.UpdateRecruitersList()
+        end)
+        self.diffFilterButtons[label] = btn
+    end
+
+    function LFG.UpdateDiffFilterVisibility()
+        local cat = LFG.CurrentCategory or "ALL"
+        local filters = DIFFICULTY_FILTERS[cat]
+        for _, btn in pairs(self.diffFilterButtons) do btn:Hide() end
+        if filters then
+            local anchor = clearSearchBtn
+            for _, f in ipairs(filters) do
+                local btn = self.diffFilterButtons[f.label]
+                if btn then
+                    btn:ClearAllPoints()
+                    btn:SetPoint("LEFT", anchor, "RIGHT", 4, 0)
+                    btn:Show()
+                    anchor = btn
+                end
+            end
+        end
+        LFG.UpdateDiffFilterVisuals()
+    end
+
+    function LFG.UpdateDiffFilterVisuals()
+        local active = LFG.DifficultyFilter
+        for label, btn in pairs(self.diffFilterButtons) do
+            if label == active then
+                if btn.bg then btn.bg:SetColorTexture(unpack(_tc("bgTabActive"))) end
+                if btn.text then btn.text:SetTextColor(unpack(_tc("primary"))) end
+            else
+                if btn.bg then btn.bg:SetColorTexture(unpack(_tc("bgButton"))) end
+                if btn.text then btn.text:SetTextColor(unpack(_tc("textMuted"))) end
+            end
+        end
+    end
     self.recruitersFrame = CreateFrame("Frame", nil, self.mainContainer)
     self.recruitersFrame:SetSize(IW, 360)
     self.recruitersFrame:SetPoint("TOP", self.searchFrame, "BOTTOM", 0, -8)
@@ -2499,7 +2594,7 @@ function LFG:Initialize(parentFrame)
             LFG.ClearAllSearches()
         end
     end)
-    self.frostnetBtn = FrostSeekUIUtils.CreateModernButton(self.controlsFrame, 100, 22, "FrostNet", _tc("accent"))
+    self.frostnetBtn = FrostSeekUIUtils.CreateModernButton(self.controlsFrame, 100, 22, L["frostnet_title"], _tc("accent"))
     self.frostnetBtn:SetPoint("LEFT", self.clearAllBtn, "RIGHT", 10, 0)
     self.frostnetBtn:SetScript("OnClick", function()
         if FrostSeek.Presence then

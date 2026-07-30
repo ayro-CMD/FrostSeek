@@ -225,3 +225,37 @@ R: Cancella la cartella `Interface\AddOns\FrostSeek`. Per pulire anche i salvata
 ---
 Buon divertimento. Se qualcosa non funziona come dovrebbe, prima `/fsdebug` poi `/fsnet`, poi chiedi sul Discord ufficiale.
 — Ayro
+---
+15) Novità v2.2.0 (LEGGI SE HAI GIA' USATO FROSTSEEK)
+Questa versione aggiunge diverse funzioni nuove. Niente paura: tutto quello che già usavi continua a funzionare uguale.
+
+🔗 Voice Bridge — link Discord nel profilo
+NUOVO: il link Discord/TeamSpeak si imposta UNA VOLTA nel tab Profilo.
+- Apri il tab Profile dal main frame
+- Trova il campo "Voice URL (Discord/TS)"
+- Incolla il tuo invito Discord (deve iniziare con https://discord.gg/ o https://discord.com/invite/)
+- Clicca "Salva Link Voice"
+- Da quel momento in poi, ogni gruppo che pubblichi su FrostNet avrà automaticamente il tuo link allegato
+- Clicca "Test Voice" per verificare che il link funzioni (apre un popup con il link selezionabile + bottone Copy)
+- Gli altri utenti vedranno un pulsante "Entra in Voice" quando selezionano il tuo gruppo nel tab FrostNet → Browse
+- Su 3.3.5 il popup non apre il browser in automatico (limiti del client): stampa il link in chat e lo puoi copiare a mano
+- Da chat puoi comunque gestire i link (per te o per altri leader):
+  - `/fsvoice set <leaderName> <URL>`
+  - `/fsvoice get <leaderName>`
+  - `/fsvoice remove <leaderName>`
+  - `/fsvoice list`
+
+🌐 Lingua
+In Options → General ci sono due dropdown nuovi:
+- Language: auto / enUS / itIT / esES (auto segue la lingua del client WoW)
+- Log Level: DEBUG / INFO / WARN / ERROR (controlla quanto stampa in chat)
+Le traduzioni italiana e spagnola sono complete al 100%.
+Quando cambi lingua, appare un popup "Ricarica Ora / Più tardi" — clicca "Ricarica Ora" per applicare la nuova lingua.
+
+🛠️ Comandi nuovi per power-user
+- `/fsdumplog` — stampa gli ultimi 200 eventi del log interno (utile quando reporti un bug)
+- `/fsreset confirm` — cancella TUTTO tranne i tuoi template LFM preferiti (da usare come ultima spiaggia)
+
+📦 Retrocompatibilità
+- Il protocollo di rete è passato da FSK1 a FSK2. I client vecchi (2.1.x) continuano a vedere i tuoi messaggi e tu vedi i loro. Non serve fare nulla.
+- Al primo login dopo l'upgrade, FrostSeek crea un backup del vecchio DB in `FrostSeekDB._backup_v1`. Se qualcosa va storto, puoi tornare indietro a mano.

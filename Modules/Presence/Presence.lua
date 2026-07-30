@@ -90,6 +90,17 @@ function Presence:HandlePong(name, seen)
     end
 end
 
+function Presence:HandleHeartbeat(name, seen)
+    if not name or name == "" then return end
+    local pn = UnitName("player") or ""
+    if name == pn then return end
+    local u = self.onlineUsers[name]
+    if u then
+        u.seen = seen or time()
+        u.lastHeartbeat = time()
+    end
+end
+
 function Presence:HandlePresence(user)
     if not user or not user.name or user.name == "" then return end
     local pn = UnitName("player") or ""
@@ -192,14 +203,47 @@ function Presence:GetOnlineUsers()
         table.insert(rows, u)
     end
 
-    table.sort(rows, function(a, b)
+    local myGuild = (GetGuildInfo and GetGuildInfo("player")) or ""
+    local searchQ = (self.searchFilter or ""):lower()
+    local filtered = {}
+    for _, u in ipairs(rows) do
+        if u.isSelf then
+            table.insert(filtered, u)
+        else
+            local nameLower = tostring(u.name or ""):lower()
+            if searchQ ~= "" and not string.find(nameLower, searchQ, 1, true) then
+                
+            elseif self.guildOnly and myGuild ~= "" and (u.guild or "") ~= myGuild then
+            
+            else
+                table.insert(filtered, u)
+            end
+        end
+    end
+
+    local sortMode = self.sortMode or "name"
+    table.sort(filtered, function(a, b)
         if a.isSelf and not b.isSelf then return true end
         if b.isSelf and not a.isSelf then return false end
         if a.isFriend and not b.isFriend then return true end
         if b.isFriend and not a.isFriend then return false end
+        if sortMode == "guild" then
+            local ga = tostring(a.guild or "")
+            local gb = tostring(b.guild or "")
+            if ga ~= gb then return ga < gb end
+            return tostring(a.name or "") < tostring(b.name or "")
+        elseif sortMode == "zone" then
+            local za = tostring(a.zone or "")
+            local zb = tostring(b.zone or "")
+            if za ~= zb then return za < zb end
+            return tostring(a.name or "") < tostring(b.name or "")
+        elseif sortMode == "seen" then
+            return (a.seen or 0) > (b.seen or 0)
+        end
+
         return tostring(a.name or "") < tostring(b.name or "")
     end)
-    return rows
+    return filtered
 end
 
 function Presence:GetStats()
@@ -528,6 +572,10 @@ function Presence:BuildPanel(parent)
     f.supportCount:SetTextColor(unpack(_tc("textDim")))
 
     local colY = statsY - statsH - 6
+    local toolbarH = 28
+    local toolbarY = colY
+    colY = colY - toolbarH
+
     local header = CreateFrame("Frame", nil, f)
     header:SetWidth(496)
     header:SetHeight(22)
@@ -548,6 +596,89 @@ function Presence:BuildPanel(parent)
         t:SetPoint("LEFT", header, "LEFT", lbl[2], 0)
         t:SetText(_hex("textDim") .. lbl[1] .. "|r")
     end
+
+    local toolbar = CreateFrame("Frame", nil, f)
+    toolbar:SetPoint("TOPLEFT", f, "TOPLEFT", 10, toolbarY)
+    toolbar:SetSize(496, 24)
+
+    local searchLabel = toolbar:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    searchLabel:SetPoint("LEFT", toolbar, "LEFT", 0, 0)
+    searchLabel:SetText(_hex("textDim") .. (L["search"] or "Search") .. ":|r")
+    f.searchEdit = CreateFrame("EditBox", nil, toolbar)
+    f.searchEdit:SetAutoFocus(false)
+    f.searchEdit:SetFontObject("GameFontNormalSmall")
+    f.searchEdit:SetSize(140, 20)
+    f.searchEdit:SetPoint("LEFT", searchLabel, "RIGHT", 6, 0)
+    f.searchEdit:SetBackdrop({
+        bgFile = "Interface\\ChatFrame\\ChatFrameBackground",
+        edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
+        edgeSize = 8,
+        insets = { left = 2, right = 2, top = 2, bottom = 2 }
+    })
+    f.searchEdit:SetBackdropColor(0.08, 0.08, 0.12, 0.95)
+    f.searchEdit:SetBackdropBorderColor(0.3, 0.4, 0.5, 1.0)
+    f.searchEdit:SetTextInsets(6, 6, 2, 2)
+    f.searchEdit:SetText("")
+    f.searchEdit:SetScript("OnEscapePressed", function(self) self:ClearFocus() end)
+    f.searchEdit:SetScript("OnTextChanged", function(self)
+        Presence.searchFilter = (self:GetText() or ""):lower()
+        Presence:RefreshPanel()
+    end)
+
+    local sortLabel = toolbar:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    sortLabel:SetPoint("LEFT", f.searchEdit, "RIGHT", 12, 0)
+    sortLabel:SetText(_hex("textDim") .. (L["presence_sort"] or "Sort") .. ":|r")
+    local sortBtn = CreateFrame("Button", nil, toolbar)
+    sortBtn:SetSize(90, 20)
+    sortBtn:SetPoint("LEFT", sortLabel, "RIGHT", 4, 0)
+    sortBtn.bg = sortBtn:CreateTexture(nil, "BACKGROUND")
+    sortBtn.bg:SetAllPoints()
+    sortBtn.bg:SetColorTexture(0.1, 0.1, 0.15, 0.95)
+    sortBtn.border = sortBtn:CreateTexture(nil, "BORDER")
+    sortBtn.border:SetAllPoints()
+    sortBtn.border:SetColorTexture(0.3, 0.4, 0.5, 1.0)
+    sortBtn.text = sortBtn:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    sortBtn.text:SetPoint("CENTER")
+    f.sortBtn = sortBtn
+    Presence.sortMode = Presence.sortMode or "name"
+    local SORT_OPTIONS = { "name", "guild", "zone", "seen" }
+    sortBtn.text:SetText(L["presence_sort_" .. Presence.sortMode] or Presence.sortMode)
+    sortBtn:SetScript("OnClick", function()
+        local idx = 1
+        for i, v in ipairs(SORT_OPTIONS) do
+            if v == Presence.sortMode then idx = i; break end
+        end
+        Presence.sortMode = SORT_OPTIONS[(idx % #SORT_OPTIONS) + 1]
+        sortBtn.text:SetText(L["presence_sort_" .. Presence.sortMode] or Presence.sortMode)
+        Presence:RefreshPanel()
+    end)
+
+    local guildToggle = CreateFrame("Button", nil, toolbar)
+    guildToggle:SetSize(120, 20)
+    guildToggle:SetPoint("LEFT", sortBtn, "RIGHT", 12, 0)
+    guildToggle.bg = guildToggle:CreateTexture(nil, "BACKGROUND")
+    guildToggle.bg:SetAllPoints()
+    guildToggle.bg:SetColorTexture(0.1, 0.1, 0.15, 0.95)
+    guildToggle.border = guildToggle:CreateTexture(nil, "BORDER")
+    guildToggle.border:SetAllPoints()
+    guildToggle.border:SetColorTexture(0.3, 0.4, 0.5, 1.0)
+    guildToggle.text = guildToggle:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    guildToggle.text:SetPoint("CENTER")
+    f.guildToggle = guildToggle
+    Presence.guildOnly = Presence.guildOnly or false
+    local function UpdateGuildToggleText()
+        if Presence.guildOnly then
+            guildToggle.text:SetText("|cff44ff44" .. (L["presence_guild_only"] or "Guild Only: ON") .. "|r")
+        else
+            guildToggle.text:SetText("|cff888888" .. (L["presence_guild_only"] or "Guild Only") .. ": OFF|r")
+        end
+    end
+    UpdateGuildToggleText()
+    guildToggle:SetScript("OnClick", function()
+        Presence.guildOnly = not Presence.guildOnly
+        UpdateGuildToggleText()
+        Presence:RefreshPanel()
+    end)
 
     
     local footerY = 8
@@ -627,7 +758,7 @@ function Presence:BuildPanel(parent)
             if self.userData then
                 GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
                 local classColor = GetClassColor(self.userData.classFile)
-                GameTooltip:SetText("FrostNet User", 0.53, 0.8, 1)
+                GameTooltip:SetText(L["presence_user_tooltip"] or "FrostNet User", 0.53, 0.8, 1)
                 GameTooltip:AddLine(tostring(self.userData.name or "?"), classColor[1], classColor[2], classColor[3])
                 if self.userData.guild and self.userData.guild ~= "" then
                     GameTooltip:AddLine("Guild: " .. self.userData.guild, 0.9, 0.82, 0.55)
@@ -680,11 +811,7 @@ function Presence:BuildPanel(parent)
             if button == "RightButton" and self.userData and self.userData.name then
                 local pn = UnitName("player") or ""
                 if self.userData.name ~= pn then
-                    if FrostSeekCompat and FrostSeekCompat.OpenChat then
-                        FrostSeekCompat.OpenChat("/w " .. self.userData.name .. " ")
-                    elseif ChatFrame_OpenChat then
-                        ChatFrame_OpenChat("/w " .. self.userData.name .. " ")
-                    end
+                    Presence:ShowRowContextMenu(self.userData)
                 end
             end
         end)
@@ -938,6 +1065,82 @@ function Presence:RefreshPanel()
             if row.classIcon then row.classIcon:Hide() end
         end
     end
+end
+
+Presence._ctxMenu = nil
+
+function Presence:ShowRowContextMenu(userData)
+    if not userData or not userData.name then return end
+    if Presence._ctxMenu then
+        Presence._ctxMenu:Hide()
+        Presence._ctxMenu = nil
+    end
+    local menu = CreateFrame("Frame", "FrostSeekPresenceCtxMenu", UIParent)
+    menu:SetFrameStrata("DIALOG")
+    menu:SetToplevel(true)
+    menu:EnableMouse(true)
+    local options = {
+        { label = L["popup_whisper"] or "Whisper", action = function()
+            if FrostSeekCompat and FrostSeekCompat.OpenChat then
+                FrostSeekCompat.OpenChat("/w " .. userData.name .. " ")
+            elseif ChatFrame_OpenChat then
+                ChatFrame_OpenChat("/w " .. userData.name .. " ")
+            end
+        end },
+        { label = L["popup_invite"] or "Invite", action = function()
+            pcall(function() InviteUnit(userData.name) end)
+        end },
+        { label = L["presence_add_friend"] or "Add Friend", action = function()
+            pcall(function() AddOrRemoveFriend(userData.name) end)
+        end },
+        { label = L["presence_join_voice"] or "Join Voice", action = function()
+            local VB = FrostSeek and FrostSeek.VoiceBridge
+            if VB then VB:JoinVoice(userData.name) end
+        end },
+    }
+    local itemH = 22
+    menu:SetSize(160, #options * itemH + 8)
+    menu:SetPoint("CENTER")
+    menu:SetBackdrop({
+        bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background",
+        edgeFile = "Interface\\DialogFrame\\UI-DialogBox-Border",
+        tile = true, tileSize = 16, edgeSize = 12,
+        insets = { left = 3, right = 3, top = 3, bottom = 3 }
+    })
+    menu:SetBackdropColor(0.08, 0.08, 0.12, 0.97)
+    for i, opt in ipairs(options) do
+        local btn = CreateFrame("Button", nil, menu)
+        btn:SetSize(150, itemH)
+        btn:SetPoint("TOPLEFT", menu, "TOPLEFT", 5, -4 - ((i - 1) * itemH))
+        btn.text = btn:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+        btn.text:SetPoint("LEFT", btn, "LEFT", 8, 0)
+        btn.text:SetText(opt.label)
+        btn.text:SetTextColor(0.9, 0.9, 0.9)
+        btn:SetScript("OnClick", function()
+            menu:Hide()
+            Presence._ctxMenu = nil
+            opt.action()
+        end)
+        btn:SetScript("OnEnter", function(self)
+            self.text:SetTextColor(0.5, 1, 1)
+        end)
+        btn:SetScript("OnLeave", function(self)
+            self.text:SetTextColor(0.9, 0.9, 0.9)
+        end)
+    end
+    
+    local closer = CreateFrame("Button", nil, UIParent)
+    closer:SetFrameStrata("TOOLTIP")
+    closer:SetAllPoints(UIParent)
+    closer:RegisterForClicks("AnyUp")
+    closer:SetScript("OnClick", function()
+        menu:Hide()
+        closer:Hide()
+        Presence._ctxMenu = nil
+    end)
+    menu.closer = closer
+    Presence._ctxMenu = menu
+    menu:Show()
 end
 
 function Presence:TogglePanel(parentFrame)

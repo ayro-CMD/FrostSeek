@@ -223,3 +223,37 @@ A: Delete the `Interface\AddOns\FrostSeek` folder. To also clean saved data: Opt
 ---
 Have fun. If something doesn't work as it should, first `/fsdebug` then `/fsnet`, then ask on the official Discord.
 — Ayro
+---
+15) What's new in v2.2.0 (READ IF YOU'VE USED FROSTSEEK BEFORE)
+This version adds several new features. Don't worry: everything you already used still works the same.
+
+🔗 Voice Bridge — Discord link in your Profile
+NEW: the Discord/TeamSpeak link is now set ONCE in the Profile tab.
+- Open the Profile tab in the main frame
+- Find the "Voice URL (Discord/TS)" field
+- Paste your Discord invite (must start with https://discord.gg/ or https://discord.com/invite/)
+- Click "Save Voice Link"
+- From now on, every group you publish on FrostNet will automatically have your link attached
+- Click "Test Voice" to verify the link works (opens a popup with selectable URL + Copy button)
+- Other users will see a "Join Voice" button when they select your group in the FrostNet → Browse tab
+- On 3.3.5 the popup doesn't auto-open the browser (client limitation): it prints the link in chat for manual copy-paste
+- You can still manage links from chat (for yourself or other leaders):
+  - `/fsvoice set <leaderName> <URL>`
+  - `/fsvoice get <leaderName>`
+  - `/fsvoice remove <leaderName>`
+  - `/fsvoice list`
+
+🌐 Language
+In Options → General there are two new dropdowns:
+- Language: auto / enUS / itIT / esES (auto follows the WoW client language)
+- Log Level: DEBUG / INFO / WARN / ERROR (controls chat verbosity)
+Italian and Spanish translations are 100% complete.
+When you change language, a popup "Reload Now / Later" appears — click "Reload Now" to apply the new language.
+
+🛠️ New commands for power-users
+- `/fsdumplog` — prints the last 200 internal log entries (useful when reporting a bug)
+- `/fsreset confirm` — wipes EVERYTHING except your favourite LFM templates (use as last resort)
+
+📦 Backward compatibility
+- The network protocol moved from FSK1 to FSK2. Old clients (2.1.x) still see your messages and you see theirs. Nothing to do.
+- On first login after upgrade, FrostSeek creates a backup of the old DB in `FrostSeekDB._backup_v1`. If something goes wrong, you can roll back manually.

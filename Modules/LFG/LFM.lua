@@ -29,6 +29,7 @@ local _tk = FrostSeek and FrostSeek._v and FrostSeek._v.a("lfm", LFM)
 
 local L = FrostSeek.L
 local _tc = _G.FrostSeekShared and _G.FrostSeekShared._tc or function(t) return {0.5,0.5,0.5} end
+local _hex = _G.FrostSeekShared and _G.FrostSeekShared._hex or function(t) return "|cFF888888" end
 
 local currentCategory = "RAIDS"
 local selectedRoles = { Tank = false, Healer = false, DPS = false, Support = false, BC = false }
@@ -217,7 +218,7 @@ local LFM_ACTIVITIES = {
 local DIFFICULTIES = {
     RAIDS = {"Normal", "Heroic", "Mythic", "Ascended", "Trial 1", "Trial 2", "Trial 3", "Trial 4", "Trial 5", "Trial 6", "Trial 7", "Trial 8", "Trial 9", "Trial 10"},
     DUNGEONS = {"Normal", "Heroic", "Mythic"},
-    WORLD_BOSS = {"Open World", "Instanced", "HC Instanced", "Mythic Instanced", "Ascended Instanced", "D1", "D2", "D3", "D4", "D5", "D6", "D7", "D8", "D9", "D10"},
+    WORLD_BOSS = {"Open World", "Instanced", "HC Instanced", "Mythic Instanced", "Ascended Instanced"},
     KEYSTONE = {"Mythic+"},
 }
 
@@ -548,6 +549,24 @@ local function DoAutoSpamTick()
         LFM:StopAutoSpam()
         return
     end
+
+    local threshold = FrostSeekDB and FrostSeekDB.LFM and FrostSeekDB.LFM.autoStopMemberCount or 0
+    if threshold and threshold > 0 then
+        local members = 1
+        local raid = GetNumRaidMembers and GetNumRaidMembers() or 0
+        if raid and raid > 0 then
+            members = raid
+        else
+            local party = GetNumPartyMembers and GetNumPartyMembers() or 0
+            members = party + 1
+        end
+        if members >= threshold then
+            print("|cff88ccffFrostSeek Auto-Spam:|r |cffffcc00Group reached " .. members .. "/" .. threshold .. " members - auto-stopping spam.|r")
+            LFM:StopAutoSpam()
+            return
+        end
+    end
+
     local sent = SendToAllSpamChannels(message)
     if sent > 0 then
         print("|cff88ccffFrostSeek Auto-Spam:|r Sent to " .. sent .. " channel(s)")
@@ -1518,7 +1537,7 @@ function LFM:Initialize(parentFrame)
 
     local timerLabel = self.spamFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     timerLabel:SetPoint("LEFT", spamLabel, "RIGHT", 8, 0)
-    timerLabel:SetText("Every")
+    timerLabel:SetText(L["lfm_every"])
     timerLabel:SetTextColor(unpack(_tc("textMuted")))
 
     self.spamTimerBox = CreateModernEditBox(self.spamFrame, 40, 18)
@@ -1737,6 +1756,60 @@ function LFM:Initialize(parentFrame)
     aiDesc:SetText("(invites on whisper if iLvl/lvl >= threshold)")
     aiDesc:SetTextColor(unpack(_tc("textDim")))
 
+    local autoStopFrame = CreateFrame("Frame", nil, self.mainContainer)
+    autoStopFrame:SetSize(IW, 28)
+    autoStopFrame:SetPoint("TOP", self.autoInviteFrame, "BOTTOM", 0, -4)
+    self.autoStopFrame = autoStopFrame
+
+    local asLabel = autoStopFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    asLabel:SetPoint("LEFT", autoStopFrame, "LEFT", 10, 0)
+    asLabel:SetText(_hex("accent") .. (L["options_lfm_auto_stop"] or "Auto-Stop Spam Threshold") .. "|r")
+    asLabel:SetTextColor(unpack(_tc("textPrimary")))
+
+    local asStopValues = { 0, 5, 10, 15, 20, 25, 40 }
+    local asStopBtn = CreateFrame("Button", nil, autoStopFrame)
+    asStopBtn:SetSize(80, 20)
+    asStopBtn:SetPoint("LEFT", asLabel, "RIGHT", 8, 0)
+    asStopBtn.bg = asStopBtn:CreateTexture(nil, "BACKGROUND")
+    asStopBtn.bg:SetAllPoints()
+    asStopBtn.bg:SetColorTexture(0.1, 0.1, 0.15, 0.95)
+    asStopBtn.border = asStopBtn:CreateTexture(nil, "BORDER")
+    asStopBtn.border:SetAllPoints()
+    asStopBtn.border:SetColorTexture(0.3, 0.4, 0.5, 1.0)
+    asStopBtn.text = asStopBtn:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    asStopBtn.text:SetPoint("CENTER")
+    self.autoStopBtn = asStopBtn
+
+    local function UpdateAutoStopBtnText()
+        local v = FrostSeekDB.LFM.autoStopMemberCount or 0
+        if v == 0 then
+            asStopBtn.text:SetText("|cff888888" .. (L["disabled"] or "Disabled") .. "|r")
+        else
+            asStopBtn.text:SetText("|cff44ff44" .. tostring(v) .. "|r")
+        end
+    end
+    UpdateAutoStopBtnText()
+
+    asStopBtn:SetScript("OnClick", function()
+        local cur = FrostSeekDB.LFM.autoStopMemberCount or 0
+        local idx = 1
+        for i, v in ipairs(asStopValues) do
+            if v == cur then idx = i; break end
+        end
+        local nextVal = asStopValues[(idx % #asStopValues) + 1]
+        FrostSeekDB.LFM.autoStopMemberCount = nextVal
+        UpdateAutoStopBtnText()
+        if nextVal == 0 then
+            print("|cff88ccffFrostSeek LFM:|r Auto-stop spam disabled")
+        else
+            print("|cff88ccffFrostSeek LFM:|r Auto-stop spam at " .. nextVal .. " members")
+        end
+    end)
+
+    local asDesc = autoStopFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    asDesc:SetPoint("LEFT", asStopBtn, "RIGHT", 8, 0)
+    asDesc:SetText(_hex("textDim") .. (L["options_lfm_auto_stop_desc"] or "Auto-stop LFM spam when group reaches this many members") .. "|r")
+
     self.controlsFrame = CreateFrame("Frame", nil, self.mainContainer)
     self.controlsFrame:SetSize(IW, 32)
     self.controlsFrame:SetPoint("BOTTOM", self.mainContainer, "BOTTOM", 0, 8)
@@ -1765,7 +1838,7 @@ function LFM:Initialize(parentFrame)
     end)
     self.sendAllBtn:SetScript("OnEnter", function(self)
         GameTooltip:SetOwner(self, "ANCHOR_TOP")
-        GameTooltip:SetText("Send to All Spam Channels", 1, 1, 1)
+        GameTooltip:SetText(L["lfm_send_all_tooltip"], 1, 1, 1)
         GameTooltip:AddLine("Sends the message to all selected Ch#.", 0.8, 0.8, 0.8)
         GameTooltip:Show()
     end)

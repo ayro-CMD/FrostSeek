@@ -333,14 +333,14 @@ function Community:Initialize(parentFrame)
 
     local title = F:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
     title:SetPoint("TOPLEFT", F, "TOPLEFT", pad, curY)
-    title:SetText(_hex("accent") .. "Community|r")
+    title:SetText(_hex("accent") .. L["community_title"] .. "|r")
     curY = curY - 30
 
     self.subTabs = {}
     local subTabDefs = {
-        { id = "browser",      name = "Guild Browser" },
-        { id = "recruitment",  name = "Recruitment Creator" },
-        { id = "events",       name = "Event Board" },
+        { id = "browser",      name = L["community_subtab_browser"] },
+        { id = "recruitment",  name = L["community_subtab_recruitment"] },
+        { id = "events",       name = L["community_subtab_events"] },
     }
     local subTabW = 140
     local subTabH = 24
@@ -934,7 +934,7 @@ function Community:BuildEventBoardFrame()
     filterBtn.border:SetColorTexture(unpack(_tc("border")))
     filterBtn.text = filterBtn:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     filterBtn.text:SetPoint("CENTER")
-    filterBtn.text:SetText("All")
+    filterBtn.text:SetText(L["filter_all"])
     filterBtn:SetScript("OnClick", function()
         local db = EventDB()
         local idx = 1
@@ -982,7 +982,7 @@ function Community:BuildEventBoardFrame()
     clearBtn.accent:SetColorTexture(unpack(_tc("danger")))
     clearBtn.text = clearBtn:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     clearBtn.text:SetPoint("CENTER")
-    clearBtn.text:SetText("|cffff7755Clear All|r")
+    clearBtn.text:SetText("|cffff7755" .. L["community_clear_all"] .. "|r")
     clearBtn:SetScript("OnEnter", function(self)
         self.border:SetColorTexture(unpack(_tc("borderHover")))
     end)
@@ -991,7 +991,7 @@ function Community:BuildEventBoardFrame()
     end)
     clearBtn:SetScript("OnClick", function()
         if Shared and Shared.ConfirmDialog then
-            Shared.ConfirmDialog("Clear Events", "Remove all local community events?", function()
+            Shared.ConfirmDialog(L["community_clear_events_title"], L["community_clear_events_msg"], function()
                 Community:ClearAllEvents()
             end)
         else
@@ -1020,7 +1020,7 @@ function Community:BuildEventBoardFrame()
     refreshBtn.accent:SetColorTexture(unpack(_tc("accentBar")))
     refreshBtn.text = refreshBtn:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     refreshBtn.text:SetPoint("CENTER")
-    refreshBtn.text:SetText("|cff88ccffRefresh|r")
+    refreshBtn.text:SetText("|cff88ccff" .. L["community_refresh"] .. "|r")
     refreshBtn:SetScript("OnEnter", function(self)
         self.border:SetColorTexture(unpack(_tc("borderHover")))
     end)
@@ -1108,7 +1108,7 @@ function Community:BuildEventBoardFrame()
         row.dismissBtn.border:SetColorTexture(unpack(_tc("border")))
         row.dismissBtn.text = row.dismissBtn:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
         row.dismissBtn.text:SetPoint("CENTER")
-        row.dismissBtn.text:SetText("|cffff7755Dismiss|r")
+        row.dismissBtn.text:SetText("|cffff7755" .. L["community_dismiss"] .. "|r")
         row.dismissBtn:SetScript("OnEnter", function(self)
             self.border:SetColorTexture(unpack(_tc("borderHover")))
         end)
@@ -1420,7 +1420,7 @@ function Community:BuildBrowserFrame()
 
     local header = bf:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     header:SetPoint("TOPLEFT", bf, "TOPLEFT", 0, 0)
-    header:SetText(_hex("textDim") .. "Discovered guilds from chat messages|r")
+    header:SetText(_hex("textDim") .. L["community_guilds_discovered"] .. "|r")
     curY = -20
 
     local searchLabel = bf:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
@@ -1458,7 +1458,7 @@ function Community:BuildBrowserFrame()
     langBtn.border:SetColorTexture(unpack(_tc("border")))
     langBtn.text = langBtn:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     langBtn.text:SetPoint("CENTER")
-    langBtn.text:SetText("All")
+    langBtn.text:SetText(L["filter_all"])
     langBtn:SetScript("OnClick", function()
         local order = {"all", "it", "es", "pt", "de", "fr", "en", "pl", "cs", "ru", "ro"}
         local idx = 1
@@ -1489,7 +1489,7 @@ function Community:BuildBrowserFrame()
     sortBtn.border:SetColorTexture(unpack(_tc("border")))
     sortBtn.text = sortBtn:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     sortBtn.text:SetPoint("CENTER")
-    sortBtn.text:SetText("Recent")
+    sortBtn.text:SetText(L["event_board_recent"] or "Recent")
     sortBtn:SetScript("OnClick", function()
         if self.browserSort == "recent" then self.browserSort = "name"
         elseif self.browserSort == "name" then self.browserSort = "sender"
@@ -1521,7 +1521,7 @@ function Community:BuildBrowserFrame()
     clearBtn.accent:SetColorTexture(unpack(_tc("danger")))
     clearBtn.text = clearBtn:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     clearBtn.text:SetPoint("CENTER")
-    clearBtn.text:SetText("|cffff7755Clear All|r")
+    clearBtn.text:SetText("|cffff7755" .. L["community_clear_all"] .. "|r")
     clearBtn:SetScript("OnEnter", function(self)
         self.hoverTex:Show()
         self.border:SetColorTexture(unpack(_tc("borderHover")))
@@ -1532,7 +1532,7 @@ function Community:BuildBrowserFrame()
     end)
     clearBtn:SetScript("OnClick", function()
         if Shared and Shared.ConfirmDialog then
-            Shared.ConfirmDialog("Clear Guild Database", "Remove all discovered guilds?", function()
+            Shared.ConfirmDialog(L["community_clear_guilds_title"], L["community_clear_guilds_msg"], function()
                 FrostSeekDB.Guilds = {}
                 self:RefreshBrowser()
                 print("|cff88ccffFrostSeek:|r Guild database cleared")
@@ -1778,7 +1778,7 @@ function Community:BuildRecruitmentFrame()
 
     local header = rf:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     header:SetPoint("TOPLEFT", rf, "TOPLEFT", 0, 0)
-    header:SetText(_hex("textDim") .. "Create your guild recruitment message|r")
+    header:SetText(_hex("textDim") .. L["community_recruitment_create"] .. "|r")
     curY = -22
 
     local gNameLabel = rf:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
@@ -2070,33 +2070,33 @@ function Community:BuildRecruitmentFrame()
     end
 
     local btnY1 = curY
-    local saveBtn = MakeModernButton(rf, "Save Template", 100, 22, "accentBar", _tc("textPrimary"))
+    local saveBtn = MakeModernButton(rf, L["community_save_template"], 100, 22, "accentBar", _tc("textPrimary"))
     saveBtn:SetPoint("TOPLEFT", rf, "TOPLEFT", 0, btnY1)
     saveBtn:SetScript("OnClick", function() Community:SaveTemplateDialog() end)
 
-    local loadBtn = MakeModernButton(rf, "Load Template", 100, 22, "accentBar", _tc("textPrimary"))
+    local loadBtn = MakeModernButton(rf, L["community_load_template"], 100, 22, "accentBar", _tc("textPrimary"))
     loadBtn:SetPoint("LEFT", saveBtn, "RIGHT", 6, 0)
     loadBtn:SetScript("OnClick", function() Community:LoadTemplateDialog() end)
 
-    local delBtn = MakeModernButton(rf, "Delete Template", 100, 22, "danger", {1, 0.5, 0.3})
+    local delBtn = MakeModernButton(rf, L["community_delete_template"], 100, 22, "danger", {1, 0.5, 0.3})
     delBtn:SetPoint("LEFT", loadBtn, "RIGHT", 6, 0)
-    delBtn.text:SetText("|cffff7755Delete Template|r")
+    delBtn.text:SetText("|cffff7755" .. L["community_delete_template"] .. "|r")
     delBtn:SetScript("OnClick", function() Community:DeleteTemplateDialog() end)
 
     curY = curY - 24
     local btnY2 = curY
-    local sendBtn = MakeModernButton(rf, "Send Once", 100, 22, "success", {0.4, 1, 0.4})
-    sendBtn.text:SetText("|cff44ff66Send Once|r")
+    local sendBtn = MakeModernButton(rf, L["community_send_once"], 100, 22, "success", {0.4, 1, 0.4})
+    sendBtn.text:SetText("|cff44ff66" .. L["community_send_once"] .. "|r")
     sendBtn:SetPoint("TOPLEFT", rf, "TOPLEFT", 0, btnY2)
     sendBtn:SetScript("OnClick", function() Community:SendRecruitmentToChat() end)
 
-    local startSpamBtn = MakeModernButton(rf, "Start Spam", 100, 22, "accentBar", {0.4, 1, 0.4})
-    startSpamBtn.text:SetText("|cff44ff44Start Spam|r")
+    local startSpamBtn = MakeModernButton(rf, L["community_start_spam"], 100, 22, "accentBar", {0.4, 1, 0.4})
+    startSpamBtn.text:SetText("|cff44ff44" .. L["community_start_spam"] .. "|r")
     startSpamBtn:SetPoint("LEFT", sendBtn, "RIGHT", 6, 0)
     startSpamBtn:SetScript("OnClick", function() Community:StartSpam() end)
 
-    local stopSpamBtn = MakeModernButton(rf, "Stop Spam", 100, 22, "danger", {1, 0.4, 0.4})
-    stopSpamBtn.text:SetText("|cffff5555Stop Spam|r")
+    local stopSpamBtn = MakeModernButton(rf, L["community_stop_spam"], 100, 22, "danger", {1, 0.4, 0.4})
+    stopSpamBtn.text:SetText("|cffff5555" .. L["community_stop_spam"] .. "|r")
     stopSpamBtn:SetPoint("LEFT", startSpamBtn, "RIGHT", 6, 0)
     stopSpamBtn:SetScript("OnClick", function() Community:StopSpam() end)
 

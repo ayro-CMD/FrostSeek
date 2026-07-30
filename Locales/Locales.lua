@@ -95,9 +95,17 @@ local STRINGS = {
     ["profile_title"] = "Profile",
     ["profile_role"] = "Role",
     ["profile_spec"] = "Spec",
+    ["profile_spec_secondary"] = "Spec / Secondary Role",
     ["profile_discord"] = "Discord",
+    ["profile_discord_ready"] = "Discord Ready",
+    ["profile_discord_ready_yes"] = "Yes",
+    ["profile_discord_ready_no"] = "No",
     ["profile_note"] = "Note",
+    ["profile_application_notes"] = "Application Notes",
     ["profile_auto_fill"] = "Auto Fill Stats",
+    ["profile_your_profile"] = "Your Profile",
+    ["profile_preview"] = "Profile Preview",
+    ["profile_voice_url_inline"] = "Voice URL  (Discord/TS — auto-attached to your listings)",
     ["options_title"] = "Options",
     ["options_general"] = "General",
     ["options_lfg"] = "LFG System",
@@ -108,6 +116,15 @@ local STRINGS = {
 
     ["presence_online"] = "%d users online",
     ["presence_offline"] = "No users online",
+    ["presence_user_tooltip"] = "FrostNet User",
+    ["presence_sort"] = "Sort",
+    ["presence_sort_name"] = "Name",
+    ["presence_sort_guild"] = "Guild",
+    ["presence_sort_zone"] = "Zone",
+    ["presence_sort_seen"] = "Seen",
+    ["presence_guild_only"] = "Guild Only",
+    ["presence_add_friend"] = "Add Friend",
+    ["presence_join_voice"] = "Join Voice",
 
     ["tooltip_left_click"] = "Left-click to open",
     ["tooltip_right_click"] = "Right-click for options",
@@ -164,6 +181,7 @@ local STRINGS = {
     ["label_loot_method"] = "Loot Method",
     ["label_min_ilvl"] = "Min iLvl",
     ["label_max_members"] = "Max Members",
+    ["label_roles_needed"] = "Roles Needed",
     ["label_type"] = "Type",
     ["label_expansion"] = "Expansion",
     ["label_activity"] = "Activity",
@@ -191,6 +209,7 @@ local STRINGS = {
     ["clear_all"] = "Clear All",
     ["select_all"] = "Select All",
     ["deselect_all"] = "Deselect All",
+    ["toggle_all"] = "Toggle All",
     ["lfm_desc"] = "Create, edit and auto-spam LFM messages",
     ["lfm_need"] = "Need",
     ["lfm_difficulty"] = "Diff",
@@ -207,6 +226,7 @@ local STRINGS = {
     ["lfm_no_message"] = "No message set!",
     ["lfm_no_channels"] = "No channels selected!",
     ["lfm_sent_channels"] = "Sent to %d channel(s)",
+    ["lfm_send_all_tooltip"] = "Send to All Spam Channels",
     ["lfm_spam_started"] = "Auto-spam started (every %ds)",
     ["lfm_spam_stopped"] = "Auto-spam stopped",
     ["lfm_min_ilvl"] = "Min iLvl",
@@ -217,10 +237,11 @@ local STRINGS = {
     ["listings_select_group"] = "Select a group to see details",
     ["listings_no_active_group"] = "No active group.",
     ["listings_active_groups"] = "Active groups: %d",
+    ["listings_confirm_remove"] = "Are you sure you want to remove your listing for %s?",
     ["listings_clear_history"] = "Clear History",
+    ["listings_clear_history_confirm"] = "Clear all non-pending application history?",
     ["listings_remove_listing"] = "Remove Listing",
     ["listings_publish_group"] = "Publish Group",
-    ["listings_confirm_remove"] = "Are you sure you want to remove your listing?",
     ["listings_application_sent"] = "Application sent for %s",
     ["listings_accepted_invited"] = "Accepted and invited %s",
     ["listings_select_activity"] = "Select an activity!",
@@ -246,6 +267,38 @@ local STRINGS = {
     ["options_system_settings"] = "System Settings",
     ["options_open_settings"] = "Open Settings Window",
     ["options_current_status"] = "Current Status",
+    ["options_basic_config"] = "Basic addon configuration",
+    ["options_enable_frostnet_desc"] = "Enable the FrostNet network (join FSK channel and communicate)",
+    ["options_auto_open_desc"] = "Automatically open FrostSeek window when you log in",
+    ["options_minimap_button_desc"] = "Show the FrostSeek minimap button",
+    ["options_save_position_desc"] = "Remember window positions between sessions",
+    ["options_debug_mode_desc"] = "Enable debug messages in chat",
+    ["options_ui_scale_desc"] = "Adjust the scale of the FrostSeek interface (0.5 - 1.5)",
+    ["options_quick_disable"] = "Quick Disable LFG + Popups",
+    ["options_quick_disable_desc"] = "Same as Ctrl+Click on the minimap button: turn off BOTH the LFG radar and popup alerts at once. FrostNet and LFM stay active.",
+    ["options_disable_lfg"] = "Disable LFG System",
+    ["options_disable_lfg_desc"] = "Completely disable the LFG radar",
+    ["options_disable_popups_desc"] = "Disable LFM alert popups",
+    ["options_silent_notifications_desc"] = "Disable sound for LFG notifications",
+    ["options_no_alerts_group_desc"] = "Don't show alerts when in a group",
+    ["options_no_alerts_combat_desc"] = "Don't show alerts when in combat",
+    ["options_popup_duration_desc"] = "How long popups stay visible (seconds)",
+    ["options_popup_cooldown_desc"] = "Time between identical popups (seconds)",
+    ["options_max_popups_desc"] = "Maximum number of popups shown at once",
+    ["options_activity_filter"] = "Activity Filter",
+    ["options_activity_filter_desc"] = "Choose which dungeons, raids and activities appear in LFG messages and popups. Uncheck items you are NOT interested in.",
+    ["options_custom_tags"] = "Custom Tags",
+    ["options_lfm_header_desc"] = "Configure the Looking For Members system",
+    ["options_auto_update_interval"] = "Auto-update Interval",
+    ["options_auto_update_interval_desc"] = "Seconds between keystone list updates (0 = disable)",
+    ["options_auto_spam_header_desc"] = "Auto-Spam: automatically send LFM messages on a timer",
+    ["options_spam_timer"] = "Spam Timer (seconds)",
+    ["options_spam_timer_desc"] = "How often to auto-send the LFM message (min 5s)",
+    ["options_auto_invite_header_desc"] = "Auto-Invite: automatically invite players who whisper their iLvl",
+    ["options_enable_auto_invite"] = "Enable Auto-Invite on Whisper",
+    ["options_enable_auto_invite_desc"] = "When someone whispers you and their iLvl meets the minimum, auto-invite them",
+    ["options_lfm_auto_stop"] = "Auto-Stop Spam Threshold",
+    ["options_lfm_auto_stop_desc"] = "Auto-stop LFM spam when group reaches this many members (0 = disabled)",
     ["options_lfm"] = "LFM System",
     ["options_advanced"] = "Advanced",
     ["options_theme"] = "Theme",
@@ -327,13 +380,158 @@ local STRINGS = {
     ["event_board_cleared"] = "All local events cleared",
     ["event_board_invalid"] = "Event requires a name",
     ["event_board_section_events"] = "Events",
+    ["event_board_recent"] = "Recent",
+
+    -- Community tab labels and buttons
+    ["community_title"] = "Community",
+    ["community_subtab_browser"] = "Guild Browser",
+    ["community_subtab_recruitment"] = "Recruitment Creator",
+    ["community_subtab_events"] = "Event Board",
+    ["community_guilds_discovered"] = "Discovered guilds from chat messages",
+    ["community_recruitment_create"] = "Create your guild recruitment message",
+    ["community_clear_all"] = "Clear All",
+    ["community_refresh"] = "Refresh",
+    ["community_dismiss"] = "Dismiss",
+    ["community_save_template"] = "Save Template",
+    ["community_load_template"] = "Load Template",
+    ["community_delete_template"] = "Delete Template",
+    ["community_send_once"] = "Send Once",
+    ["community_start_spam"] = "Start Spam",
+    ["community_stop_spam"] = "Stop Spam",
+    ["community_clear_events_title"] = "Clear Events",
+    ["community_clear_events_msg"] = "Remove all local community events?",
+    ["community_clear_guilds_title"] = "Clear Guild Database",
+    ["community_clear_guilds_msg"] = "Remove all discovered guilds?",
+
+    -- protocol & networking
+    ["net_connected"] = "Connected to channel %s (slot %s)",
+    ["net_disconnected"] = "Disconnected from channel %s, will retry...",
+    ["net_no_loopback"] = "No loopback echo from server within 2s — the server may be dropping your messages. Run /fsnet to verify.",
+    ["net_publish_ok"] = "Group published to channel FSK (%s)",
+    ["net_publish_queued"] = "Channel not connected yet — your group is queued and will be published automatically when FSK reconnects.",
+    ["net_publish_ratelimited"] = "Group publish deferred (rate-limit), will retry in ~2s.",
+    ["net_listing_new"] = "New group from %s — %s%s",
+    ["net_listing_full"] = "Group full, listing removed for %s",
+    ["net_listing_removed"] = "Listing removed for %s",
+    ["net_listing_only_one"] = "Previous listing removed (only one group allowed at a time)",
+    ["net_listing_created"] = "Group created: %s",
+    ["net_select_activity"] = "Select an activity!",
+    ["net_select_group"] = "Select a group before applying",
+    ["net_cant_apply_own"] = "You cannot apply to your own group!",
+    ["net_applicant_received"] = "%s applied for %s",
+    ["net_app_accepted"] = "Application accepted for %s!",
+    ["net_app_declined"] = "Application declined for %s",
+    ["net_app_sent"] = "Application sent for %s",
+    ["net_app_withdrawn"] = "Application withdrawn for %s",
+    ["net_app_accepted_invited"] = "Accepted and invited %s",
+    ["net_app_declined_sent"] = "Application declined",
+
+    -- schema migration & reset
+    ["migration_failed"] = "schema migration to v%s failed: %s",
+    ["reset_warning"] = "This will WIPE all settings, listings, history, voice links.",
+    ["reset_confirm_hint"] = "Type /fsreset confirm to proceed (your LFM favorite templates will be preserved).",
+    ["reset_done"] = "Settings reset complete. Reload UI (/reload) for full effect.",
+    ["log_empty"] = "Logger not initialised.",
+    ["log_header"] = "FROSTSEEK LOG (last %s entries)",
+    ["log_footer"] = "==================================================",
+
+    -- voice bridge
+    ["voice_join"] = "Join Voice",
+    ["voice_link_set"] = "Voice link saved for %s",
+    ["voice_link_cleared"] = "Voice link removed for %s",
+    ["voice_link_invalid"] = "Voice link must start with https://discord.gg/ or https://discord.com/invite/",
+    ["voice_no_link"] = "No voice link set for this group",
+    ["voice_link_prompt"] = "Paste Discord/TeamSpeak invite URL:",
+    ["voice_save"] = "Save Voice Link",
+    ["voice_test"] = "Test Voice",
+    ["voice_url_label"] = "Voice URL (Discord/TS)",
+    ["voice_url_desc"] = "Your Discord/TS link. It will be automatically attached to your FrostNet listings.",
+    ["voice_copy"] = "Copy",
+    ["voice_copy_ok"] = "URL copied to clipboard",
+    ["voice_select_hint"] = "CopyToClipboard not available - URL selected, press Ctrl+C",
+    ["voice_popup_hint1"] = "Select the URL below and press Ctrl+C to copy,",
+    ["voice_popup_hint2"] = "or click Copy to copy automatically (Retail+ only).",
+
+    -- settings panel
+    ["settings_language"] = "Language",
+    ["settings_language_desc"] = "auto = follow WoW client language",
+    ["settings_log_level"] = "Log Level",
+    ["settings_log_level_desc"] = "Controls /fsdumplog verbosity",
+    ["settings_language_changed"] = "Language changed to %s. Reload the UI to apply?",
+    ["settings_reload_now"] = "Reload Now",
+    ["settings_reload_later"] = "Later",
+    ["settings_language_set"] = "Language set to %s",
+
+    -- Core addon messages
+    ["core_loaded"] = "FrostSeek v%s loaded!",
+    ["core_modules_loaded"] = "FrostSeek: v%s -- All modules loaded",
+    ["core_module_init_error"] = "FrostSeek Core: Error initializing '%s': %s",
+    ["core_lfg_popups_disabled"] = "FrostSeek: LFG + Popups |cffff4444disabled|r",
+    ["core_lfg_popups_disabled_hint"] = "FrostSeek: LFG + Popups |cffff4444disabled|r |cff888888(Ctrl+Click again to re-enable)|r",
+    ["core_lfg_popups_enabled"] = "FrostSeek: LFG + Popups |cff44ff44enabled|r",
+    ["core_welcome"] = "FrostSeek: Welcome, adventurer!",
+    ["core_ping_sent"] = "FrostNet: Ping sent!",
+    ["core_shared_not_loaded"] = "FrostSeek: Shared module not loaded!",
+    ["core_class_override_set"] = "FrostSeek: Manual class override set to %s",
+    ["core_class_override_hint"] = "Type /fsclass reset to remove the override.",
+    ["core_class_override_cleared"] = "FrostSeek: Manual class override cleared. Using auto-detection.",
+    ["core_usage_loadtemplate"] = "FrostSeek: Usage: /fsloadtemplate <name>",
+    ["core_usage_deltemplate"] = "FrostSeek: Usage: /fsdeltemplate <name>",
+    ["core_log_empty"] = "FrostSeek: Logger not initialised.",
+    ["core_net_not_loaded"] = "FrostSeek: Network module not loaded!",
+    ["core_net_tip_1"] = "Tip: ask your friends to run /fsnet too and compare ChannelId.",
+    ["core_net_tip_2"] = "If your ChannelId is nil while 'Connected: true', there's a sync bug.",
+    ["core_net_tip_3"] = "If your friends show 0 online users, the FSK channel is realm-locked or faction-locked.",
+    ["core_reset_done"] = "FrostSeek: Settings reset complete. Reload UI (/reload) for full effect.",
+    ["core_reset_warning"] = "FrostSeek: This will WIPE all settings, listings, history, voice links.",
+    ["core_reset_hint"] = "Type /fsreset confirm to proceed (your LFM favorite templates will be preserved).",
 }
+
+local LOCALE_TABLES = { enUS = STRINGS }
+
+function FrostSeek.RegisterLocale(code, tbl)
+    if code and tbl then
+        LOCALE_TABLES[code] = tbl
+    end
+end
+
+function FrostSeek.GetAvailableLocales()
+    local codes = {}
+    for code, _ in pairs(LOCALE_TABLES) do
+        table.insert(codes, code)
+    end
+    table.sort(codes)
+    return codes
+end
+
+local function resolveLocaleCode()
+    if FrostSeekDB and FrostSeekDB.Settings then
+        local lang = FrostSeekDB.Settings.language
+        if lang and lang ~= "auto" and LOCALE_TABLES[lang] then
+            return lang
+        end
+    end
+    local wowLocale = (GetLocale and GetLocale()) or "enUS"
+    if LOCALE_TABLES[wowLocale] then return wowLocale end
+    if wowLocale and #wowLocale >= 2 then
+        local short = string.sub(wowLocale, 1, 2)
+        local candidates = { it = "itIT", es = "esES", de = "deDE", fr = "frFR" }
+        local mapped = candidates[short]
+        if mapped and LOCALE_TABLES[mapped] then return mapped end
+    end
+    return "enUS"
+end
 
 FrostSeek.L = setmetatable({}, {
     __index = function(_, key)
-        local v = STRINGS[key]
+        local code = resolveLocaleCode()
+        local tbl = LOCALE_TABLES[code] or STRINGS
+        local v = tbl[key]
         if v == nil then
-            return key
+            v = STRINGS[key] 
+        end
+        if v == nil then
+            return key 
         end
         return v
     end,
@@ -342,4 +540,34 @@ FrostSeek.L = setmetatable({}, {
 function FrostSeek.Lf(key, ...)
     local template = FrostSeek.L[key]
     return string.format(template, ...)
+end
+
+if StaticPopupDialogs and not StaticPopupDialogs["FROSTSEEK_LANGUAGE_RELOAD"] then
+    StaticPopupDialogs["FROSTSEEK_LANGUAGE_RELOAD"] = {
+        text = "%s",
+        button1 = "Reload Now",
+        button2 = "Later",
+        timeout = 0,
+        whileDead = true,
+        hideOnEscape = true,
+        OnAccept = function(self)
+            if ReloadUI then
+                ReloadUI()
+            else
+                ConsoleExec("reloadui")
+            end
+        end,
+    }
+end
+
+function FrostSeek.PromptReloadUI(messageText)
+    if not StaticPopupDialogs then return end
+    local L = FrostSeek.L
+    StaticPopupDialogs["FROSTSEEK_LANGUAGE_RELOAD"].button1 = L["settings_reload_now"] or "Reload Now"
+    StaticPopupDialogs["FROSTSEEK_LANGUAGE_RELOAD"].button2 = L["settings_reload_later"] or "Later"
+    if StaticPopup_FindVisible then
+        local existing = StaticPopup_FindVisible("FROSTSEEK_LANGUAGE_RELOAD")
+        if existing then existing:Hide() end
+    end
+    StaticPopup_Show("FROSTSEEK_LANGUAGE_RELOAD", messageText)
 end

@@ -55,7 +55,96 @@ function FrostSeek._v.g(name)
     return FrostSeek._v.w[name]
 end
 
-FrostSeek.VERSION = "2.1.8"
+FrostSeek.VERSION = "2.2.0"
+
+local function LPrint(key, ...)
+    local L = FrostSeek and FrostSeek.L
+    if not L then
+        print("[FrostSeek] " .. tostring(key))
+        return
+    end
+    local body
+    if select("#", ...) > 0 then
+        local Lf = FrostSeek.Lf or function(k, ...) return string.format(k, ...) end
+        body = Lf(key, ...)
+    else
+        body = L[key] or key
+    end
+    print(body)
+end
+
+FrostSeek.SCHEMA_VERSION = 4
+
+
+local LOG_LEVELS = { DEBUG = 1, INFO = 2, WARN = 3, ERROR = 4 }
+local LOG_COLORS = { DEBUG = "888888", INFO = "88ccff", WARN = "ffcc00", ERROR = "ff5555" }
+local LOG_BUFFER_MAX = 200
+
+FrostSeek.Logger = {
+    Buffer = {},
+    Level = "WARN",
+}
+
+local function tsNow()
+    return date("%H:%M:%S")
+end
+
+local function shouldLog(level)
+    local cur = FrostSeek.Logger.Level or "WARN"
+    return (LOG_LEVELS[level] or 0) >= (LOG_LEVELS[cur] or 0)
+end
+
+local function pushBuffer(level, msg)
+    local buf = FrostSeek.Logger.Buffer
+    buf[#buf + 1] = {
+        ts = tsNow(),
+        level = level,
+        color = LOG_COLORS[level] or "888888",
+        msg = tostring(msg),
+    }
+    if #buf > LOG_BUFFER_MAX then
+        table.remove(buf, 1)
+    end
+end
+
+function FrostSeek.Logger.Log(level, msg)
+    level = (level or "INFO"):upper()
+    if not LOG_LEVELS[level] then level = "INFO" end
+    pushBuffer(level, msg)
+    if shouldLog(level) then
+        local color = LOG_COLORS[level] or "888888"
+        print("|cff" .. color .. "[FSK:" .. level .. "]|r " .. tostring(msg))
+    end
+end
+
+function FrostSeek.Logger.Debug(msg) FrostSeek.Logger.Log("DEBUG", msg) end
+function FrostSeek.Logger.Info(msg)  FrostSeek.Logger.Log("INFO",  msg) end
+function FrostSeek.Logger.Warn(msg)  FrostSeek.Logger.Log("WARN",  msg) end
+function FrostSeek.Logger.Error(msg) FrostSeek.Logger.Log("ERROR", msg) end
+
+function FrostSeek.SafeCall(fn, ...)
+    local args = { ... }
+    local ok, err = xpcall(function() return fn(unpack(args)) end,
+        function(e)
+            return tostring(e) .. "\n" .. debugstack and debugstack(2, 8) or ""
+        end)
+    if not ok then
+        FrostSeek.Logger.Error("SafeCall failed: " .. tostring(err))
+        return false
+    end
+    return true, err
+end
+
+function FrostSeek.SafeHandler(fn)
+    return function(self, ...)
+        local ok, err = xpcall(fn, function(e)
+            return tostring(e) .. "\n" .. (debugstack and debugstack(2, 8) or "")
+        end, self, ...)
+        if not ok then
+            FrostSeek.Logger.Error("Event handler crashed: " .. tostring(err))
+        end
+    end
+end
 
 FrostSeekDB = FrostSeekDB or {}
 
@@ -123,6 +212,7 @@ if not FrostSeekDB.LFM then
         autoInviteEnabled = false,
         autoInviteMinIlvl = 150,
         customMessage = "",
+        autoStopMemberCount = 0,
     }
 end
 
@@ -132,6 +222,7 @@ if FrostSeekDB.LFM then
     if FrostSeekDB.LFM.autoInviteEnabled == nil then FrostSeekDB.LFM.autoInviteEnabled = false end
     if FrostSeekDB.LFM.autoInviteMinIlvl == nil then FrostSeekDB.LFM.autoInviteMinIlvl = 150 end
     if FrostSeekDB.LFM.customMessage == nil then FrostSeekDB.LFM.customMessage = "" end
+    if FrostSeekDB.LFM.autoStopMemberCount == nil then FrostSeekDB.LFM.autoStopMemberCount = 0 end
 end
 
 if not FrostSeekDB.MPlusScores then
@@ -190,6 +281,62 @@ if not FrostSeekDB.Settings then
     }
 end
 
+local MIGRATIONS = {}
+MIGRATIONS[2] = function(db)
+    if not db._backup_v1 then
+        local snap = {}
+        for _, k in ipairs({"LFG","LFM","MPlusScores","Favorites","Guilds","GuildTemplates","SessionStats","Profile","Settings"}) do
+            if db[k] ~= nil then snap[k] = db[k] end
+        end
+        db._backup_v1 = snap
+    end
+end
+
+MIGRATIONS[3] = function(db)
+    db.Settings = db.Settings or {}
+    if db.Settings.language == nil then db.Settings.language = "auto" end
+    if db.Settings.logLevel  == nil then db.Settings.logLevel  = "WARN"  end
+    if not db.VoiceLinks then db.VoiceLinks = {} end
+    if not db.Calendar then
+        db.Calendar = {
+            entries = {}, 
+            reminders = {},
+        }
+    end
+end
+
+MIGRATIONS[4] = function(db)
+    db.Calendar = nil
+end
+
+local function MigrateSchema()
+    local db = FrostSeekDB
+    db._schemaVersion = db._schemaVersion or 1
+
+    if db._schemaVersion < 2 and MIGRATIONS[2] then
+        MIGRATIONS[2](db)
+        db._schemaVersion = 2
+    end
+
+    while db._schemaVersion < FrostSeek.SCHEMA_VERSION do
+        local nextV = db._schemaVersion + 1
+        local fn = MIGRATIONS[nextV]
+        if not fn then
+            db._schemaVersion = nextV
+        else
+            local ok, err = pcall(fn, db)
+            if ok then
+                db._schemaVersion = nextV
+            else
+                LPrint("migration_failed", tostring(nextV), tostring(err))
+                break
+            end
+        end
+    end
+end
+
+MigrateSchema()
+
 local function EnsureSettingsIntegrity()
     if FrostSeekDB.Settings.uiScale == nil then FrostSeekDB.Settings.uiScale = 1.0 end
     if FrostSeekDB.Settings.autoOpen == nil then FrostSeekDB.Settings.autoOpen = false end
@@ -200,6 +347,11 @@ local function EnsureSettingsIntegrity()
     if FrostSeekDB.Settings.theme == nil then FrostSeekDB.Settings.theme = "Frost" end
     if FrostSeekDB.Settings.frostnetEnabled == nil then FrostSeekDB.Settings.frostnetEnabled = true end
     if FrostSeekDB.Settings.applyWhisper == nil then FrostSeekDB.Settings.applyWhisper = false end
+    if FrostSeekDB.Settings.language == nil then FrostSeekDB.Settings.language = "auto" end
+    if FrostSeekDB.Settings.logLevel == nil then FrostSeekDB.Settings.logLevel = "WARN" end
+
+    FrostSeek.Logger.Level = FrostSeekDB.Settings.logLevel or "WARN"
+    if not FrostSeekDB.VoiceLinks then FrostSeekDB.VoiceLinks = {} end
     if FrostSeekDB.LFG and FrostSeekDB.LFG.popupCategories then
         if FrostSeekDB.LFG.popupCategories.WORLD_BOSS == nil then
             FrostSeekDB.LFG.popupCategories.WORLD_BOSS = true
@@ -482,7 +634,7 @@ local tabDefinitions = {
     { id = "listings", name = "FrostNet", desc = "Browse, Create Groups & Profile" },
     { id = "lfg", name = "LFG", desc = "Looking For Group" },
     { id = "lfm", name = "LFM", desc = "Looking For Members" },
-    { id = "community", name = "Community", desc = "Guild browser, recruitment & community" },
+    { id = "community", name = "Community", desc = "Guild browser, recruitment & events" },
     { id = "options", name = "Options", desc = "System Settings" },
 }
 
@@ -567,9 +719,9 @@ miniButton:SetScript("OnClick", function(self, button)
     if button == "LeftButton" and IsControlKeyDown() then
         local nowDisabled = FrostSeek.ToggleAddonDisabled()
         if nowDisabled then
-            print("|cff88ccffFrostSeek:|r LFG + Popups |cffff4444disabled|r |cff888888(Ctrl+Click again to re-enable)|r")
+            LPrint("core_lfg_popups_disabled_hint")
         else
-            print("|cff88ccffFrostSeek:|r LFG + Popups |cff44ff44enabled|r")
+            LPrint("core_lfg_popups_enabled")
         end
         if GameTooltip:IsOwned(self) then
             self:GetScript("OnEnter")(self)
@@ -749,7 +901,7 @@ SlashCmdList["FROSTSEEK"] = function(msg)
     elseif cmd == "ping" then
         if FrostSeek.Presence and FrostSeek.Presence.SendPing then
             FrostSeek.Presence:SendPing()
-            print("|cff88ccffFrostNet:|r Ping sent!")
+            LPrint("core_ping_sent")
         end
     else
         MainFrame:Show()
@@ -782,7 +934,7 @@ SLASH_FSLOADTPL1 = "/fsloadtemplate"
 SlashCmdList["FSLOADTPL"] = function(msg)
     local name = msg and msg:match("^%s*(.-)%s*$") or ""
     if name == "" then
-        print("|cffff5555FrostSeek:|r Usage: /fsloadtemplate <name>")
+        LPrint("core_usage_loadtemplate")
         return
     end
     if FrostSeek.Community and FrostSeek.Community.LoadTemplateByName then
@@ -794,7 +946,7 @@ SLASH_FSDELTPL1 = "/fsdeltemplate"
 SlashCmdList["FSDELTPL"] = function(msg)
     local name = msg and msg:match("^%s*(.-)%s*$") or ""
     if name == "" then
-        print("|cffff5555FrostSeek:|r Usage: /fsdeltemplate <name>")
+        LPrint("core_usage_deltemplate")
         return
     end
     if FrostSeek.Community and FrostSeek.Community.DeleteTemplateByName then
@@ -811,22 +963,22 @@ end
 SLASH_FSDISABLE1 = "/fsdisable"
 SlashCmdList["FSDISABLE"] = function()
     FrostSeek.SetAddonDisabled(true)
-    print("|cff88ccffFrostSeek:|r LFG + Popups |cffff4444disabled|r")
+    LPrint("core_lfg_popups_disabled")
 end
 
 SLASH_FSENABLE1 = "/fsenable"
 SlashCmdList["FSENABLE"] = function()
     FrostSeek.SetAddonDisabled(false)
-    print("|cff88ccffFrostSeek:|r LFG + Popups |cff44ff44enabled|r")
+    LPrint("core_lfg_popups_enabled")
 end
 
 SLASH_FSTOGGLE1 = "/fstoggle"
 SlashCmdList["FSTOGGLE"] = function()
     local nowDisabled = FrostSeek.ToggleAddonDisabled()
     if nowDisabled then
-        print("|cff88ccffFrostSeek:|r LFG + Popups |cffff4444disabled|r")
+        LPrint("core_lfg_popups_disabled")
     else
-        print("|cff88ccffFrostSeek:|r LFG + Popups |cff44ff44enabled|r")
+        LPrint("core_lfg_popups_enabled")
     end
 end
 
@@ -834,6 +986,9 @@ SLASH_FSDEBUG1 = "/fsdebug"
 SlashCmdList["FSDEBUG"] = function()
     print("|cff88ccff========== FROSTSEEK DEBUG ==========|r")
     print("version = " .. tostring(FrostSeek.VERSION))
+    print("schemaVersion = " .. tostring(FrostSeekDB._schemaVersion) .. "/" .. tostring(FrostSeek.SCHEMA_VERSION))
+    print("language = " .. tostring(FrostSeekDB.Settings.language))
+    print("logLevel = " .. tostring(FrostSeekDB.Settings.logLevel))
     print("autoOpen = " .. tostring(FrostSeekDB.Settings.autoOpen))
     print("minimapButton = " .. tostring(FrostSeekDB.Settings.minimapButton))
     print("debugMode = " .. tostring(FrostSeekDB.Settings.debugMode))
@@ -874,14 +1029,80 @@ SlashCmdList["FSDEBUG"] = function()
         print("  Online users: " .. tostring(Presence:GetOnlineCount()))
     end
 
+    print("|cff88ccffv2.2.0 Modules:|r")
+    local VB = FrostSeek.VoiceBridge
+    if VB then
+        local count = 0
+        if FrostSeekDB.VoiceLinks then
+            for _ in pairs(FrostSeekDB.VoiceLinks) do count = count + 1 end
+        end
+        print("  VoiceBridge: " .. count .. " stored voice links")
+        print("  VoiceBridge API: " .. tostring(Network.usesAddonMessageAPI and "C_ChatInfo.SendAddonMessage" or "Legacy custom channel (FSK)"))
+    else
+        print("  VoiceBridge: not loaded")
+    end
+
+    if FrostSeek.Logger then
+        print("  Logger: " .. #FrostSeek.Logger.Buffer .. "/" .. "200 entries buffered, level=" .. tostring(FrostSeek.Logger.Level))
+    end
+
     print("|cff88ccff====================================|r")
+end
+
+SLASH_FSRESET1 = "/fsreset"
+SlashCmdList["FSRESET"] = function(msg)
+    msg = (msg or ""):lower():gsub("%s+", "")
+    if msg ~= "confirm" then
+        LPrint("core_reset_warning")
+        LPrint("core_reset_hint")
+        return
+    end
+
+    local savedTemplates = FrostSeekDB.LFM and FrostSeekDB.LFM.favoriteTemplates or nil
+    local savedChannelPresets = FrostSeekDB.LFM and FrostSeekDB.LFM.channelPresets or nil
+
+    for k, _ in pairs(FrostSeekDB) do
+        if k ~= "_backup_v1" and k ~= "_schemaVersion" then
+            FrostSeekDB[k] = nil
+        end
+    end
+    FrostSeekDB._schemaVersion = 1
+
+    MigrateSchema()
+    EnsureSettingsIntegrity()
+
+    if savedTemplates and FrostSeekDB.LFM then
+        FrostSeekDB.LFM.favoriteTemplates = savedTemplates
+    end
+    if savedChannelPresets and FrostSeekDB.LFM then
+        FrostSeekDB.LFM.channelPresets = savedChannelPresets
+    end
+
+    LPrint("core_reset_done")
+end
+
+SLASH_FSDUMPLOG1 = "/fsdumplog"
+SlashCmdList["FSDUMPLOG"] = function()
+    if not FrostSeek.Logger or not FrostSeek.Logger.Buffer then
+        LPrint("core_log_empty")
+        return
+    end
+    print("|cff88ccff========== FROSTSEEK LOG (last " .. #FrostSeek.Logger.Buffer .. " entries) ==========|r")
+    for i, entry in ipairs(FrostSeek.Logger.Buffer) do
+        print(string.format("|cff666666[%s]|r |cff%s%s|r: %s",
+            entry.ts or "?",
+            entry.color or "888888",
+            entry.level or "INFO",
+            entry.msg or ""))
+    end
+    print("|cff88ccff==================================================|r")
 end
 
 SLASH_FSOPEN1 = "/fsopen"
 SlashCmdList["FSOPEN"] = function()
     MainFrame:Show()
     FrostSeek:SwitchTab("dashboard")
-    print("|cff88ccffFrostSeek:|r Welcome, adventurer!")
+    LPrint("core_welcome")
 end
 
 SLASH_FSNET1 = "/fsnet"
@@ -963,7 +1184,7 @@ SLASH_FSCLASS1 = "/fsclass"
 SlashCmdList["FSCLASS"] = function(msg)
     local Shared = _G.FrostSeekShared
     if not Shared then
-        print("|cffff5555FrostSeek:|r Shared module not loaded!")
+        LPrint("core_shared_not_loaded")
         return
     end
 
@@ -975,8 +1196,8 @@ SlashCmdList["FSCLASS"] = function(msg)
         if not FrostSeekDB.Settings then FrostSeekDB.Settings = {} end
         FrostSeekDB.Settings.manualClass = arg
         Shared._cachedPlayerClass = nil
-        print("|cff88ccffFrostSeek:|r Manual class override set to |cffffffff" .. arg .. "|r")
-        print("|cff888888Type /fsclass reset to remove the override.|r")
+        LPrint("core_class_override_set", arg)
+        LPrint("core_class_override_hint")
         return
     end
 
@@ -985,7 +1206,7 @@ SlashCmdList["FSCLASS"] = function(msg)
             FrostSeekDB.Settings.manualClass = nil
         end
         Shared._cachedPlayerClass = nil
-        print("|cff88ccffFrostSeek:|r Manual class override cleared. Using auto-detection.")
+        LPrint("core_class_override_cleared")
         return
     end
 
@@ -1100,7 +1321,7 @@ local function InitializeFrostSeek()
     end
 
     if FrostSeekDB.Settings.showWelcome then
-        print("|cff88ccffFrostSeek v" .. FrostSeek.VERSION .. " loaded!|r  |cff666666-- AYRO|r")
+        LPrint("core_loaded", FrostSeek.VERSION)
     end
 end
 
@@ -1124,7 +1345,7 @@ local function LoadModules()
                     module:Initialize(ContentFrame)
                 end)
                 if not success then
-                    print("|cffff0000FrostSeek Core:|r Error initializing '" .. moduleName .. "': " .. tostring(err))
+                    LPrint("core_module_init_error", tostring(moduleName), tostring(err))
                 end
             end
         end
@@ -1138,7 +1359,7 @@ local function LoadModules()
             themeAPI.Apply()
         end
 
-        print("|cff88ccffFrostSeek:|r v" .. FrostSeek.VERSION .. " -- All modules loaded")
+        LPrint("core_modules_loaded", FrostSeek.VERSION)
     end)
 end
 

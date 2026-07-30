@@ -753,32 +753,70 @@ end
 
 local SETTINGS_CATEGORIES = {
     { id = "general", name = L["options_general"], icon = "Interface\\AddOns\\FrostSeek\\Media\\texture\\bottoni\\generale.tga", settings = {
-        { type = "header", id = "generalHeader", name = "", desc = "Basic addon configuration" },
-        { type = "checkbox", id = "frostnetEnabled", name = "Enable FrostNet", desc = "Enable the FrostNet network (join FSK channel and communicate)", default = true, getter = function() return FrostSeekDB.Settings.frostnetEnabled ~= false end, setter = function(v) FrostSeekDB.Settings.frostnetEnabled = v; local net = _G.FrostSeek and _G.FrostSeek.Network; if net then if v then net:JoinChannel() else net:LeaveChannel() end end; print("|cff88ccffFrostNet:|r " .. (v and "|cff44ff44Enabled|r" or "|cffff5555Disabled|r")) end },
-        { type = "checkbox", id = "autoOpen", name = "Auto-Open on Login", desc = "Automatically open FrostSeek window when you log in", default = false, getter = function() return FrostSeekDB.Settings.autoOpen end, setter = function(v) FrostSeekDB.Settings.autoOpen = v print("|cff88ccffFrostSeek:|r Auto-open " .. (v and "enabled" or "disabled")) end },
-        { type = "checkbox", id = "minimapButton", name = L["minimap_show"], desc = "Show the FrostSeek minimap button", default = true, getter = function() return FrostSeekDB.Settings.minimapButton end, setter = function(v) FrostSeekDB.Settings.minimapButton = v local mb = _G["FrostSeekMiniMapButton"]; if mb and mb.SetShown then mb:SetShown(v) end end },
-        { type = "checkbox", id = "savePosition", name = "Save Window Position", desc = "Remember window positions between sessions", default = true, getter = function() return FrostSeekDB.Settings.savePosition end, setter = function(v) FrostSeekDB.Settings.savePosition = v end },
-        { type = "checkbox", id = "debugMode", name = "Debug Mode", desc = "Enable debug messages in chat", default = false, getter = function() return FrostSeekDB.Settings.debugMode end, setter = function(v) FrostSeekDB.Settings.debugMode = v end },
-        { type = "slider", id = "uiScale", name = "UI Scale", desc = "Adjust the scale of the FrostSeek interface (0.5 - 1.5)", min = 0.5, max = 1.5, step = 0.05, default = 1.0, getter = function() return FrostSeekDB.Settings.uiScale end, setter = function(v) FrostSeekDB.Settings.uiScale = v if FrostSeek.MainFrame then FrostSeek.MainFrame:SetScale(v) end end },
+        { type = "header", id = "generalHeader", name = "", desc = L["options_basic_config"] },
+        { type = "checkbox", id = "frostnetEnabled", name = L["options_enable_frostnet"], desc = L["options_enable_frostnet_desc"], default = true, getter = function() return FrostSeekDB.Settings.frostnetEnabled ~= false end, setter = function(v) FrostSeekDB.Settings.frostnetEnabled = v; local net = _G.FrostSeek and _G.FrostSeek.Network; if net then if v then net:JoinChannel() else net:LeaveChannel() end end; print("|cff88ccffFrostNet:|r " .. (v and "|cff44ff44" .. L["enabled"] .. "|r" or "|cffff5555" .. L["disabled"] .. "|r")) end },
+        { type = "checkbox", id = "autoOpen", name = L["options_auto_open"], desc = L["options_auto_open_desc"], default = false, getter = function() return FrostSeekDB.Settings.autoOpen end, setter = function(v) FrostSeekDB.Settings.autoOpen = v print("|cff88ccffFrostSeek:|r Auto-open " .. (v and "enabled" or "disabled")) end },
+        { type = "checkbox", id = "minimapButton", name = L["minimap_show"], desc = L["options_minimap_button_desc"], default = true, getter = function() return FrostSeekDB.Settings.minimapButton end, setter = function(v) FrostSeekDB.Settings.minimapButton = v local mb = _G["FrostSeekMiniMapButton"]; if mb and mb.SetShown then mb:SetShown(v) end end },
+        { type = "checkbox", id = "savePosition", name = L["options_save_position"], desc = L["options_save_position_desc"], default = true, getter = function() return FrostSeekDB.Settings.savePosition end, setter = function(v) FrostSeekDB.Settings.savePosition = v end },
+        { type = "checkbox", id = "debugMode", name = L["options_debug_mode"], desc = L["options_debug_mode_desc"], default = false, getter = function() return FrostSeekDB.Settings.debugMode end, setter = function(v) FrostSeekDB.Settings.debugMode = v end },
+        { type = "dropdown", id = "language", name = L["settings_language"], desc = L["settings_language_desc"], default = "auto",
+          options = function()
+              local codes = {}
+              if FrostSeek and FrostSeek.GetAvailableLocales then
+                  codes = FrostSeek.GetAvailableLocales()
+              else
+                  codes = { "enUS" }
+              end
+              local result = { "auto" }
+              for _, c in ipairs(codes) do table.insert(result, c) end
+              return result
+          end,
+          getter = function() return FrostSeekDB.Settings.language or "auto" end,
+          setter = function(v)
+              FrostSeekDB.Settings.language = v
+              print("|cff88ccffFrostSeek:|r " .. (L["settings_language_set"] or "Language set to %s"):format(tostring(v)))
+              local msg = (L["settings_language_changed"] or "Language changed to %s. Reload the UI to apply?"):format(tostring(v))
+              if FrostSeek and FrostSeek.PromptReloadUI then
+                  FrostSeek.PromptReloadUI(msg)
+              end
+          end },
+        { type = "dropdown", id = "logLevel", name = L["settings_log_level"], desc = L["settings_log_level_desc"], default = "WARN",
+          options = function() return { "DEBUG", "INFO", "WARN", "ERROR" } end,
+          getter = function() return FrostSeekDB.Settings.logLevel or "WARN" end,
+          setter = function(v)
+              FrostSeekDB.Settings.logLevel = v
+              if FrostSeek and FrostSeek.Logger then
+                  FrostSeek.Logger.Level = v
+              end
+              print("|cff88ccffFrostSeek:|r Log level set to " .. tostring(v))
+          end },
+        { type = "slider", id = "uiScale", name = L["options_ui_scale"], desc = L["options_ui_scale_desc"], min = 0.5, max = 1.5, step = 0.05, default = 1.0, getter = function() return FrostSeekDB.Settings.uiScale end, setter = function(v) FrostSeekDB.Settings.uiScale = v if FrostSeek.MainFrame then FrostSeek.MainFrame:SetScale(v) end end },
     }},
     { id = "lfg", name = L["options_lfg"], icon = "Interface\\AddOns\\FrostSeek\\Media\\texture\\bottoni\\exp.tga", settings = {
-        { type = "header", id = "lfgHeader", name = "", desc = "Configure the Looking For Group radar" },
-        { type = "checkbox", id = "quickDisable", name = "Quick Disable LFG + Popups", desc = "Same as Ctrl+Click on the minimap button: turn off BOTH the LFG radar and popup alerts at once. FrostNet and LFM stay active.", default = false, getter = function() return _G.FrostSeek and _G.FrostSeek.IsAddonDisabled and _G.FrostSeek.IsAddonDisabled() or false end, setter = function(v) if _G.FrostSeek and _G.FrostSeek.SetAddonDisabled then _G.FrostSeek.SetAddonDisabled(v) end end },
-        { type = "checkbox", id = "disableLFG", name = "Disable LFG System", desc = "Completely disable the LFG radar", default = false, getter = function() return FrostSeekDB.LFG.disableLFG end, setter = function(v) FrostSeekDB.LFG.disableLFG = v; local lfg = _G.FrostSeek and _G.FrostSeek.Modules and _G.FrostSeek.Modules.lfg; if lfg and lfg.UpdateToggleVisual then lfg.UpdateToggleVisual(not v) end; if _G.FrostSeek and _G.FrostSeek.UpdateMinimapDisabledOverlay then _G.FrostSeek.UpdateMinimapDisabledOverlay() end end },
-        { type = "checkbox", id = "disablePopups", name = L["lfg_disable_popups"], desc = "Disable LFM alert popups", default = false, getter = function() return FrostSeekDB.LFG.disablePopups end, setter = function(v) FrostSeekDB.LFG.disablePopups = v; if _G.FrostSeek and _G.FrostSeek.UpdateMinimapDisabledOverlay then _G.FrostSeek.UpdateMinimapDisabledOverlay() end end },
-        { type = "checkbox", id = "silentNotifications", name = L["lfg_silent_notifications"], desc = "Disable sound for LFG notifications", default = false, getter = function() return FrostSeekDB.LFG.silentNotifications end, setter = function(v) FrostSeekDB.LFG.silentNotifications = v end },
-        { type = "checkbox", id = "doNotAlertInGroup", name = L["lfg_no_alerts_group"], desc = "Don't show alerts when in a group", default = false, getter = function() return FrostSeekDB.LFG.doNotAlertInGroup end, setter = function(v) FrostSeekDB.LFG.doNotAlertInGroup = v end },
-        { type = "checkbox", id = "doNotAlertInCombat", name = L["lfg_no_alerts_combat"], desc = "Don't show alerts when in combat", default = false, getter = function() return FrostSeekDB.LFG.doNotAlertInCombat end, setter = function(v) FrostSeekDB.LFG.doNotAlertInCombat = v end },
-        { type = "slider", id = "frameDuration", name = L["lfg_popup_duration"], desc = "How long popups stay visible (seconds)", min = 2, max = 10, step = 1, default = 5, getter = function() return FrostSeekDB.LFG.frameDuration end, setter = function(v) FrostSeekDB.LFG.frameDuration = v end },
-        { type = "slider", id = "popupCooldown", name = L["lfg_popup_cooldown"], desc = "Time between identical popups (seconds)", min = 60, max = 600, step = 10, default = 370, getter = function() return FrostSeekDB.LFG.popupCooldown end, setter = function(v) FrostSeekDB.LFG.popupCooldown = v end },
-        { type = "slider", id = "maxConcurrentPopups", name = L["lfg_max_popups"], desc = "Maximum number of popups shown at once", min = 1, max = 5, step = 1, default = 2, getter = function() return FrostSeekDB.LFG.maxConcurrentPopups end, setter = function(v) FrostSeekDB.LFG.maxConcurrentPopups = v end },
+        { type = "header", id = "lfgHeader", name = "", desc = L["lfg_title"] },
+        { type = "checkbox", id = "quickDisable", name = L["options_quick_disable"], desc = L["options_quick_disable_desc"], default = false, getter = function() return _G.FrostSeek and _G.FrostSeek.IsAddonDisabled and _G.FrostSeek.IsAddonDisabled() or false end, setter = function(v) if _G.FrostSeek and _G.FrostSeek.SetAddonDisabled then _G.FrostSeek.SetAddonDisabled(v) end end },
+        { type = "checkbox", id = "disableLFG", name = L["options_disable_lfg"], desc = L["options_disable_lfg_desc"], default = false, getter = function() return FrostSeekDB.LFG.disableLFG end, setter = function(v) FrostSeekDB.LFG.disableLFG = v; local lfg = _G.FrostSeek and _G.FrostSeek.Modules and _G.FrostSeek.Modules.lfg; if lfg and lfg.UpdateToggleVisual then lfg.UpdateToggleVisual(not v) end; if _G.FrostSeek and _G.FrostSeek.UpdateMinimapDisabledOverlay then _G.FrostSeek.UpdateMinimapDisabledOverlay() end end },
+        { type = "checkbox", id = "disablePopups", name = L["lfg_disable_popups"], desc = L["options_disable_popups_desc"], default = false, getter = function() return FrostSeekDB.LFG.disablePopups end, setter = function(v) FrostSeekDB.LFG.disablePopups = v; if _G.FrostSeek and _G.FrostSeek.UpdateMinimapDisabledOverlay then _G.FrostSeek.UpdateMinimapDisabledOverlay() end end },
+        { type = "checkbox", id = "silentNotifications", name = L["lfg_silent_notifications"], desc = L["options_silent_notifications_desc"], default = false, getter = function() return FrostSeekDB.LFG.silentNotifications end, setter = function(v) FrostSeekDB.LFG.silentNotifications = v end },
+        { type = "checkbox", id = "doNotAlertInGroup", name = L["lfg_no_alerts_group"], desc = L["options_no_alerts_group_desc"], default = false, getter = function() return FrostSeekDB.LFG.doNotAlertInGroup end, setter = function(v) FrostSeekDB.LFG.doNotAlertInGroup = v end },
+        { type = "checkbox", id = "doNotAlertInCombat", name = L["lfg_no_alerts_combat"], desc = L["options_no_alerts_combat_desc"], default = false, getter = function() return FrostSeekDB.LFG.doNotAlertInCombat end, setter = function(v) FrostSeekDB.LFG.doNotAlertInCombat = v end },
+        { type = "slider", id = "frameDuration", name = L["lfg_popup_duration"], desc = L["options_popup_duration_desc"], min = 2, max = 10, step = 1, default = 5, getter = function() return FrostSeekDB.LFG.frameDuration end, setter = function(v) FrostSeekDB.LFG.frameDuration = v end },
+        { type = "slider", id = "popupCooldown", name = L["lfg_popup_cooldown"], desc = L["options_popup_cooldown_desc"], min = 60, max = 600, step = 10, default = 370, getter = function() return FrostSeekDB.LFG.popupCooldown end, setter = function(v) FrostSeekDB.LFG.popupCooldown = v end },
+        { type = "slider", id = "maxConcurrentPopups", name = L["lfg_max_popups"], desc = L["options_max_popups_desc"], min = 1, max = 5, step = 1, default = 2, getter = function() return FrostSeekDB.LFG.maxConcurrentPopups end, setter = function(v) FrostSeekDB.LFG.maxConcurrentPopups = v end },
+        { type = "dropdown", id = "autoStopMemberCount", name = L["options_lfm_auto_stop"], desc = L["options_lfm_auto_stop_desc"], default = 0,
+          options = function() return { 0, 5, 10, 15, 20, 25, 40 } end,
+          getter = function() return FrostSeekDB.LFM.autoStopMemberCount or 0 end,
+          setter = function(v)
+              FrostSeekDB.LFM.autoStopMemberCount = tonumber(v) or 0
+              print("|cff88ccffFrostSeek:|r Auto-stop threshold set to " .. tostring(v))
+          end },
     }},
-    { id = "activityfilter", name = "Activity Filter", icon = "Interface\\AddOns\\FrostSeek\\Media\\texture\\bottoni\\filtri.tga", settings = {
-        { type = "header", id = "activityFilterHeader", desc = "Choose which dungeons, raids and activities appear in LFG messages and popups. Uncheck items you are NOT interested in." },
+    { id = "activityfilter", name = L["options_activity_filter"], icon = "Interface\\AddOns\\FrostSeek\\Media\\texture\\bottoni\\filtri.tga", settings = {
+        { type = "header", id = "activityFilterHeader", desc = L["options_activity_filter_desc"] },
         { type = "activityfilter", id = "activityFilterCheckboxes" }
     }},
     { id = "custommessage", name = "LFG Custom Wisp", icon = "Interface\\AddOns\\FrostSeek\\Media\\texture\\bottoni\\lfgwisp.tga", settings = {} },
-    { id = "customkeywords", name = "Custom Tags", icon = "Interface\\AddOns\\FrostSeek\\Media\\texture\\bottoni\\tag.tga", settings = {} },
+    { id = "customkeywords", name = L["options_custom_tags"], icon = "Interface\\AddOns\\FrostSeek\\Media\\texture\\bottoni\\tag.tga", settings = {} },
     { id = "lfm", name = "LFM System", icon = "Interface\\AddOns\\FrostSeek\\Media\\texture\\bottoni\\lfm.tga", settings = {
         { type = "header", id = "lfmHeader", name = "", desc = "Configure the Looking For Members system" },
         { type = "slider", id = "autoUpdateInterval", name = "Auto-update Interval", desc = "Seconds between keystone list updates (0 = disable)", min = 0, max = 300, step = 10, default = 60, getter = function() return FrostSeekDB.LFM.autoUpdateInterval end, setter = function(v) FrostSeekDB.LFM.autoUpdateInterval = v if FrostSeek.Modules and FrostSeek.Modules.lfm and FrostSeek.Modules.lfm.UpdateAutoUpdateInterval then FrostSeek.Modules.lfm:UpdateAutoUpdateInterval() end end },
@@ -1069,7 +1107,21 @@ local function CreateSettingControl(parent, setting, yOffset)
 
     elseif setting.type == "dropdown" then
         local selectedValue = setting.getter and setting.getter() or setting.default or ""
-        local options = setting.options or {}
+        local rawOptions = setting.options
+        if type(rawOptions) == "function" then
+            local ok, result = pcall(rawOptions)
+            if ok then rawOptions = result end
+        end
+        rawOptions = rawOptions or {}
+
+        local options = {}
+        for _, opt in ipairs(rawOptions) do
+            if type(opt) == "table" then
+                table.insert(options, { value = opt.value, text = opt.text or tostring(opt.value), key = tostring(opt.value) })
+            else
+                table.insert(options, { value = opt, text = tostring(opt), key = tostring(opt) })
+            end
+        end
 
         local btn = CreateFrame("Button", nil, controlFrame)
         btn:SetSize(160, 24)
@@ -1089,10 +1141,11 @@ local function CreateSettingControl(parent, setting, yOffset)
 
         
         local function GetDisplayText(val)
+            local key = tostring(val)
             for _, opt in ipairs(options) do
-                if opt.value == val then return opt.text end
+                if opt.key == key then return opt.text end
             end
-            return val
+            return tostring(val)
         end
         btn.text:SetText(GetDisplayText(selectedValue))
 
@@ -1112,15 +1165,21 @@ local function CreateSettingControl(parent, setting, yOffset)
         btn:SetScript("OnClick", function(self)
             
             local curVal = setting.getter and setting.getter() or setting.default or ""
-            local nextVal = curVal
+            local curKey = tostring(curVal)
+            local nextOpt = nil
             for i, opt in ipairs(options) do
-                if opt.value == curVal then
-                    nextVal = options[(i % #options) + 1].value
+                if opt.key == curKey then
+                    nextOpt = options[(i % #options) + 1]
                     break
                 end
             end
-            self.text:SetText(GetDisplayText(nextVal))
-            if setting.setter then setting.setter(nextVal) else FrostSeekDB.Settings[setting.id] = nextVal end
+            if not nextOpt and #options > 0 then
+                nextOpt = options[1]
+            end
+            if nextOpt then
+                self.text:SetText(nextOpt.text)
+                if setting.setter then setting.setter(nextOpt.value) else FrostSeekDB.Settings[setting.id] = nextOpt.value end
+            end
         end)
 
         return controlFrame, -40, btn
@@ -1318,6 +1377,21 @@ local function CreateSettingControl(parent, setting, yOffset)
                 hText:SetText(entry.header)
                 hText:SetTextColor(hc[1] * 1.3, hc[2] * 1.3, hc[3] * 1.3)
 
+                local toggleBtn = CreateFrame("Button", nil, hFrame)
+                toggleBtn:SetSize(120, 20)
+                toggleBtn:SetPoint("RIGHT", hFrame, "RIGHT", -6, 0)
+                toggleBtn.bg = toggleBtn:CreateTexture(nil, "BACKGROUND")
+                toggleBtn.bg:SetAllPoints()
+                toggleBtn.bg:SetColorTexture(hc[1] * 0.15, hc[2] * 0.15, hc[3] * 0.15, 0.6)
+                toggleBtn.border = toggleBtn:CreateTexture(nil, "BORDER")
+                toggleBtn.border:SetAllPoints()
+                toggleBtn.border:SetColorTexture(hc[1] * 0.4, hc[2] * 0.4, hc[3] * 0.4, 0.8)
+                toggleBtn.text = toggleBtn:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+                toggleBtn.text:SetPoint("CENTER")
+                toggleBtn._headerName = entry.header
+                toggleBtn._checkboxes = currentHeaderCheckboxes
+                hFrame._toggleBtn = toggleBtn
+
                 yOff = yOff - 30
             else
                 local row = CreateFrame("Frame", nil, container)
@@ -1383,6 +1457,51 @@ local function CreateSettingControl(parent, setting, yOffset)
 
         if currentHeaderName and #currentHeaderCheckboxes > 0 then
             headerSections[currentHeaderName] = currentHeaderCheckboxes
+        end
+
+        local function updateToggleBtnText(toggleBtn, checkboxes)
+            local allOn = true
+            local allOff = true
+            for _, info in ipairs(checkboxes) do
+                if info.cb.checked then allOff = false else allOn = false end
+            end
+            if allOn then
+                toggleBtn.text:SetText("|cffff5555" .. (L["deselect_all"] or "Deselect All") .. "|r")
+            elseif allOff then
+                toggleBtn.text:SetText("|cff44ff44" .. (L["select_all"] or "Select All") .. "|r")
+            else
+                toggleBtn.text:SetText("|cff88ccff" .. (L["toggle_all"] or "Toggle All") .. "|r")
+            end
+        end
+
+        local toggleButtons = {}
+        for headerName, checkboxes in pairs(headerSections) do
+        end
+
+        for _, child in ipairs({ container:GetChildren() }) do
+            if child._toggleBtn and child._toggleBtn._headerName then
+                local hb = child._toggleBtn
+                local cbList = headerSections[hb._headerName]
+                if cbList then
+                    toggleButtons[hb._headerName] = hb
+                    updateToggleBtnText(hb, cbList)
+                    hb:SetScript("OnClick", function()
+                        local allOn = true
+                        for _, info in ipairs(cbList) do
+                            if not info.cb.checked then allOn = false; break end
+                        end
+                        local target = not allOn
+                        for _, info in ipairs(cbList) do
+                            info.cb.checked = target
+                            info.cb.check:SetShown(target)
+                            FrostSeekDB.LFG.activityFilter[info.id] = target
+                            info.label:SetTextColor(unpack(target and _tc("textPrimary") or _tc("textDim")))
+                        end
+                        updateToggleBtnText(hb, cbList)
+                        if LFG.UpdateFilterIconState then LFG.UpdateFilterIconState() end
+                    end)
+                end
+            end
         end
 
         local btnRow = CreateFrame("Frame", nil, container)
