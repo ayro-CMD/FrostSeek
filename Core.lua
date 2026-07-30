@@ -1,6 +1,6 @@
 --[[
 ==============================================================================
- FrostSeek - Advanced LFG/LFM Manager with FrostNet
+ FrostSeek - Advanced LFG/LFM Manager
 ==============================================================================
  Copyright (c) 2026 Ayro. All rights reserved.
 
@@ -55,7 +55,7 @@ function FrostSeek._v.g(name)
     return FrostSeek._v.w[name]
 end
 
-FrostSeek.VERSION = "2.1.7"
+FrostSeek.VERSION = "2.1.8"
 
 FrostSeekDB = FrostSeekDB or {}
 
@@ -623,13 +623,13 @@ FrostSeek.MiniMapButton = miniButton
 FrostSeek._activeMinimapCategory = nil
 
 local CATEGORY_ICONS = {
-    KEYSTONE    = ICON_BASE .. "rosa.tga",
-    RAID        = ICON_BASE .. "orange.tga",
-    PVP         = ICON_BASE .. "red.tga",
-    WORLD_BOSS  = ICON_BASE .. "giallo.tga",
-    MANASTORM   = ICON_BASE .. "viola.tga",
-    DUNGEON     = ICON_BASE .. "verde.tga",
-    QUEST       = ICON_BASE .. "azz.tga",
+    KEYSTONE    = ICON_BASE .. "key.tga",
+    RAID        = ICON_BASE .. "raid.tga",
+    PVP         = ICON_BASE .. "pvp.tga",
+    WORLD_BOSS  = ICON_BASE .. "boss.tga",
+    MANASTORM   = ICON_BASE .. "manastorm.tga",
+    DUNGEON     = ICON_BASE .. "dungeon.tga",
+    QUEST       = ICON_BASE .. "quest.tga",
 }
 
 local ICON_PRIORITY = {
