@@ -55,7 +55,7 @@ function FrostSeek._v.g(name)
     return FrostSeek._v.w[name]
 end
 
-FrostSeek.VERSION = "2.2.0"
+FrostSeek.VERSION = "2.2.1"
 
 local function LPrint(key, ...)
     local L = FrostSeek and FrostSeek.L
@@ -172,16 +172,16 @@ if not FrostSeekDB.LFG then
             KEYSTONE = true,
             MISC = false
         },
+        popupModeFilter = "LFM",
         customFilterWords = "",
         showActiveRecruitersWindow = false,
         activeWindowPosition = nil,
         activeWindowCategory = "ALL",
         customMessages = {
             enabled = false,
-            template = "inv {role} {class} {ench} {ilvl} ilvl {gs}gs",
+            template = "inv {role} {class} {ench} {ilvl} ilvl",
             showClass = true,
             showIlvl = true,
-            showGs = true,
             showEnchant = true,
             showRole = true,
             showAchievement = false,
@@ -225,9 +225,7 @@ if FrostSeekDB.LFM then
     if FrostSeekDB.LFM.autoStopMemberCount == nil then FrostSeekDB.LFM.autoStopMemberCount = 0 end
 end
 
-if not FrostSeekDB.MPlusScores then
-    FrostSeekDB.MPlusScores = {}
-end
+if FrostSeekDB.MPlusScores ~= nil then FrostSeekDB.MPlusScores = nil end
 
 if not FrostSeekDB.Favorites then
     FrostSeekDB.Favorites = {}
@@ -262,7 +260,6 @@ if not FrostSeekDB.Profile then
         note = "",
         autoFill = true,
         autoIlvl = 0,
-        autoGs = 0,
     }
 end
 
@@ -285,7 +282,7 @@ local MIGRATIONS = {}
 MIGRATIONS[2] = function(db)
     if not db._backup_v1 then
         local snap = {}
-        for _, k in ipairs({"LFG","LFM","MPlusScores","Favorites","Guilds","GuildTemplates","SessionStats","Profile","Settings"}) do
+        for _, k in ipairs({"LFG","LFM","Favorites","Guilds","GuildTemplates","SessionStats","Profile","Settings"}) do
             if db[k] ~= nil then snap[k] = db[k] end
         end
         db._backup_v1 = snap
@@ -357,6 +354,9 @@ local function EnsureSettingsIntegrity()
             FrostSeekDB.LFG.popupCategories.WORLD_BOSS = true
         end
     end
+    if FrostSeekDB.LFG then
+        if FrostSeekDB.LFG.popupModeFilter == nil then FrostSeekDB.LFG.popupModeFilter = "LFM" end
+    end
 
     if FrostSeekDB.LFG and not FrostSeekDB.LFG.customKeywords then
         FrostSeekDB.LFG.customKeywords = {
@@ -368,16 +368,16 @@ local function EnsureSettingsIntegrity()
     if FrostSeekDB.LFG and FrostSeekDB.LFG.customMessages then
         local cm = FrostSeekDB.LFG.customMessages
         if cm.enabled == nil then cm.enabled = false end
-        if cm.template == nil or cm.template == "" then cm.template = "inv {role} {class} {ench} {ilvl} ilvl {gs}gs" end
+        if cm.template == nil or cm.template == "" then cm.template = "inv {role} {class} {ench} {ilvl} ilvl" end
         if cm.showClass == nil then cm.showClass = true end
         if cm.showIlvl == nil then cm.showIlvl = true end
-        if cm.showGs == nil then cm.showGs = true end
         if cm.showEnchant == nil then cm.showEnchant = true end
         if cm.showRole == nil then cm.showRole = true end
         if cm.showAchievement == nil then cm.showAchievement = false end
         if cm.achievementLink == nil then cm.achievementLink = "" end
         if cm.showKeystone == nil then cm.showKeystone = false end
         if cm.keystoneLink == nil then cm.keystoneLink = "" end
+        if cm.showGs ~= nil then cm.showGs = nil end
     end
 
     if FrostSeekDB.Profile then
@@ -387,7 +387,7 @@ local function EnsureSettingsIntegrity()
         if FrostSeekDB.Profile.note == nil then FrostSeekDB.Profile.note = "" end
         if FrostSeekDB.Profile.autoFill == nil then FrostSeekDB.Profile.autoFill = true end
         if FrostSeekDB.Profile.autoIlvl == nil then FrostSeekDB.Profile.autoIlvl = 0 end
-        if FrostSeekDB.Profile.autoGs == nil then FrostSeekDB.Profile.autoGs = 0 end
+        if FrostSeekDB.Profile.autoGs ~= nil then FrostSeekDB.Profile.autoGs = nil end
     end
 end
 
@@ -1029,7 +1029,7 @@ SlashCmdList["FSDEBUG"] = function()
         print("  Online users: " .. tostring(Presence:GetOnlineCount()))
     end
 
-    print("|cff88ccffv2.2.0 Modules:|r")
+    print("|cff88ccffv2.2.1 Modules:|r")
     local VB = FrostSeek.VoiceBridge
     if VB then
         local count = 0
@@ -1329,7 +1329,7 @@ local function LoadModules()
     C_Timer.After(1.0, function()
         local modulesToLoad = {
             "dashboard",
-            "profile",    
+            "profile",
             "lfg",
             "lfm",
             "listings",
