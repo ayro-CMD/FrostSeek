@@ -63,7 +63,7 @@ local RAID_KEYWORDS = {
     "naxxramas", "naxx", "karazhan", "kara", "gruul", "magtheridon", "mag",
     "serpentshrine cavern", "ssc", "tempest keep", "tk", "the eye", "eye",
     "hyjal", "mount hyjal", "black temple", "bt", "zul'aman", "za", "sunwell plateau", "swp",
-    "vault of archavon", "voa", "archavon", "obsidian sanctum", "os", "sarth", "sartharion",
+    "vault of archavon", "voa", "archavon", "obsidian sanctum", "sarth", "sartharion",
     "eye of eternity", "eoe", "malygos", "ulduar", "uld",
     "trial of the crusader", "toc", "crusader", "icecrown citadel", "icc", "ruby sanctum", "rs", "halion",
     "blackwing lair", "molten core", "temple of ahn'qiraj", "ruins of ahn'qiraj",
@@ -86,9 +86,9 @@ local RAID_KEYWORDS = {
 
 local WORLD_BOSS_KEYWORDS = {
     "soggoth", "sogoth", "azuregos", "kazzak", "doomwalker", "setis", "settis",
-    "emeriss", "lethon", "taerar", "ysondre", "dream", "nightmare","Kaldros Depthbreaker","Kaldros.Depthbreaker",
+    "emeriss", "lethon", "taerar", "ysondre", "dream", "nightmare", "kaldros depthbreaker", "kaldros.depthbreaker", "kaldros",
     "snowgrave", "atal'zul", "atal.zul", "world tour", "worldboss tour", "world boss tour",
-    "sha of anger", "galleon", "salyis", "nalak", "oondasta", "celestials", "celestial","Kaldros",
+    "sha of anger", "galleon", "salyis", "nalak", "oondasta", "celestials", "celestial",
     "gonzor", "king gnok", "king mosh", "silithid lurker", "volchan", "corrupted ancient",
 }
 
@@ -106,7 +106,7 @@ local DUNGEON_KEYWORDS = {
     "rfc", "ragefire", "ragefire chasm", "dm", "deadmines", "vc", "wc", "wailing", "wailing caverns",
     "sfk", "shadowfang", "shadowfang keep", "stocks", "stockade", "bfd", "blackfathom", "blackfathom deeps",
     "gnomer", "gnomeregan", "rfk", "razorfen kraul", "sm", "scarlet", "scarlet monastery", "gy", "lib", "arm", "cath",
-    "rfd", "razorfen downs", "ulda", "uldaman", "zf", "zul'farrak", "mara", "maraudon","Blackcock spire",
+    "rfd", "razorfen downs", "ulda", "uldaman", "zf", "zul'farrak", "mara", "maraudon","blackcock spire",
     "st", "sunken temple", "brd", "blackrock depths", "dire", "dire maul", "maul", "dme", "dmn", "dmw",
     "strat", "stratholme", "scholo", "scholomance", "lbrs", "lower blackrock spire", "ubrs", "upper blackrock spire",
     -- TBC Dungeons
@@ -137,7 +137,7 @@ local DUNGEON_KEYWORDS = {
     "gmm", "glittermurk", "karazhan crypt", "glittermurk mines",
     "kc", "vault", "vaults", "vault of the inquisition", "vaults of inquisition",
     "roads", "road to de", "de' other side","temple of embers","toe","sbd",
-    "tor'watha", "tor watha","voult of the inquisition","voult","Shadowbone depths", "the temple of embers", "Shadowbone",
+    "tor'watha", "tor watha","voult of the inquisition","voult","shadowbone depths", "the temple of embers", "shadowbone",
     -- MoP Dungeons
     "tjs", "jade serpent", "temple of the jade serpent",
     "sb", "stormstout", "stormstout brewery", "brewery",
@@ -582,6 +582,68 @@ function LFG.IsLFMMessage(msg)
     return false
 end
 
+function LFG.GetMessageMode(msg)
+    if not msg then return nil end
+    local lowerMsg = string.lower(msg)
+
+    local function startsWithIndividualRole()
+        if string.match(lowerMsg, "^dps%s+lf") or string.match(lowerMsg, "^tank%s+lf") or
+           string.match(lowerMsg, "^heal[a-z]*%s+lf") or
+           string.match(lowerMsg, "^support%s+lf") or string.match(lowerMsg, "^supp%s+lf") then
+            return true
+        end
+        if string.match(lowerMsg, "^%d+%s*i[lv]l%s+%a+%s+lf") or
+           string.match(lowerMsg, "^%d+%s*lvl%s+%a+%s+lf") or
+           string.match(lowerMsg, "^%d+%s*i[%a]+l%s+%a+%s+lf") then
+            return true
+        end
+        if string.match(lowerMsg, "^%d+%s*i[lv]l%s+lf") or
+           string.match(lowerMsg, "^%d+%s*lvl%s+lf") then
+            return true
+        end
+        if string.match(lowerMsg, "^%a+%s+%d+%s*i[lv]l%s+lf") or
+           string.match(lowerMsg, "^%a+%s+%d+%s*lvl%s+lf") then
+            return true
+        end
+        return false
+    end
+
+    if string.find(lowerMsg, "%f[%a]lfg%f[^%a]") then return "LFG" end
+    if string.match(lowerMsg, "^lfg") or string.match(lowerMsg, "%slfg") then return "LFG" end
+    if string.match(lowerMsg, "looking%s+for%s+group") then return "LFG" end
+    if string.find(lowerMsg, "%f[%a]lfm%f[^%a]") then return "LFM" end
+    if string.match(lowerMsg, "lf%d+m") then return "LFM" end
+    if string.match(lowerMsg, "^lfm") or string.match(lowerMsg, "%slfm") then return "LFM" end
+    if string.match(lowerMsg, "looking%s+for%s+more") or string.match(lowerMsg, "looking%s+for%s+members") then return "LFM" end
+    if string.match(lowerMsg, "^lf%s+team%s") or string.match(lowerMsg, "%slf%s+team%s") or
+       string.match(lowerMsg, "^lf%s+team$") or string.match(lowerMsg, "%slf%s+team$") then return "LFM" end
+    if startsWithIndividualRole() then return "LFG" end
+    if string.match(lowerMsg, "lf[ %p]+%a*%s*group") or string.match(lowerMsg, "lf[ %p]+group") then return "LFG" end
+    if string.match(lowerMsg, "%s%d+/%d+%s") or string.match(lowerMsg, "^%d+/%d+%s") or string.match(lowerMsg, "%s%d+/%d+$") then return "LFM" end
+    if string.match(lowerMsg, "last%s*spot") then
+        return "LFM"
+    end
+
+    if string.match(lowerMsg, "tank/heal") or string.match(lowerMsg, "heal/tank") or string.match(lowerMsg, "tank%%/heal") then return "LFM" end
+    if string.match(lowerMsg, "inv") and (string.find(lowerMsg, "whisper") or string.find(lowerMsg, "wisp") or string.find(lowerMsg, "pm")) then return "LFM" end
+    if string.match(lowerMsg, "%f[%a]g2g%f[^%a]") then return "LFM" end
+    if string.match(lowerMsg, "need%s+%d*%s*tank") or
+       string.match(lowerMsg, "need%s+%d*%s*heal") or
+       string.match(lowerMsg, "need%s+%d*%s*dps") or
+       string.match(lowerMsg, "need%s+%d*%s*support") or
+       string.match(lowerMsg, "need%s+%d*%s*supp") then return "LFM" end
+    if string.match(lowerMsg, "lf[ %p].*%stank") or string.match(lowerMsg, "lf[ %p].*%sheal") or
+       string.match(lowerMsg, "lf[ %p].*%sdps") or string.match(lowerMsg, "lf[ %p].*%ssupport") or
+       string.match(lowerMsg, "lf[ %p].*%ssupp") then return "LFM" end
+    if string.match(lowerMsg, "^%d+%s+tank") or string.match(lowerMsg, "^%d+%s+heal") or
+       string.match(lowerMsg, "^%d+%s+dps") or string.match(lowerMsg, "^%d+%s+support") or
+       string.match(lowerMsg, "^%d+%s+supp") then return "LFM" end
+    if string.match(lowerMsg, "lf%s+dg") or string.match(lowerMsg, "lf%s+rdf") then return "LFG" end
+    if string.match(lowerMsg, "inv%s+me") or string.match(lowerMsg, "^inv%s*$") then return "LFG" end
+
+    return "LFG"
+end
+
 function LFG.ClassifyMessage(msg)
     if not msg then
         return "MISC", "MISC", false, false, false, false, false
@@ -790,20 +852,12 @@ function LFG.GetAverageItemLevel()
     return count > 0 and math.floor((sum / count) + 0.5) or 0
 end
 
-function LFG.GetGearScore()
-    if FrostSeek and FrostSeek.CalculateGearScore then
-        return FrostSeek.CalculateGearScore("player") or 0
-    end
-    return 0
-end
-
 function LFG.CreateWhisperMessage()
     local classInfo, ilvl, enchant = LFG.GetFullPlayerInfo()
-    local gs = LFG.GetGearScore()
     local roleText = FrostSeekDB.LFG.myRole ~= "" and FrostSeekDB.LFG.myRole ~= L["none"] and FrostSeekDB.LFG.myRole or ""
     local playerLevel = UnitLevel("player") or 0
     if FrostSeekDB.LFG.customMessages and FrostSeekDB.LFG.customMessages.enabled then
-        local template = FrostSeekDB.LFG.customMessages.template or "inv {role} {class} {ench} {ilvl} ilvl {gs}gs"
+        local template = FrostSeekDB.LFG.customMessages.template or "inv {role} {class} {ench} {ilvl} ilvl"
         local message = template
         if FrostSeekDB.LFG.customMessages.showClass then
             message = string.gsub(message, "{class}", classInfo or "")
@@ -815,11 +869,7 @@ function LFG.CreateWhisperMessage()
         else
             message = string.gsub(message, "{ilvl}", "")
         end
-        if FrostSeekDB.LFG.customMessages.showGs then
-            message = string.gsub(message, "{gs}", tostring(gs or 0))
-        else
-            message = string.gsub(message, "{gs}", "")
-        end
+        message = string.gsub(message, "{gs}", "")
         if FrostSeekDB.LFG.customMessages.showEnchant then
             message = string.gsub(message, "{ench}", enchant or "")
         else
@@ -848,7 +898,7 @@ function LFG.CreateWhisperMessage()
         message = string.gsub(message, "%s+", " ")
         message = string.gsub(message, "^%s*(.-)%s*$", "%1")
         if message == "" then
-            message = "inv " .. roleText .. " " .. classInfo .. " " .. ilvl .. " ilvl " .. gs .. "gs"
+            message = "inv " .. roleText .. " " .. classInfo .. " " .. ilvl .. " ilvl"
         end
         return message
     else
@@ -856,9 +906,9 @@ function LFG.CreateWhisperMessage()
         local rolePrefix = roleText ~= "" and (roleText .. " ") or ""
         local levelText = " lv" .. playerLevel
         if classInfo == "Hero" then
-            return "inv " .. rolePrefix .. ilvl .. " ilvl " .. gs .. "gs" .. levelText .. enchantText
+            return "inv " .. rolePrefix .. ilvl .. " ilvl" .. levelText .. enchantText
         else
-            return "inv " .. rolePrefix .. classInfo .. enchantText .. " " .. ilvl .. " ilvl " .. gs .. "gs" .. levelText
+            return "inv " .. rolePrefix .. classInfo .. enchantText .. " " .. ilvl .. " ilvl" .. levelText
         end
     end
 end
@@ -914,6 +964,7 @@ function LFG.RecordActiveSearch(sender, message, channel)
             record.isKeystone = isKeystone
             record.isManastorm = isManastorm
             record.isWorldBoss = isWorldBoss
+            record.mode = LFG.GetMessageMode(message)
                     record.channel = channel
             if LFG.UpdateRecruitersList then LFG.UpdateRecruitersList() end
             LFG.CreateLFGPopup(sender, message, dungeon, isHeroic, isMythic, isRaid, isPvp, isKeystone, isManastorm, category)
@@ -932,6 +983,7 @@ function LFG.RecordActiveSearch(sender, message, channel)
         isKeystone = isKeystone,
         isManastorm = isManastorm,
         isWorldBoss = isWorldBoss,
+        mode = LFG.GetMessageMode(message),
         channel = channel,
         lastUpdate = now,
         startTime = now,
@@ -1038,14 +1090,14 @@ local DIFFICULTY_FILTERS = {
         { label = "Trial",    match = function(d) return d and d:lower():find("trial") end },
     },
     WORLD_BOSS = {
-        { label = "Normal",   match = function(d) return not d or d:lower():find("open world") or d:lower():find("normal") end },
-        { label = "HC",       match = function(d) return d and (d:lower():find("hc instanced") or d:lower():find("heroic")) end },
+        { label = "Normal",   match = function(d) return not d or d:lower():find("open world") or d:lower():find("normal") or d:lower() == "instanced" end },
+        { label = "HC",       match = function(d) return d and (d:lower():find("hc") or d:lower():find("heroic")) end },
         { label = "Mythic",   match = function(d) return d and d:lower():find("mythic") end },
         { label = "Ascended", match = function(d) return d and (d:lower():find("ascended") or d:lower():find("asc")) end },
     },
     MANASTORM = {
         { label = "Leveling", match = function(d) return d and (d:lower():find("leveling") or d:lower():find("level")) end },
-        { label = "Gold Farm", match = function(d) return d and (d:lower():find("gold farm") or d:lower():find("goldfarm")) end },
+        { label = "Farm",     match = function(d) return d and (d:lower():find("farm") or d:lower():find("gold") or d:lower():find("bonzo")) end },
         { label = "ALVA",     match = function(d) return d and d:lower():find("alva") end },
     },
    
@@ -1083,16 +1135,15 @@ local DIFFICULTY_PATTERNS = {
         { keywords = {"normal", "norm"}, label = "Normal" },
     },
     WORLD_BOSS = {
-        { keywords = {"ascended"}, label = "Ascended" },
-        { keywords = {"mythic"}, label = "Mythic Instanced" },
-        { keywords = {"heroic instanced", "hc instanced"}, label = "HC Instanced" },
+        { keywords = {"ascended", "asc%d", " asc "}, label = "Ascended" },
+        { keywords = {"mythic"}, label = "Mythic" },
+        { keywords = {"heroic", "hc"}, label = "HC" },
         { keywords = {"instanced"}, label = "Instanced" },
         { keywords = {"open world"}, label = "Open World" },
     },
     MANASTORM = {
         { keywords = {"alva"}, label = "Alva" },
-        { keywords = {"gold farm", "goldfarm"}, label = "Gold Farm" },
-        { keywords = {"bonzo farm", "bonzofarm", "bonzo"}, label = "Bonzo Farm" },
+        { keywords = {"gold farm", "goldfarm", "bonzo farm", "bonzofarm", "bonzo", "gold"}, label = "Farm" },
         { keywords = {"leveling", "level"}, label = "Leveling" },
     },
     PVP = {
@@ -1349,6 +1400,13 @@ function LFG.CreateLFGPopup(sender, message, dungeon, isHeroic, isMythic, isRaid
     if category ~= "MISC" and not FrostSeekDB.LFG.popupCategories[category] and not FrostSeekDB.LFG.popupCategories["ALL"] then
         return
     end
+    local modeFilter = FrostSeekDB.LFG.popupModeFilter
+    if modeFilter and modeFilter ~= "All" then
+        local msgMode = LFG.GetMessageMode(message) or "LFG"
+        if msgMode ~= modeFilter then
+            return
+        end
+    end
     if not LFG.CanShowPopup(sender, message) then return end
 
     local accent = CATEGORY_ACCENT[category] or CATEGORY_ACCENT.MISC
@@ -1410,7 +1468,7 @@ function LFG.CreateLFGPopup(sender, message, dungeon, isHeroic, isMythic, isRaid
     local diffColor = "|cffcccccc"
     if difficulty then
         local dl = difficulty:lower()
-        if dl:find("ascended") or dl:find("asc") then
+        if dl:find("ascended") or dl == "asc" then
             local num = dl:match("ascended%s*(%d+)") or dl:match("asc%s*(%d+)") or ""
             diffTag = L["diff_ascended"] .. (num ~= "" and num or "")
             diffColor = "|cffaa44ff"
@@ -1422,12 +1480,21 @@ function LFG.CreateLFGPopup(sender, message, dungeon, isHeroic, isMythic, isRaid
             local num = dl:match("mythic%s*(%d+)") or dl:match("m%s*(%d+)") or ""
             diffTag = L["diff_mythic"] .. (num ~= "" and num or "")
             diffColor = "|cffff44ff"
-        elseif dl:find("heroic") or dl:find("hc") then
+        elseif dl:find("heroic") or dl == "hc" then
             diffTag = L["diff_heroic"]
             diffColor = "|cff44cc44"
         elseif dl:find("ranked") then
             diffTag = L["diff_ranked"]
             diffColor = "|cffff4444"
+        elseif dl == "instanced" then
+            diffTag = L["diff_normal"] .. " (Inst)"
+            diffColor = "|cffcccccc"
+        elseif dl:find("instanced") then
+            diffTag = difficulty
+            diffColor = "|cffff8800"
+        elseif dl:find("open world") then
+            diffTag = L["diff_normal"]
+            diffColor = "|cffcccccc"
         else
             diffTag = difficulty
             diffColor = "|cffcccccc"
@@ -1508,7 +1575,7 @@ function LFG.CreateLFGPopup(sender, message, dungeon, isHeroic, isMythic, isRaid
     msgFS:SetJustifyH("LEFT")
     msgFS:SetWordWrap(false)
     local truncMsg = message and #message > 60 and string.sub(message, 1, 57) .. "..." or (message or "")
-    msgFS:SetTextColor(unpack(_tc("textDim")))
+    msgFS:SetTextColor(1, 1, 1, 1)
     msgFS:SetText(truncMsg)
 
     local footerY = 6
@@ -1646,14 +1713,8 @@ function LFG.UpdatePlayerInfo()
     if not LFG.playerInfoText then return end
     local classInfo, ilvl, enchant = LFG.GetFullPlayerInfo()
     local roleText = (FrostSeekDB.LFG.myRole ~= "" and FrostSeekDB.LFG.myRole ~= L["none"]) and ("Role: " .. FrostSeekDB.LFG.myRole) or "Role: Not Set"
-    local gs = LFG.GetGearScore()
-    local gsColor = "|cff88ccff"
-    if FrostSeek and FrostSeek.GetGearScoreColor then
-        local r, g, b = FrostSeek.GetGearScoreColor(gs)
-        gsColor = string.format("|cff%02x%02x%02x", math.floor(r * 255), math.floor(g * 255), math.floor(b * 255))
-    end
-    LFG.playerInfoText:SetText(string.format("|cffffffff%s | |cff00ff00%diLvl|r | %s%dGS|r | %s %s",
-        classInfo, ilvl, gsColor, gs, roleText, enchant))
+    LFG.playerInfoText:SetText(string.format("|cffffffff%s | |cff00ff00%diLvl|r | %s %s",
+        classInfo, ilvl, roleText, enchant))
 end
 
 local contextMenu = nil
@@ -2040,12 +2101,33 @@ function LFG.UpdateRecruitersList()
     end
     for _, search in ipairs(activeSearches) do
         if LFG.GroupMatchesCategory(search, LFG.CurrentCategory or "ALL") then
-            local passesDiff = true
-            if activeDiffMatch then
-                local diffLabel = LFG.ParseDifficulty(search.message, search.category)
-                passesDiff = activeDiffMatch(diffLabel)
+            local passesMode = true
+            if LFG.ModeFilter and LFG.ModeFilter ~= "ALL" then
+                local recMode = LFG.GetMessageMode(search.message) or "LFG"
+                search.mode = recMode
+                passesMode = (recMode == LFG.ModeFilter)
             end
-            if passesDiff then
+            if not passesMode then
+                
+            elseif activeDiffMatch then
+                local diffLabel = LFG.ParseDifficulty(search.message, search.category)
+                if activeDiffMatch(diffLabel) then
+                    if searchLower == "" then
+                        table.insert(filteredSearches, search)
+                    else
+                        local msgLower = string.lower(search.message or "")
+                        local playerLower = string.lower(search.player or "")
+                        local dungeonLower = string.lower(search.dungeon or "")
+                        local catLower = string.lower(search.category or "")
+                        if string.find(msgLower, searchLower, 1, true)
+                            or string.find(playerLower, searchLower, 1, true)
+                            or string.find(dungeonLower, searchLower, 1, true)
+                            or string.find(catLower, searchLower, 1, true) then
+                            table.insert(filteredSearches, search)
+                        end
+                    end
+                end
+            else
                 if searchLower == "" then
                     table.insert(filteredSearches, search)
                 else
@@ -2135,8 +2217,10 @@ function LFG.UpdateRecruitersList()
                     elseif dl:find("ranked") then
                         diffTag = L["diff_ranked"]
                         diffColor = "|cffff4444"
+                    elseif dl == "instanced" then
+                        diffTag = L["diff_normal"] .. " (Inst)"
+                        diffColor = "|cffcccccc"
                     elseif dl:find("instanced") then
-                        --shynga
                         diffTag = diffLabel
                         diffColor = "|cffff8800"
                     elseif dl:find("open world") then
@@ -2398,9 +2482,32 @@ function LFG:Initialize(parentFrame)
     self.lfgCountText:SetPoint("TOP", self.title, "BOTTOM", 0, -4)
     self.lfgCountText:SetText(string.format(L["lfg_active_recruiters"], 0))
     self.lfgCountText:SetTextColor(unpack(_tc("textAccent")))
+
+    self.modeFilterFrame = CreateFrame("Frame", nil, self.mainContainer)
+    self.modeFilterFrame:SetSize(IW, 26)
+    self.modeFilterFrame:SetPoint("TOP", self.lfgCountText, "BOTTOM", 0, -4)
+    local modeLabel = self.modeFilterFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    modeLabel:SetPoint("LEFT", self.modeFilterFrame, "LEFT", 10, 0)
+    modeLabel:SetText(L["search_mode_label"] or "Mode:")
+    modeLabel:SetTextColor(unpack(_tc("textNorm")))
+    LFG.modeDropdown = FrostSeekUIUtils.CreateModernDropdown(self.modeFilterFrame, 110, 20)
+    LFG.modeDropdown:SetPoint("LEFT", modeLabel, "RIGHT", 8, 0)
+    LFG.modeDropdown:SetText("All")
+    LFG.modeDropdown.selectedValue = "ALL"
+    LFG.modeDropdown:SetOptions({"All", "LFG", "LFM"})
+    LFG.ModeFilter = "ALL"
+    LFG.modeDropdown.onChange = function(value)
+        if value == "All" then
+            LFG.ModeFilter = "ALL"
+        else
+            LFG.ModeFilter = value
+        end
+        if LFG.UpdateRecruitersList then LFG.UpdateRecruitersList() end
+    end
+
     self.searchFrame = CreateFrame("Frame", nil, self.mainContainer)
     self.searchFrame:SetSize(IW, 26)
-    self.searchFrame:SetPoint("TOP", self.lfgCountText, "BOTTOM", 0, -4)
+    self.searchFrame:SetPoint("TOP", self.modeFilterFrame, "BOTTOM", 0, -4)
     local searchLabel = self.searchFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     searchLabel:SetPoint("LEFT", self.searchFrame, "LEFT", 10, 0)
     searchLabel:SetText(L["search"] .. ":")
@@ -2427,18 +2534,29 @@ function LFG:Initialize(parentFrame)
     end)
 
     self.diffFilterButtons = {}
-    local allDiffLabels = {"Normal", "Heroic", "HC", "Mythic", "Ascended", "Trial", "Leveling", "Gold Farm", "ALVA"}
+    local allDiffLabels = {"All", "Normal", "Heroic", "HC", "Mythic", "Ascended", "Trial", "Leveling", "Farm", "ALVA"}
     for _, label in ipairs(allDiffLabels) do
         local btn = FrostSeekUIUtils.CreateModernButton(self.searchFrame, 55, 18, label, _tc("border"))
         btn:Hide()
+        btn.label = label
         btn:SetScript("OnClick", function()
-            if LFG.DifficultyFilter == label then
+            if label == "All" then
                 LFG.DifficultyFilter = nil
             else
-                LFG.DifficultyFilter = label
+                if LFG.DifficultyFilter == label then
+                    LFG.DifficultyFilter = nil
+                else
+                    LFG.DifficultyFilter = label
+                end
             end
             LFG.UpdateDiffFilterVisuals()
             LFG.UpdateRecruitersList()
+        end)
+        btn:SetScript("OnEnter", function(self)
+            LFG.UpdateDiffFilterVisuals(label)
+        end)
+        btn:SetScript("OnLeave", function(self)
+            LFG.UpdateDiffFilterVisuals()
         end)
         self.diffFilterButtons[label] = btn
     end
@@ -2449,6 +2567,13 @@ function LFG:Initialize(parentFrame)
         for _, btn in pairs(self.diffFilterButtons) do btn:Hide() end
         if filters then
             local anchor = clearSearchBtn
+            local allBtn = self.diffFilterButtons["All"]
+            if allBtn then
+                allBtn:ClearAllPoints()
+                allBtn:SetPoint("LEFT", anchor, "RIGHT", 4, 0)
+                allBtn:Show()
+                anchor = allBtn
+            end
             for _, f in ipairs(filters) do
                 local btn = self.diffFilterButtons[f.label]
                 if btn then
@@ -2462,15 +2587,57 @@ function LFG:Initialize(parentFrame)
         LFG.UpdateDiffFilterVisuals()
     end
 
-    function LFG.UpdateDiffFilterVisuals()
+    function LFG.UpdateDiffFilterVisuals(hovered)
         local active = LFG.DifficultyFilter
+        local cat = LFG.CurrentCategory or "ALL"
+        local accent = CATEGORY_ACCENT[cat] or {0.5, 0.5, 0.5}
         for label, btn in pairs(self.diffFilterButtons) do
-            if label == active then
-                if btn.bg then btn.bg:SetColorTexture(unpack(_tc("bgTabActive"))) end
-                if btn.text then btn.text:SetTextColor(unpack(_tc("primary"))) end
+            if not btn.text then btn.text = btn:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall") btn.text:SetPoint("CENTER") btn.text:SetText(label) end
+            local isHovered = (label == hovered)
+            if label == "All" then
+                if not active then
+                    local m = isHovered and 0.75 or 0.55
+                    if btn.bg then btn.bg:SetColorTexture(accent[1] * m, accent[2] * m, accent[3] * m, 0.95) end
+                    if btn.border then btn.border:SetColorTexture(min(accent[1] * 1.3, 1), min(accent[2] * 1.3, 1), min(accent[3] * 1.3, 1), 1) end
+                    if btn.text then btn.text:SetTextColor(1, 1, 1) end
+                else
+                    if btn.bg then
+                        if isHovered then
+                            btn.bg:SetColorTexture(accent[1] * 0.3, accent[2] * 0.3, accent[3] * 0.3, 0.7)
+                        else
+                            btn.bg:SetColorTexture(unpack(_tc("bgButton")))
+                        end
+                    end
+                    if btn.border then
+                        if isHovered then
+                            btn.border:SetColorTexture(accent[1] * 0.6, accent[2] * 0.6, accent[3] * 0.6, 0.9)
+                        else
+                            btn.border:SetColorTexture(unpack(_tc("border")))
+                        end
+                    end
+                    if btn.text then btn.text:SetTextColor(isHovered and 1 or unpack(_tc("textMuted"))) end
+                end
+            elseif label == active then
+                local m = isHovered and 1.0 or 0.85
+                if btn.bg then btn.bg:SetColorTexture(accent[1] * m, accent[2] * m, accent[3] * m, m) end
+                if btn.border then btn.border:SetColorTexture(min(accent[1] * 1.5, 1), min(accent[2] * 1.5, 1), min(accent[3] * 1.5, 1), 1) end
+                if btn.text then btn.text:SetTextColor(1, 1, 1) end
             else
-                if btn.bg then btn.bg:SetColorTexture(unpack(_tc("bgButton"))) end
-                if btn.text then btn.text:SetTextColor(unpack(_tc("textMuted"))) end
+                if btn.bg then
+                    if isHovered then
+                        btn.bg:SetColorTexture(accent[1] * 0.25, accent[2] * 0.25, accent[3] * 0.25, 0.7)
+                    else
+                        btn.bg:SetColorTexture(unpack(_tc("bgButton")))
+                    end
+                end
+                if btn.border then
+                    if isHovered then
+                        btn.border:SetColorTexture(accent[1] * 0.5, accent[2] * 0.5, accent[3] * 0.5, 0.85)
+                    else
+                        btn.border:SetColorTexture(unpack(_tc("border")))
+                    end
+                end
+                if btn.text then btn.text:SetTextColor(isHovered and 1 or unpack(_tc("textMuted"))) end
             end
         end
     end
@@ -2723,6 +2890,7 @@ local function InitializeLFGSystem()
     FrostSeekDB.LFG.popupCategories = FrostSeekDB.LFG.popupCategories or {
         ALL = true, DUNGEON = true, RAID = true, WORLD_BOSS = true, PVP = true, MANASTORM = true, KEYSTONE = true, MISC = false
     }
+    if FrostSeekDB.LFG.popupModeFilter == nil then FrostSeekDB.LFG.popupModeFilter = "LFM" end
 
     if FrostSeekDB.LFG.popupCategories.CUSTOM ~= nil then
         FrostSeekDB.LFG.popupCategories.CUSTOM = nil

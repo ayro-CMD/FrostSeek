@@ -76,8 +76,8 @@ local RATE_LIMITS = {
     DECISION = 0.3,
     PING = 1.0,
     PONG = 1.0,
-    HB = 1.0,      
-    REPORT = 0.5,  
+    HB = 1.0,
+    REPORT = 0.5,
 }
 
 local function debugLog(msg)

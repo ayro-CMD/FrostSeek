@@ -134,7 +134,6 @@ end
 local function GetPlayerData()
     local classInfo = "Unknown"
     local ilvl = 0
-    local gs = 0
     local enchant = ""
     local roleText = ""
 
@@ -183,10 +182,6 @@ local function GetPlayerData()
     end
     ilvl = count > 0 and math.floor((sum / count) + 0.5) or 0
 
-    if FrostSeek and FrostSeek.CalculateGearScore then
-        gs = FrostSeek.CalculateGearScore("player") or 0
-    end
-
     if MysticEnchantUtil then
         local enchantData = MysticEnchantUtil.GetAppliedEnchantCountByQuality("player")
         if enchantData and enchantData[5] then
@@ -202,7 +197,7 @@ local function GetPlayerData()
 
     roleText = FrostSeekDB and FrostSeekDB.LFG and FrostSeekDB.LFG.myRole or ""
 
-    return classInfo, ilvl, gs, enchant, roleText
+    return classInfo, ilvl, enchant, roleText
 end
 
 local function CreateModernButton(parent, text, width, height)
@@ -415,15 +410,15 @@ end
 local function UpdateCustomPreview(previewText)
     if not previewText then return end
 
-    local classInfo, ilvl, gs, enchant, roleText = GetPlayerData()
+    local classInfo, ilvl, enchant, roleText = GetPlayerData()
     local customMessages = FrostSeekDB and FrostSeekDB.LFG and FrostSeekDB.LFG.customMessages
 
     if customMessages and customMessages.enabled then
-        local message = customMessages.template or "inv {role} {class} {ench} {ilvl} ilvl {gs}gs"
+        local message = customMessages.template or "inv {role} {class} {ench} {ilvl} ilvl"
 
         message = string.gsub(message, "{class}", (customMessages.showClass ~= false) and classInfo or "")
         message = string.gsub(message, "{ilvl}", (customMessages.showIlvl ~= false) and tostring(ilvl or 0) or "")
-        message = string.gsub(message, "{gs}", (customMessages.showGs ~= false) and tostring(gs or 0) or "")
+        message = string.gsub(message, "{gs}", "")
         message = string.gsub(message, "{ench}", (customMessages.showEnchant ~= false) and enchant or "")
         message = string.gsub(message, "{role}", (customMessages.showRole ~= false) and roleText or "")
         local playerLevel = UnitLevel("player") or 0
@@ -579,7 +574,6 @@ local function CreateCustomMessageTab(parent, scrollContent)
     local checkboxConfigs = {
         { id = "showClass", name = "Class", x = 30, y = yOffset },
         { id = "showIlvl", name = "Item Level", x = 150, y = yOffset },
-        { id = "showGs", name = "GearScore", x = 270, y = yOffset },
         { id = "showEnchant", name = "Enchant", x = 30, y = yOffset - 30 },
         { id = "showRole", name = L["lfg_role"], x = 150, y = yOffset - 30 },
         { id = "showLevel", name = "Level", x = 270, y = yOffset - 30 },
@@ -623,10 +617,11 @@ local function CreateCustomMessageTab(parent, scrollContent)
     local resetBtn = CreateModernButton(frame, "Reset to Default", 150, 30)
     resetBtn:SetPoint("TOPLEFT", 20, yOffset)
     resetBtn:SetScript("OnClick", function()
-        FrostSeekDB.LFG.customMessages.template = "inv {role} {class} {ench} {ilvl} ilvl {gs}gs"
+        FrostSeekDB.LFG.customMessages.template = "inv {role} {class} {ench} {ilvl} ilvl"
         templateBox:SetText(FrostSeekDB.LFG.customMessages.template)
 
-        local defaults = { showClass = true, showIlvl = true, showGs = true, showEnchant = true, showRole = true, showLevel = true, showKeystone = false }
+        local defaults = { showClass = true, showIlvl = true, showEnchant = true, showRole = true, showLevel = true, showKeystone = false }
+        if FrostSeekDB.LFG.customMessages.showGs ~= nil then FrostSeekDB.LFG.customMessages.showGs = nil end
         for id, val in pairs(defaults) do
             FrostSeekDB.LFG.customMessages[id] = val
             if checkboxes[id] then
@@ -803,13 +798,6 @@ local SETTINGS_CATEGORIES = {
         { type = "slider", id = "frameDuration", name = L["lfg_popup_duration"], desc = L["options_popup_duration_desc"], min = 2, max = 10, step = 1, default = 5, getter = function() return FrostSeekDB.LFG.frameDuration end, setter = function(v) FrostSeekDB.LFG.frameDuration = v end },
         { type = "slider", id = "popupCooldown", name = L["lfg_popup_cooldown"], desc = L["options_popup_cooldown_desc"], min = 60, max = 600, step = 10, default = 370, getter = function() return FrostSeekDB.LFG.popupCooldown end, setter = function(v) FrostSeekDB.LFG.popupCooldown = v end },
         { type = "slider", id = "maxConcurrentPopups", name = L["lfg_max_popups"], desc = L["options_max_popups_desc"], min = 1, max = 5, step = 1, default = 2, getter = function() return FrostSeekDB.LFG.maxConcurrentPopups end, setter = function(v) FrostSeekDB.LFG.maxConcurrentPopups = v end },
-        { type = "dropdown", id = "autoStopMemberCount", name = L["options_lfm_auto_stop"], desc = L["options_lfm_auto_stop_desc"], default = 0,
-          options = function() return { 0, 5, 10, 15, 20, 25, 40 } end,
-          getter = function() return FrostSeekDB.LFM.autoStopMemberCount or 0 end,
-          setter = function(v)
-              FrostSeekDB.LFM.autoStopMemberCount = tonumber(v) or 0
-              print("|cff88ccffFrostSeek:|r Auto-stop threshold set to " .. tostring(v))
-          end },
     }},
     { id = "activityfilter", name = L["options_activity_filter"], icon = "Interface\\AddOns\\FrostSeek\\Media\\texture\\bottoni\\filtri.tga", settings = {
         { type = "header", id = "activityFilterHeader", desc = L["options_activity_filter_desc"] },
@@ -822,6 +810,13 @@ local SETTINGS_CATEGORIES = {
         { type = "slider", id = "autoUpdateInterval", name = "Auto-update Interval", desc = "Seconds between keystone list updates (0 = disable)", min = 0, max = 300, step = 10, default = 60, getter = function() return FrostSeekDB.LFM.autoUpdateInterval end, setter = function(v) FrostSeekDB.LFM.autoUpdateInterval = v if FrostSeek.Modules and FrostSeek.Modules.lfm and FrostSeek.Modules.lfm.UpdateAutoUpdateInterval then FrostSeek.Modules.lfm:UpdateAutoUpdateInterval() end end },
         { type = "header", id = "autoSpamHeader", name = "", desc = "Auto-Spam: automatically send LFM messages on a timer" },
         { type = "slider", id = "autoSpamInterval", name = "Spam Timer (seconds)", desc = "How often to auto-send the LFM message (min 5s)", min = 5, max = 300, step = 5, default = 30, getter = function() return FrostSeekDB.LFM.autoSpamInterval or 30 end, setter = function(v) FrostSeekDB.LFM.autoSpamInterval = v end },
+        { type = "dropdown", id = "autoStopMemberCount", name = L["options_lfm_auto_stop"], desc = L["options_lfm_auto_stop_desc"], default = 0,
+          options = function() return { 0, 5, 10, 15, 20, 25, 40 } end,
+          getter = function() return FrostSeekDB.LFM.autoStopMemberCount or 0 end,
+          setter = function(v)
+              FrostSeekDB.LFM.autoStopMemberCount = tonumber(v) or 0
+              print("|cff88ccffFrostSeek:|r Auto-stop threshold set to " .. tostring(v))
+          end },
         { type = "header", id = "autoInviteHeader", name = "", desc = "Auto-Invite: automatically invite players who whisper their iLvl" },
         { type = "checkbox", id = "autoInviteEnabled", name = "Enable Auto-Invite on Whisper", desc = "When someone whispers you and their iLvl meets the minimum, auto-invite them", default = false, getter = function() return FrostSeekDB.LFM.autoInviteEnabled or false end, setter = function(v) FrostSeekDB.LFM.autoInviteEnabled = v print("|cff88ccffFrostSeek LFM:|r Auto-Invite " .. (v and "enabled" or "disabled")) end },
         { type = "slider", id = "autoInviteMinIlvl", name = "Min iLvl for Auto-Invite", desc = "Minimum item level required to auto-invite (a player whispering a number >= this value gets invited)", min = 0, max = 500, step = 5, default = 150, getter = function() return FrostSeekDB.LFM.autoInviteMinIlvl or 150 end, setter = function(v) FrostSeekDB.LFM.autoInviteMinIlvl = v print("|cff88ccffFrostSeek LFM:|r Auto-Invite min iLvl set to " .. v) end },
@@ -829,6 +824,10 @@ local SETTINGS_CATEGORIES = {
     }},
     { id = "popupcategories", name = "Popup Categories", icon = "Interface\\AddOns\\FrostSeek\\Media\\texture\\bottoni\\popupcategorie.tga", settings = {
         { type = "header", id = "popupCategoriesHeader", name = "", desc = "Select which categories trigger popup notifications" },
+        { type = "dropdown", id = "popupModeFilter", name = L["options_popup_mode_filter"], desc = L["options_popup_mode_filter_desc"], default = "LFM",
+          options = function() return { "All", "LFG", "LFM" } end,
+          getter = function() return FrostSeekDB.LFG.popupModeFilter or "LFM" end,
+          setter = function(v) FrostSeekDB.LFG.popupModeFilter = v end },
         { type = "category", id = "popupCategories", name = "Enable popups for:", categories = {
             { id = "ALL", name = L["cat_all"], desc = "Show popups for all categories (overrides individual selections)" },
             { id = "DUNGEON", name = L["cat_dungeon"], desc = "Normal and heroic dungeons" },
@@ -911,9 +910,8 @@ local SETTINGS_CATEGORIES = {
                 Shared.ConfirmDialog(L["clear_all_data"], "This action cannot be undone!\n\nAll FrostSeek data will be reset to defaults.", function()
                     FrostSeekDB = {
                         Settings = { uiScale = 1.0, windowPosition = nil, minimapButton = true, debugMode = false, savePosition = true, autoOpen = false, soundEnabled = true, soundPopup = true, soundListing = true, soundApplicant = true },
-                        LFG = { myRole = "", silentNotifications = false, frameDuration = 5, disablePopups = false, disableLFG = false, maxMessageLength = 90, popupCooldown = 370, maxConcurrentPopups = 2, doNotAlertInGroup = true, doNotAlertInCombat = true, popupCategories = { ALL = true, DUNGEON = true, RAID = true, WORLD_BOSS = true, PVP = true, MANASTORM = true, KEYSTONE = true, MISC = false }, customFilterWords = "", showActiveRecruitersWindow = false, customMessages = { enabled = false, template = "hello {class} {ilvl} {gs}gs {ench} dps or healer {keystone}", showClass = true, showIlvl = true, showGs = false, showEnchant = true, showRole = true, showLevel = true, showKeystone = false, keystoneLink = "" } },
+                        LFG = { myRole = "", silentNotifications = false, frameDuration = 5, disablePopups = false, disableLFG = false, maxMessageLength = 90, popupCooldown = 370, maxConcurrentPopups = 2, doNotAlertInGroup = true, doNotAlertInCombat = true, popupCategories = { ALL = true, DUNGEON = true, RAID = true, WORLD_BOSS = true, PVP = true, MANASTORM = true, KEYSTONE = true, MISC = false }, popupModeFilter = "LFM", customFilterWords = "", showActiveRecruitersWindow = false, customMessages = { enabled = false, template = "hello {class} {ilvl} {ench} dps or healer {keystone}", showClass = true, showIlvl = true, showEnchant = true, showRole = true, showLevel = true, showKeystone = false, keystoneLink = "" } },
                         LFM = { lastMessages = {}, favoriteTemplates = {}, channelPresets = {}, autoUpdateInterval = 60 },
-                        MPlusScores = {},
                     }
                     ReloadUI()
                 end)
@@ -940,7 +938,7 @@ local function CreateSettingControl(parent, setting, yOffset)
 
         local EnsureProfile = function()
             if not FrostSeekDB then FrostSeekDB = {} end
-            if not FrostSeekDB.Profile then FrostSeekDB.Profile = { role = "", spec = "", discord = false, note = "", autoFill = true, autoIlvl = 0, autoGs = 0 } end
+            if not FrostSeekDB.Profile then FrostSeekDB.Profile = { role = "", spec = "", discord = false, note = "", autoFill = true, autoIlvl = 0 } end
             return FrostSeekDB.Profile
         end
 

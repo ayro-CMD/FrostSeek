@@ -447,13 +447,12 @@ function Listings:ShowApplicantPopup(applicant)
     local row2Y = -42
     local lvl = applicant.level or "?"
     local ilvl = applicant.itemLevel or "?"
-    local gs = applicant.gearScore or "?"
     local infoFS = popup:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     infoFS:SetPoint("TOPLEFT", popup, "TOPLEFT", 32, row2Y)
     infoFS:SetPoint("RIGHT", popup, "RIGHT", -10, 0)
     infoFS:SetJustifyH("LEFT")
     infoFS:SetTextColor(unpack(_tc("textNorm")))
-    infoFS:SetText("|cff888888" .. L["app_level"] .. ":|r " .. lvl .. "  |cff88ccffiLvl:|r |cff44ff44" .. ilvl .. "|r  |cff88ccffGS:|r |cffffcc00" .. gs .. "|r")
+    infoFS:SetText("|cff888888" .. L["app_level"] .. ":|r " .. lvl .. "  |cff88ccffiLvl:|r |cff44ff44" .. ilvl .. "|r")
 
     local row3Y = -56
     local noteText = applicant.note or applicant.message or ""
@@ -1889,13 +1888,9 @@ function Listings:BuildMyListingFrame()
         r.ilvl:SetPoint("LEFT", r, "LEFT", 260, 0)
         r.ilvl:SetWidth(50)
 
-        r.gs = r:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-        r.gs:SetPoint("LEFT", r, "LEFT", 315, 0)
-        r.gs:SetWidth(50)
-
         r.note = r:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-        r.note:SetPoint("LEFT", r, "LEFT", 370, 0)
-        r.note:SetWidth(200)
+        r.note:SetPoint("LEFT", r, "LEFT", 315, 0)
+        r.note:SetWidth(255)
         r.note:SetJustifyH("LEFT")
 
         r.acceptBtn = UI and UI.CreateModernButton(r, 55, 20, L["listings_accept"]) or CreateFrame("Button", nil, r, "UIPanelButtonTemplate")
@@ -2018,7 +2013,6 @@ function Listings:RefreshApplicants()
             row.class:SetText(tostring(a.class or ""))
             row.role:SetText(roleText(a.role))
             row.ilvl:SetText((a.itemLevel and a.itemLevel ~= "" and a.itemLevel ~= "0") and (a.itemLevel .. " ilvl") or "--")
-            row.gs:SetText((a.gearScore and a.gearScore ~= "" and a.gearScore ~= "0") and (a.gearScore .. " gs") or "--")
             row.note:SetText(tostring(a.note or ""))
         else
             row:Hide()

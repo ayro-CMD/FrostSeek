@@ -12,6 +12,7 @@ local STRINGS = {
     ["reset"] = "Reset",
     ["clear"] = "Clear",
     ["search"] = "Search",
+    ["search_mode_label"] = "Mode:",
     ["refresh"] = "Refresh",
     ["loading"] = "Loading...",
     ["none"] = "None",
@@ -112,6 +113,8 @@ local STRINGS = {
     ["options_frostnet"] = "FrostNet",
     ["options_profile"] = "Profile",
     ["options_popup_categories"] = "Popup Categories",
+    ["options_popup_mode_filter"] = "Popup Mode Filter",
+    ["options_popup_mode_filter_desc"] = "Show popups only for messages of this mode (All / LFG / LFM)",
     ["options_sound"] = "Sound",
 
     ["presence_online"] = "%d users online",
@@ -145,7 +148,6 @@ local STRINGS = {
     ["minimap_show"] = "Show Minimap Button",
     ["minimap_hide"] = "Hide Minimap Button",
 
-    ["gear_score"] = "GS",
     ["item_level"] = "iLvl",
     ["level"] = "Level",
     ["class"] = "Class",
@@ -172,7 +174,6 @@ local STRINGS = {
     ["label_loot"] = "Loot",
     ["label_note"] = "Note",
     ["label_ilvl"] = "iLvl",
-    ["label_gs"] = "GS",
     ["label_guild"] = "Guild",
     ["label_zone"] = "Zone",
     ["label_difficulty"] = "Difficulty",
@@ -257,7 +258,6 @@ local STRINGS = {
     ["presence_who_list"] = "Who List",
     ["presence_ping_sent"] = "Ping sent!",
     ["dashboard_item_level"] = "ITEM LEVEL",
-    ["dashboard_gearscore"] = "GEARSCORE",
     ["dashboard_gold"] = "GOLD",
     ["dashboard_online"] = "ONLINE",
     ["dashboard_lfg_activity"] = "LFG ACTIVITY",
@@ -515,7 +515,7 @@ local function resolveLocaleCode()
     if LOCALE_TABLES[wowLocale] then return wowLocale end
     if wowLocale and #wowLocale >= 2 then
         local short = string.sub(wowLocale, 1, 2)
-        local candidates = { it = "itIT", es = "esES", de = "deDE", fr = "frFR" }
+        local candidates = { it = "itIT", es = "esES", de = "deDE", fr = "frFR", pt = "ptBR" }
         local mapped = candidates[short]
         if mapped and LOCALE_TABLES[mapped] then return mapped end
     end

@@ -42,7 +42,6 @@ local function EnsureProfileDB()
             note = "",
             autoFill = true,
             autoIlvl = 0,
-            autoGs = 0,
             status = "Online",
         }
     end
@@ -54,7 +53,7 @@ local function EnsureProfileDB()
     if p.note == nil then p.note = "" end
     if p.autoFill == nil then p.autoFill = true end
     if p.autoIlvl == nil then p.autoIlvl = 0 end
-    if p.autoGs == nil then p.autoGs = 0 end
+    if p.autoGs ~= nil then p.autoGs = nil end
     if p.status == nil or p.status == "" then p.status = "Online" end
     return p
 end
@@ -67,35 +66,27 @@ EnsureProfileDB()
 
 function Profile:AutoFill()
     local p = EnsureProfileDB()
-    if not p then return 0, 0 end
+    if not p then return 0 end
 
     local ilvl = 0
-    if FrostSeek.CalculateGearScore then
-        local sum, count = 0, 0
-        for i = 1, 17 do
-            if i ~= 4 then
-                local itemLink = GetInventoryItemLink("player", i)
-                if itemLink then
-                    local _, _, _, itemLevel = GetItemInfo(itemLink)
-                    if itemLevel and itemLevel > 0 then
-                        sum = sum + itemLevel
-                        count = count + 1
-                    end
+    local sum, count = 0, 0
+    for i = 1, 17 do
+        if i ~= 4 then
+            local itemLink = GetInventoryItemLink("player", i)
+            if itemLink then
+                local _, _, _, itemLevel = GetItemInfo(itemLink)
+                if itemLevel and itemLevel > 0 then
+                    sum = sum + itemLevel
+                    count = count + 1
                 end
             end
         end
-        ilvl = count > 0 and math.floor((sum / count) + 0.5) or 0
     end
-
-    local gs = 0
-    if FrostSeek.CalculateGearScore then
-        gs = FrostSeek.CalculateGearScore("player") or 0
-    end
+    ilvl = count > 0 and math.floor((sum / count) + 0.5) or 0
 
     p.autoIlvl = ilvl
-    p.autoGs = gs
 
-    return ilvl, gs
+    return ilvl
 end
 
 function Profile:GetProfile()
@@ -123,7 +114,6 @@ function Profile:GetProfileForApp()
         level = tostring(UnitLevel("player") or 60),
         role = p.role or "DPS",
         itemLevel = tostring(p.autoIlvl or 0),
-        gearScore = tostring(p.autoGs or 0),
         roleType = p.spec or "",
         discord = p.discord and "Yes" or "No",
         status = p.status or "Online",
@@ -563,7 +553,7 @@ end
 
 function Profile:UpdateAutoInfo()
     if not self.autoInfo then return end
-    local ilvl, gs = self:AutoFill()
+    local ilvl = self:AutoFill()
     local Shared = _G.FrostSeekShared
     local classFile
     if Shared and Shared.GetPlayerClassFile then
@@ -580,7 +570,6 @@ function Profile:UpdateAutoInfo()
         _hex("textDim") .. "Lv " .. tostring(UnitLevel("player") or 60) .. " " ..
         tostring(classFile or "") .. "|r")
     table.insert(lines, "|cff88ccffiLvl:|r |cff44ff44" .. tostring(ilvl or 0) .. "|r   " ..
-        "|cff88ccffGS:|r |cffffcc00" .. tostring(gs or 0) .. "|r   " ..
         "|cff88ccffRole:|r " .. (roleColors[p.role] or "|cffffffff") .. roleName .. "|r   " ..
         "|cff88ccffDiscord:|r " .. (p.discord and "|cff44ff44Yes|r" or "|cffff5555No|r"))
 
@@ -591,7 +580,7 @@ function Profile:UpdateAutoInfo()
         local previewLines = {}
         table.insert(previewLines, _hex("textDim") .. "--- Application Profile ---|r")
         table.insert(previewLines, "|cff88ccffName:|r " .. app.name .. "  |cff88ccffClass:|r " .. app.classFile)
-        table.insert(previewLines, "|cff88ccffiLvl:|r " .. app.itemLevel .. "  |cff88ccffGS:|r " .. app.gearScore .. "  |cff88ccffRole:|r " .. app.role)
+        table.insert(previewLines, "|cff88ccffiLvl:|r " .. app.itemLevel .. "  |cff88ccffRole:|r " .. app.role)
         if app.roleType and app.roleType ~= "" then
             table.insert(previewLines, "|cff88ccffSpec:|r " .. app.roleType)
         end

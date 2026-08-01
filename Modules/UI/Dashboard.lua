@@ -30,7 +30,6 @@ local Shared = _G.FrostSeekShared
 local GetClassIcon = Shared and Shared.GetClassIcon or function(cf) return "Interface\\Icons\\INV_Misc_QuestionMark" end
 
 local cachedIlvl = 0
-local cachedGS = 0
 local sessionStartTime = GetTime()
 
 local function _tc(token)
@@ -155,7 +154,7 @@ function Dashboard:Initialize(parentFrame)
     local kpiH = 68
     local kpiGap = 4
     local totalW = (F:GetWidth() or 800) - 20
-    local kpiW = (totalW - kpiGap * 2) / 3
+    local kpiW = (totalW - kpiGap) / 2
 
     local kpi1 = CreateFrame("Frame", nil, F)
     kpi1:SetPoint("TOPLEFT", F, "TOPLEFT", 10, curY)
@@ -181,30 +180,13 @@ function Dashboard:Initialize(parentFrame)
     kpi2bg:SetAllPoints()
     kpi2bg:SetColorTexture(unpack(C.bgBlock))
 
-    self.kpiGsNum = kpi2:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
-    self.kpiGsNum:SetPoint("CENTER", kpi2, "CENTER", 0, 6)
-    self.kpiGsNum:SetText("0")
-    self.kpiGsNum:SetTextColor(unpack(C.accent))
-
-    self.kpiGsLabel = kpi2:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-    self.kpiGsLabel:SetPoint("BOTTOM", kpi2, "BOTTOM", 0, 8)
-    self.kpiGsLabel:SetText(L["dashboard_gearscore"])
-    self.kpiGsLabel:SetTextColor(unpack(C.textLabel))
-
-    local kpi3 = CreateFrame("Frame", nil, F)
-    kpi3:SetPoint("TOPLEFT", kpi2, "TOPRIGHT", kpiGap, 0)
-    kpi3:SetSize(kpiW, kpiH)
-    local kpi3bg = kpi3:CreateTexture(nil, "BACKGROUND")
-    kpi3bg:SetAllPoints()
-    kpi3bg:SetColorTexture(unpack(C.bgBlock))
-
-    self.kpiGoldNum = kpi3:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
-    self.kpiGoldNum:SetPoint("CENTER", kpi3, "CENTER", 0, 6)
+    self.kpiGoldNum = kpi2:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
+    self.kpiGoldNum:SetPoint("CENTER", kpi2, "CENTER", 0, 6)
     self.kpiGoldNum:SetText("0g")
     self.kpiGoldNum:SetTextColor(unpack(C.gold))
 
-    self.kpiGoldLabel = kpi3:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-    self.kpiGoldLabel:SetPoint("BOTTOM", kpi3, "BOTTOM", 0, 8)
+    self.kpiGoldLabel = kpi2:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    self.kpiGoldLabel:SetPoint("BOTTOM", kpi2, "BOTTOM", 0, 8)
     self.kpiGoldLabel:SetText(L["dashboard_gold"])
     self.kpiGoldLabel:SetTextColor(unpack(C.textLabel))
 
@@ -429,9 +411,6 @@ function Dashboard:CalculateItemLevel()
         end
     end
     cachedIlvl = count > 0 and math.floor((sum / count) + 0.5) or 0
-    if FrostSeek and FrostSeek.CalculateGearScore then
-        cachedGS = FrostSeek.CalculateGearScore("player") or 0
-    end
 end
 
 function Dashboard:Show()
@@ -462,14 +441,6 @@ function Dashboard:UpdateAll()
     if cachedIlvl > 0 then
         table.insert(tags, _hex("success") .. cachedIlvl .. "|r " .. _hex("textDim") .. "ilvl|r")
     end
-    if cachedGS > 0 then
-        local gsHex = string.format("%02X%02X%02X", _tc("accent")[1] * 255, _tc("accent")[2] * 255, _tc("accent")[3] * 255)
-        if FrostSeek and FrostSeek.GetGearScoreColor then
-            local r, g, b = FrostSeek.GetGearScoreColor(cachedGS)
-            if r and g and b then gsHex = string.format("%02X%02X%02X", r * 255, g * 255, b * 255) end
-        end
-        table.insert(tags, "|cFF" .. gsHex .. cachedGS .. "|r " .. _hex("textDim") .. "gs|r")
-    end
     local role = FrostSeekDB and FrostSeekDB.LFG and FrostSeekDB.LFG.myRole or "No Role"
     if role ~= "" and role ~= "No Role" then
         local roleColors = {Tank="4488FF",Healer="33CC55",DPS="FF5555",BC="FFAA00"}
@@ -489,19 +460,6 @@ function Dashboard:UpdateAll()
 
     self.kpiIlvlNum:SetText(tostring(cachedIlvl))
     self.kpiIlvlNum:SetTextColor(unpack(cachedIlvl > 0 and C.success or C.textDim))
-
-    if cachedGS > 0 then
-        self.kpiGsNum:SetText(tostring(cachedGS))
-        if FrostSeek and FrostSeek.GetGearScoreColor then
-            local r, g, b = FrostSeek.GetGearScoreColor(cachedGS)
-            self.kpiGsNum:SetTextColor(r or 0.53, g or 0.8, b or 1.0)
-        else
-            self.kpiGsNum:SetTextColor(unpack(C.accent))
-        end
-    else
-        self.kpiGsNum:SetText("0")
-        self.kpiGsNum:SetTextColor(unpack(C.textDim))
-    end
 
     local money = GetMoney()
     local g = math.floor(money / 10000)
