@@ -87,9 +87,10 @@ local RAID_KEYWORDS = {
 local WORLD_BOSS_KEYWORDS = {
     "soggoth", "sogoth", "azuregos", "kazzak", "doomwalker", "setis", "settis",
     "emeriss", "lethon", "taerar", "ysondre", "dream", "nightmare", "kaldros depthbreaker", "kaldros.depthbreaker", "kaldros",
-    "snowgrave", "atal'zul", "atal.zul", "world tour", "worldboss tour", "world boss tour",
+    "snowgrave", "atal'zul", "atal.zul", "atal azul", "atal'azul", "world tour", "worldboss tour", "world boss tour",
     "sha of anger", "galleon", "salyis", "nalak", "oondasta", "celestials", "celestial",
     "gonzor", "king gnok", "king mosh", "silithid lurker", "volchan", "corrupted ancient",
+    "worldboss", "world boss", "wb",
 }
 
 local PVP_KEYWORDS = {
@@ -242,6 +243,7 @@ local ACTIVITY_FILTER_GROUPS = {
     { id = "HOR", name = "Halls of Reflection", keywords = {"HOR", "REFLECTION"} },
 
     { header = "WOTLK RAIDS", isHeader = true },
+    { id = "NAXX", name = "Naxxramas", keywords = {"NAXX", "NAXXRAMAS"} },
     { id = "VOA", name = "Vault of Archavon", keywords = {"VOA", "ARCHAVON", "VAULT OF ARCHAVON"} },
     { id = "OS", name = "Obsidian Sanctum", keywords = {"OS", "OBSIDIAN", "SARTH", "SARTHARION", "OBSIDIAN SANCTUM"} },
     { id = "EOE", name = "Eye of Eternity", keywords = {"EOE", "MALYGOS", "EYE", "EYE OF ETERNITY", "THE EYE"} },
@@ -306,6 +308,7 @@ local ACTIVITY_FILTER_GROUPS = {
     
 
     { header = "WORLD BOSSES", isHeader = true },
+    { id = "WB_GENERIC", name = "World Boss (generic wb)", keywords = {"WB", "WORLDBOSS", "WORLD BOSS"} },
     { id = "AZUREGOS", name = "Azuregos", keywords = {"AZUREGOS", "AZURE"} },
     { id = "KAZZAK", name = "Lord Kazzak", keywords = {"KAZZAK"} },
     { id = "DOOMWALKER", name = "Doomwalker", keywords = {"DOOMWALKER"} },
@@ -316,7 +319,7 @@ local ACTIVITY_FILTER_GROUPS = {
     { id = "SOGGOTH", name = "Soggoth", keywords = {"SOGGOTH", "SOGOTH"} },
     { id = "SETIS", name = "Setis", keywords = {"SETIS", "SETTIS"} },
     { id = "SNOWGRAVE", name = "Snowgrave", keywords = {"SNOWGRAVE"} },
-    { id = "ATALZUL", name = "Atal'Zul", keywords = {"ATAL'ZUL", "ATAL.ZUL"} },
+    { id = "ATALZUL", name = "Atal'Zul", keywords = {"ATAL'ZUL", "ATAL.ZUL", "ATAL AZUL", "ATAL'AZUL"} },
     { id = "KALDROS", name = "Kaldros Depthbreaker", keywords = {"KALDROS", "KALDROS DEPTHBREAKER", "KALDROS.DEPTHBREAKER"} },
     { id = "WBT", name = "World Boss Tour", keywords = {"WORLD TOUR", "WORLDBOSS TOUR", "WORLD BOSS TOUR"} },
     { id = "DREAM", name = "Emerald Dream", keywords = {"EMERALD DREAM"} },
@@ -351,16 +354,57 @@ local ACTIVITY_FILTER_GROUPS = {
 }
 
 local ACTIVITY_DUNGEON_LOOKUP = {}
+local KEYWORD_TO_NAME = {}
 for _, entry in ipairs(ACTIVITY_FILTER_GROUPS) do
     if not entry.isHeader and entry.keywords then
         for _, kw in ipairs(entry.keywords) do
-            ACTIVITY_DUNGEON_LOOKUP[kw] = entry.id
+            if not ACTIVITY_DUNGEON_LOOKUP[kw] then
+                ACTIVITY_DUNGEON_LOOKUP[kw] = {}
+            end
+            table.insert(ACTIVITY_DUNGEON_LOOKUP[kw], entry.id)
+            if entry.name and not KEYWORD_TO_NAME[kw] then
+                KEYWORD_TO_NAME[kw] = entry.name
+            end
         end
     end
 end
 
 LFG.ACTIVITY_FILTER_GROUPS = ACTIVITY_FILTER_GROUPS
 LFG.ACTIVITY_DUNGEON_LOOKUP = ACTIVITY_DUNGEON_LOOKUP
+LFG.KEYWORD_TO_NAME = KEYWORD_TO_NAME
+
+local KEYSTONE_SPECIAL_NAMES = {
+    STRAT = "Stratholme",
+    BRD = "Blackrock Depths",
+    SCHOLO = "Scholomance",
+    LBRS = "Lower Blackrock Spire",
+    UBRS = "Upper Blackrock Spire",
+    MC = "Molten Core",
+}
+
+function LFG.GetCanonicalDungeonName(category, dungeon)
+    if not dungeon or dungeon == "" then
+        return ""
+    end
+    if category == "KEYSTONE" and dungeon == "DM" then
+        return "Dire Maul"
+    end
+    if KEYSTONE_SPECIAL_NAMES[dungeon] and category == "KEYSTONE" then
+        return KEYSTONE_SPECIAL_NAMES[dungeon]
+    end
+    if KEYWORD_TO_NAME[dungeon] then
+        return KEYWORD_TO_NAME[dungeon]
+    end
+    if dungeon == "RAID" then return L["cat_raid"] end
+    if dungeon == "DUNGEON" then return L["cat_dungeon"] end
+    if dungeon == "WORLD_BOSS" then return L["cat_world_boss"] end
+    if dungeon == "PVP" then return L["cat_pvp"] end
+    if dungeon == "MANASTORM" then return L["cat_manastorm"] end
+    if dungeon == "KEYSTONE" then return L["cat_keystone"] end
+    if dungeon == "MISC" then return L["cat_misc"] end
+    if dungeon == "RDF" then return L["cat_dungeon"] .. " (RDF)" end
+    return dungeon
+end
 
 function LFG.PassesActivityFilter(category, dungeon)
     if not FrostSeekDB.LFG.activityFilter then return true end
@@ -373,9 +417,14 @@ function LFG.PassesActivityFilter(category, dungeon)
     if category == "KEYSTONE" then
         return FrostSeekDB.LFG.activityFilter["KEYSTONE"] ~= false
     end
-    local filterId = ACTIVITY_DUNGEON_LOOKUP[dungeon]
-    if filterId then
-        return FrostSeekDB.LFG.activityFilter[filterId] ~= false
+    local filterIds = ACTIVITY_DUNGEON_LOOKUP[dungeon]
+    if filterIds and #filterIds > 0 then
+        for _, id in ipairs(filterIds) do
+            if FrostSeekDB.LFG.activityFilter[id] ~= false then
+                return true
+            end
+        end
+        return false
     end
     return true
 end
@@ -462,25 +511,44 @@ local function IsSpamMessage(msg)
             longSpamHits = longSpamHits + 1
         end
     end
-    if longSpamHits >= 1 then
-        return true
-    end
+
     local hasStrongLFG =
         string.match(lowerMsg, "lf%d+m") ~= nil or
         string.match(lowerMsg, "lf%d") ~= nil or
         string.find(lowerMsg, "%f[%a]lfm%f[^%a]") ~= nil or
+        string.find(lowerMsg, "%f[%a]lfg%f[^%a]") ~= nil or
+        string.match(lowerMsg, "^lfm") ~= nil or
+        string.match(lowerMsg, "%slfm") ~= nil or
+        string.match(lowerMsg, "^lfg") ~= nil or
+        string.match(lowerMsg, "%slfg") ~= nil or
         string.find(lowerMsg, "need%s+tank") ~= nil or
         string.find(lowerMsg, "need%s+heal") ~= nil or
         string.find(lowerMsg, "need%s+dps") ~= nil or
         string.find(lowerMsg, "need%s+support") ~= nil or
+        string.find(lowerMsg, "need%s+supp") ~= nil or
         string.find(lowerMsg, "1tank") ~= nil or
         string.find(lowerMsg, "1heal") ~= nil or
         string.find(lowerMsg, "1dps") ~= nil or
         string.find(lowerMsg, "%dtank") ~= nil or
         string.find(lowerMsg, "%dheal") ~= nil or
-        string.find(lowerMsg, "%ddps") ~= nil
+        string.find(lowerMsg, "%ddps") ~= nil or
+        string.find(lowerMsg, "looking%s+for%s+group") ~= nil or
+        string.find(lowerMsg, "looking%s+for%s+more") ~= nil or
+        string.find(lowerMsg, "looking%s+for%s+members") ~= nil or
+        string.match(lowerMsg, "%s%d+/%d+%s") ~= nil or
+        string.match(lowerMsg, "^%d+/%d+%s") ~= nil or
+        string.match(lowerMsg, "%s%d+/%d+$") ~= nil
+
     if hasStrongLFG then
-        return shortSpamHits >= 3
+        if longSpamHits >= 3 then return true end
+        if longSpamHits >= 2 and shortSpamHits >= 1 then return true end
+        if longSpamHits >= 1 and shortSpamHits >= 3 then return true end
+        if shortSpamHits >= 5 then return true end
+        return false
+    end
+
+    if longSpamHits >= 1 then
+        return true
     end
     return shortSpamHits >= 2
 end
@@ -956,6 +1024,7 @@ function LFG.RecordActiveSearch(sender, message, channel)
             record.message = message
             record.lastUpdate = now
             record.dungeon = dungeon
+            record.dungeonName = LFG.GetCanonicalDungeonName(category, dungeon)
             record.category = category
             record.isHeroic = isHeroic
             record.isMythic = isMythic
@@ -975,6 +1044,7 @@ function LFG.RecordActiveSearch(sender, message, channel)
         player = sender,
         message = message,
         dungeon = dungeon,
+        dungeonName = LFG.GetCanonicalDungeonName(category, dungeon),
         category = category,
         isHeroic = isHeroic,
         isMythic = isMythic,
@@ -1042,6 +1112,7 @@ function LFG.RecordFromListing(listing)
             record.message = msg
             record.lastUpdate = now
             record.dungeon = listing.activity
+            record.dungeonName = listing.activity
             record.category = category
             record.isHeroic = false
             record.isRaid = isRaid
@@ -1059,6 +1130,7 @@ function LFG.RecordFromListing(listing)
         player = sender,
         message = msg,
         dungeon = listing.activity,
+        dungeonName = listing.activity,
         category = category,
         isHeroic = false,
         isRaid = isRaid,
@@ -1400,13 +1472,14 @@ function LFG.CreateLFGPopup(sender, message, dungeon, isHeroic, isMythic, isRaid
     if category ~= "MISC" and not FrostSeekDB.LFG.popupCategories[category] and not FrostSeekDB.LFG.popupCategories["ALL"] then
         return
     end
-    local modeFilter = FrostSeekDB.LFG.popupModeFilter
-    if modeFilter and modeFilter ~= "All" then
-        local msgMode = LFG.GetMessageMode(message) or "LFG"
-        if msgMode ~= modeFilter then
-            return
-        end
-    end
+
+    local msgMode = LFG.GetMessageMode(message) or "LFG"
+    local showLFG = FrostSeekDB.LFG.popupShowLFG ~= false
+    local showLFM = FrostSeekDB.LFG.popupShowLFM ~= false
+    if msgMode == "LFG" and not showLFG then return end
+    if msgMode == "LFM" and not showLFM then return end
+    if (not showLFG) and (not showLFM) then return end
+
     if not LFG.CanShowPopup(sender, message) then return end
 
     local accent = CATEGORY_ACCENT[category] or CATEGORY_ACCENT.MISC
@@ -1512,6 +1585,7 @@ function LFG.CreateLFGPopup(sender, message, dungeon, isHeroic, isMythic, isRaid
 
     local catHex = string.format("%02x%02x%02x", math.floor(ar*255), math.floor(ag*255), math.floor(ab*255))
     local dungeonDisplay = ""
+    local canonicalDungeon = LFG.GetCanonicalDungeonName(category, dungeon)
     if isKeystone then
         local ksName, ksLevel = LFG.ParseKeystoneInfo(message)
         if ksName then
@@ -1520,17 +1594,19 @@ function LFG.CreateLFGPopup(sender, message, dungeon, isHeroic, isMythic, isRaid
                 diffTag = L["diff_mythic"] .. ksLevel
                 diffColor = "|cffff44ff"
             end
+        else
+            dungeonDisplay = canonicalDungeon ~= "" and canonicalDungeon or L["cat_keystone"]
         end
     elseif category == "RAID" then
-        dungeonDisplay = dungeon and dungeon ~= "RAID" and dungeon or L["cat_raid"]
+        dungeonDisplay = canonicalDungeon ~= "" and canonicalDungeon or L["cat_raid"]
     elseif category == "WORLD_BOSS" then
-        dungeonDisplay = dungeon and dungeon ~= "WORLD_BOSS" and dungeon or L["cat_world_boss"]
+        dungeonDisplay = canonicalDungeon ~= "" and canonicalDungeon or L["cat_world_boss"]
     elseif category == "MANASTORM" then
-        dungeonDisplay = L["cat_manastorm"]
+        dungeonDisplay = canonicalDungeon ~= "" and canonicalDungeon or L["cat_manastorm"]
     elseif category == "PVP" then
-        dungeonDisplay = dungeon and dungeon ~= "PVP" and dungeon or L["cat_pvp"]
+        dungeonDisplay = canonicalDungeon ~= "" and canonicalDungeon or L["cat_pvp"]
     else
-        dungeonDisplay = dungeon and dungeon ~= "MISC" and dungeon ~= "DUNGEON" and dungeon or L["cat_dungeon"]
+        dungeonDisplay = canonicalDungeon ~= "" and canonicalDungeon or L["cat_dungeon"]
     end
 
     local row1Y = -22
@@ -1610,6 +1686,45 @@ function LFG.CreateLFGPopup(sender, message, dungeon, isHeroic, isMythic, isRaid
         LFG.RemovePopupFrame(popup)
         print("|cffff8800FrostSeek:|r " .. FrostSeek.Lf("popup_muted", sender))
     end)
+
+    local muteBossBtn
+    if category == "WORLD_BOSS" and dungeon and dungeon ~= "" then
+        muteBossBtn = UI and UI.CreateModernButton and UI.CreateModernButton(popup, 80, 20, L["popup_mute_boss"], _tc("catWorldBoss"))
+        if not muteBossBtn then
+            muteBossBtn = CreateFrame("Button", nil, popup)
+            muteBossBtn:SetSize(80, 20)
+            muteBossBtn.text = muteBossBtn:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+            muteBossBtn.text:SetPoint("CENTER")
+            muteBossBtn.text:SetText(L["popup_mute_boss"])
+        end
+        muteBossBtn:SetPoint("LEFT", muteBtn, "RIGHT", 4, 0)
+        muteBossBtn:SetScript("OnClick", function()
+            local filterIds = ACTIVITY_DUNGEON_LOOKUP[dungeon]
+            if filterIds and #filterIds > 0 then
+                for _, id in ipairs(filterIds) do
+                    FrostSeekDB.LFG.activityFilter[id] = false
+                end
+            end
+            for i = #openFrames, 1, -1 do
+                local f = openFrames[i]
+                if f and f.category == "WORLD_BOSS" and f.dungeon == dungeon then
+                    LFG.RemovePopupFrame(f)
+                end
+            end
+            if LFG.UpdateRecruitersList then LFG.UpdateRecruitersList() end
+            print("|cffff8800FrostSeek:|r " .. FrostSeek.Lf("popup_boss_muted", tostring(dungeon)))
+        end)
+        muteBossBtn:SetScript("OnEnter", function(self)
+            GameTooltip:SetOwner(self, "ANCHOR_TOP")
+            GameTooltip:SetText(L["popup_mute_boss"])
+            GameTooltip:AddLine(L["popup_mute_boss_desc"], 0.85, 0.85, 0.85, true)
+            GameTooltip:Show()
+        end)
+        muteBossBtn:SetScript("OnLeave", function(self)
+            GameTooltip:Hide()
+        end)
+    end
+    popup.dungeon = dungeon
 
     local closeBtn = UI and UI.CreateModernButton and UI.CreateModernButton(popup, 48, 20, L["close"], _tc("secondary"))
     if not closeBtn then
@@ -2118,10 +2233,12 @@ function LFG.UpdateRecruitersList()
                         local msgLower = string.lower(search.message or "")
                         local playerLower = string.lower(search.player or "")
                         local dungeonLower = string.lower(search.dungeon or "")
+                        local dungeonNameLower = string.lower(search.dungeonName or "")
                         local catLower = string.lower(search.category or "")
                         if string.find(msgLower, searchLower, 1, true)
                             or string.find(playerLower, searchLower, 1, true)
                             or string.find(dungeonLower, searchLower, 1, true)
+                            or string.find(dungeonNameLower, searchLower, 1, true)
                             or string.find(catLower, searchLower, 1, true) then
                             table.insert(filteredSearches, search)
                         end
@@ -2134,10 +2251,12 @@ function LFG.UpdateRecruitersList()
                     local msgLower = string.lower(search.message or "")
                     local playerLower = string.lower(search.player or "")
                     local dungeonLower = string.lower(search.dungeon or "")
+                    local dungeonNameLower = string.lower(search.dungeonName or "")
                     local catLower = string.lower(search.category or "")
                     if string.find(msgLower, searchLower, 1, true)
                         or string.find(playerLower, searchLower, 1, true)
                         or string.find(dungeonLower, searchLower, 1, true)
+                        or string.find(dungeonNameLower, searchLower, 1, true)
                         or string.find(catLower, searchLower, 1, true) then
                         table.insert(filteredSearches, search)
                     end
@@ -2240,7 +2359,7 @@ function LFG.UpdateRecruitersList()
                     diffTag = L["diff_normal"]
                     diffColor = "|cffcccccc"
                 end
-                local dungeonDisplay = record.dungeon
+                local dungeonDisplay = record.dungeonName or record.dungeon or ""
                 if diffTag and diffTag ~= "" then
                     dungeonDisplay = dungeonDisplay .. " " .. diffColor .. "[" .. diffTag .. "]|r"
                 end
@@ -2262,7 +2381,8 @@ function LFG.UpdateRecruitersList()
                 end
                 GameTooltip:AddLine("|cFF88CCFFTime:|r " .. string.format("%ds ago", timeSinceForTooltip), 0.8, 0.8, 0.8)
                 if record.dungeon and record.dungeon ~= "MISC" then
-                    GameTooltip:AddLine("|cFF88CCFFDungeon:|r " .. record.dungeon, 0.8, 0.8, 0.8)
+                    local tipDungeon = record.dungeonName or record.dungeon
+                    GameTooltip:AddLine("|cFF88CCFFDungeon:|r " .. tipDungeon, 0.8, 0.8, 0.8)
                 end
                 GameTooltip:AddLine("|cFF88CCFFCategory:|r " .. record.category, 0.8, 0.8, 0.8)
                 GameTooltip:Show()
@@ -2891,6 +3011,23 @@ local function InitializeLFGSystem()
         ALL = true, DUNGEON = true, RAID = true, WORLD_BOSS = true, PVP = true, MANASTORM = true, KEYSTONE = true, MISC = false
     }
     if FrostSeekDB.LFG.popupModeFilter == nil then FrostSeekDB.LFG.popupModeFilter = "LFM" end
+
+    if FrostSeekDB.LFG.popupShowLFG == nil or FrostSeekDB.LFG.popupShowLFM == nil then
+        local legacy = FrostSeekDB.LFG.popupModeFilter
+        if legacy == "LFG" then
+            FrostSeekDB.LFG.popupShowLFG = true
+            FrostSeekDB.LFG.popupShowLFM = false
+        elseif legacy == "LFM" then
+            FrostSeekDB.LFG.popupShowLFG = false
+            FrostSeekDB.LFG.popupShowLFM = true
+        else
+            FrostSeekDB.LFG.popupShowLFG = true
+            FrostSeekDB.LFG.popupShowLFM = true
+        end
+        FrostSeekDB.LFG.popupModeFilter = nil
+    end
+    FrostSeekDB.LFG.popupShowLFG = FrostSeekDB.LFG.popupShowLFG ~= false
+    FrostSeekDB.LFG.popupShowLFM = FrostSeekDB.LFG.popupShowLFM ~= false
 
     if FrostSeekDB.LFG.popupCategories.CUSTOM ~= nil then
         FrostSeekDB.LFG.popupCategories.CUSTOM = nil

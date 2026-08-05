@@ -824,10 +824,22 @@ local SETTINGS_CATEGORIES = {
     }},
     { id = "popupcategories", name = "Popup Categories", icon = "Interface\\AddOns\\FrostSeek\\Media\\texture\\bottoni\\popupcategorie.tga", settings = {
         { type = "header", id = "popupCategoriesHeader", name = "", desc = "Select which categories trigger popup notifications" },
-        { type = "dropdown", id = "popupModeFilter", name = L["options_popup_mode_filter"], desc = L["options_popup_mode_filter_desc"], default = "LFM",
-          options = function() return { "All", "LFG", "LFM" } end,
-          getter = function() return FrostSeekDB.LFG.popupModeFilter or "LFM" end,
-          setter = function(v) FrostSeekDB.LFG.popupModeFilter = v end },
+        { type = "checkbox", id = "popupShowLFG", name = L["options_popup_show_lfg"], desc = L["options_popup_show_lfg_desc"], default = true,
+          getter = function() return FrostSeekDB.LFG.popupShowLFG ~= false end,
+          setter = function(v)
+              FrostSeekDB.LFG.popupShowLFG = v and true or false
+              if (not (FrostSeekDB.LFG.popupShowLFG ~= false)) and (not (FrostSeekDB.LFG.popupShowLFM ~= false)) then
+                  FrostSeekDB.LFG.popupShowLFM = true
+              end
+          end },
+        { type = "checkbox", id = "popupShowLFM", name = L["options_popup_show_lfm"], desc = L["options_popup_show_lfm_desc"], default = true,
+          getter = function() return FrostSeekDB.LFG.popupShowLFM ~= false end,
+          setter = function(v)
+              FrostSeekDB.LFG.popupShowLFM = v and true or false
+              if (not (FrostSeekDB.LFG.popupShowLFG ~= false)) and (not (FrostSeekDB.LFG.popupShowLFM ~= false)) then
+                  FrostSeekDB.LFG.popupShowLFG = true
+              end
+          end },
         { type = "category", id = "popupCategories", name = "Enable popups for:", categories = {
             { id = "ALL", name = L["cat_all"], desc = "Show popups for all categories (overrides individual selections)" },
             { id = "DUNGEON", name = L["cat_dungeon"], desc = "Normal and heroic dungeons" },
@@ -910,7 +922,7 @@ local SETTINGS_CATEGORIES = {
                 Shared.ConfirmDialog(L["clear_all_data"], "This action cannot be undone!\n\nAll FrostSeek data will be reset to defaults.", function()
                     FrostSeekDB = {
                         Settings = { uiScale = 1.0, windowPosition = nil, minimapButton = true, debugMode = false, savePosition = true, autoOpen = false, soundEnabled = true, soundPopup = true, soundListing = true, soundApplicant = true },
-                        LFG = { myRole = "", silentNotifications = false, frameDuration = 5, disablePopups = false, disableLFG = false, maxMessageLength = 90, popupCooldown = 370, maxConcurrentPopups = 2, doNotAlertInGroup = true, doNotAlertInCombat = true, popupCategories = { ALL = true, DUNGEON = true, RAID = true, WORLD_BOSS = true, PVP = true, MANASTORM = true, KEYSTONE = true, MISC = false }, popupModeFilter = "LFM", customFilterWords = "", showActiveRecruitersWindow = false, customMessages = { enabled = false, template = "hello {class} {ilvl} {ench} dps or healer {keystone}", showClass = true, showIlvl = true, showEnchant = true, showRole = true, showLevel = true, showKeystone = false, keystoneLink = "" } },
+                        LFG = { myRole = "", silentNotifications = false, frameDuration = 5, disablePopups = false, disableLFG = false, maxMessageLength = 90, popupCooldown = 370, maxConcurrentPopups = 2, doNotAlertInGroup = true, doNotAlertInCombat = true, popupCategories = { ALL = true, DUNGEON = true, RAID = true, WORLD_BOSS = true, PVP = true, MANASTORM = true, KEYSTONE = true, MISC = false }, popupShowLFG = true, popupShowLFM = true, customFilterWords = "", showActiveRecruitersWindow = false, customMessages = { enabled = false, template = "hello {class} {ilvl} {ench} dps or healer {keystone}", showClass = true, showIlvl = true, showEnchant = true, showRole = true, showLevel = true, showKeystone = false, keystoneLink = "" } },
                         LFM = { lastMessages = {}, favoriteTemplates = {}, channelPresets = {}, autoUpdateInterval = 60 },
                     }
                     ReloadUI()

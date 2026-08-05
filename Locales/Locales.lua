@@ -115,6 +115,13 @@ local STRINGS = {
     ["options_popup_categories"] = "Popup Categories",
     ["options_popup_mode_filter"] = "Popup Mode Filter",
     ["options_popup_mode_filter_desc"] = "Show popups only for messages of this mode (All / LFG / LFM)",
+    ["options_popup_show_lfg"] = "Show LFG Popups",
+    ["options_popup_show_lfg_desc"] = "Display popup alerts for LFG messages from players looking for a group to join",
+    ["options_popup_show_lfm"] = "Show LFM Popups",
+    ["options_popup_show_lfm_desc"] = "Display popup alerts for LFM messages from players forming a raid or group and looking for members",
+    ["popup_mute_boss"] = "Mute Boss",
+    ["popup_mute_boss_desc"] = "Disable popups for this specific world boss until you re-enable it in the Activity Filter tab. Useful for bosses with weekly lockouts that you have already completed.",
+    ["popup_boss_muted"] = "Popups for world boss '%s' have been disabled. Re-enable it in Options > Activity Filter.",
     ["options_sound"] = "Sound",
 
     ["presence_online"] = "%d users online",
