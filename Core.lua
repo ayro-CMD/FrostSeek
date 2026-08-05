@@ -55,7 +55,7 @@ function FrostSeek._v.g(name)
     return FrostSeek._v.w[name]
 end
 
-FrostSeek.VERSION = "2.2.1"
+FrostSeek.VERSION = "2.2.3"
 
 local function LPrint(key, ...)
     local L = FrostSeek and FrostSeek.L
@@ -173,6 +173,8 @@ if not FrostSeekDB.LFG then
             MISC = false
         },
         popupModeFilter = "LFM",
+        popupShowLFG = true,
+        popupShowLFM = true,
         customFilterWords = "",
         showActiveRecruitersWindow = false,
         activeWindowPosition = nil,
@@ -356,6 +358,23 @@ local function EnsureSettingsIntegrity()
     end
     if FrostSeekDB.LFG then
         if FrostSeekDB.LFG.popupModeFilter == nil then FrostSeekDB.LFG.popupModeFilter = "LFM" end
+
+        if FrostSeekDB.LFG.popupShowLFG == nil or FrostSeekDB.LFG.popupShowLFM == nil then
+            local legacy = FrostSeekDB.LFG.popupModeFilter
+            if legacy == "LFG" then
+                FrostSeekDB.LFG.popupShowLFG = true
+                FrostSeekDB.LFG.popupShowLFM = false
+            elseif legacy == "LFM" then
+                FrostSeekDB.LFG.popupShowLFG = false
+                FrostSeekDB.LFG.popupShowLFM = true
+            else
+                FrostSeekDB.LFG.popupShowLFG = true
+                FrostSeekDB.LFG.popupShowLFM = true
+            end
+            FrostSeekDB.LFG.popupModeFilter = nil
+        end
+        FrostSeekDB.LFG.popupShowLFG = FrostSeekDB.LFG.popupShowLFG ~= false
+        FrostSeekDB.LFG.popupShowLFM = FrostSeekDB.LFG.popupShowLFM ~= false
     end
 
     if FrostSeekDB.LFG and not FrostSeekDB.LFG.customKeywords then
