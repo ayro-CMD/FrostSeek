@@ -55,7 +55,7 @@ function FrostSeek._v.g(name)
     return FrostSeek._v.w[name]
 end
 
-FrostSeek.VERSION = "2.2.3"
+FrostSeek.VERSION = "2.2.4"
 
 local function LPrint(key, ...)
     local L = FrostSeek and FrostSeek.L
@@ -175,6 +175,7 @@ if not FrostSeekDB.LFG then
         popupModeFilter = "LFM",
         popupShowLFG = true,
         popupShowLFM = true,
+        popupAnchor = nil,
         customFilterWords = "",
         showActiveRecruitersWindow = false,
         activeWindowPosition = nil,
@@ -979,6 +980,36 @@ SlashCmdList["FSOPTIONS"] = function()
     FrostSeek:SwitchTab("options")
 end
 
+SLASH_FSPOPUP1 = "/fspopup"
+SlashCmdList["FSPOPUP"] = function(msg)
+    local LFG = FrostSeek and FrostSeek.Modules and FrostSeek.Modules.lfg
+    if not LFG or not LFG.SetPopupUnlockMode then
+        print("|cffff5555FrostSeek:|r LFG module not loaded yet.")
+        return
+    end
+    msg = (msg or ""):lower():gsub("%s+", "")
+    if msg == "reset" or msg == "default" then
+        LFG.ResetPopupAnchor()
+    elseif msg == "status" then
+        local a = FrostSeekDB and FrostSeekDB.LFG and FrostSeekDB.LFG.popupAnchor
+        local b = FrostSeekDB and FrostSeekDB.Listings and FrostSeekDB.Listings.appPopupAnchor
+        if a then
+            print(string.format("|cff88ccffFrostSeek:|r LFG popup anchor: %s/%s @ %.0f, %.0f (saved)",
+                tostring(a.point), tostring(a.relativePoint), a.x or 0, a.y or 0))
+        else
+            print("|cff88ccffFrostSeek:|r LFG popup anchor: default (TOP/TOP @ 0, -40)")
+        end
+        if b then
+            print(string.format("|cff44dd77FrostSeek:|r FrostNet popup anchor: %s/%s @ %.0f, %.0f (saved)",
+                tostring(b.point), tostring(b.relativePoint), b.x or 0, b.y or 0))
+        else
+            print("|cff44dd77FrostSeek:|r FrostNet popup anchor: default (TOPLEFT/TOPLEFT @ 10, -40)")
+        end
+    else
+        LFG.SetPopupUnlockMode(true)
+    end
+end
+
 SLASH_FSDISABLE1 = "/fsdisable"
 SlashCmdList["FSDISABLE"] = function()
     FrostSeek.SetAddonDisabled(true)
@@ -1048,7 +1079,7 @@ SlashCmdList["FSDEBUG"] = function()
         print("  Online users: " .. tostring(Presence:GetOnlineCount()))
     end
 
-    print("|cff88ccffv2.2.1 Modules:|r")
+    print("|cff88ccffv2.2.4 Modules:|r")
     local VB = FrostSeek.VoiceBridge
     if VB then
         local count = 0
