@@ -332,13 +332,27 @@ local APP_POPUP_H = 100
 local APP_POPUP_GAP = 6
 local APP_POPUP_MAX = 4
 
-local function RepositionAppPopups()
+local function RepositionAppPopupsImpl()
+    local LFG = _G.FrostSeek and _G.FrostSeek.Modules and _G.FrostSeek.Modules.lfg
+    local point, relFrame, relPoint, xOfs, yOfs = "TOPLEFT", UIParent, "TOPLEFT", 10, -40
+    if LFG and LFG.GetApplicantPopupAnchorPoint then
+        point, relFrame, relPoint, xOfs, yOfs = LFG.GetApplicantPopupAnchorPoint()
+    end
     for i, popup in ipairs(appPopups) do
         popup:ClearAllPoints()
         local h = popup:GetHeight() or APP_POPUP_H
-        local yOffset = -40 - ((i - 1) * (h + APP_POPUP_GAP))
-        popup:SetPoint("TOPLEFT", UIParent, "TOPLEFT", 10, yOffset)
+        local cascadeY
+        if yOfs <= 0 then
+            cascadeY = yOfs - ((i - 1) * (h + APP_POPUP_GAP))
+        else
+            cascadeY = yOfs + ((i - 1) * (h + APP_POPUP_GAP))
+        end
+        popup:SetPoint(point, relFrame, relPoint, xOfs, cascadeY)
     end
+end
+
+function Listings:RepositionAppPopups()
+    RepositionAppPopupsImpl()
 end
 
 local function RemoveAppPopup(popup)
@@ -358,7 +372,7 @@ local function RemoveAppPopup(popup)
             break
         end
     end
-    C_Timer.After(0.05, RepositionAppPopups)
+    C_Timer.After(0.05, RepositionAppPopupsImpl)
 end
 
 function Listings:ShowApplicantPopup(applicant)
@@ -389,6 +403,27 @@ function Listings:ShowApplicantPopup(applicant)
     popup:SetAlpha(0)
     UIFrameFadeIn(popup, 0.2, 0, 1)
     popup.applicantName = applicant.name
+    popup:EnableMouse(true)
+    popup:SetMovable(true)
+    popup:RegisterForDrag("LeftButton")
+    popup:SetScript("OnDragStart", function(self)
+        if IsShiftKeyDown() then
+            self:StartMoving()
+            self._dragging = true
+        end
+    end)
+    popup:SetScript("OnDragStop", function(self)
+        if self._dragging then
+            self:StopMovingOrSizing()
+            self._dragging = false
+            local LFG = _G.FrostSeek and _G.FrostSeek.Modules and _G.FrostSeek.Modules.lfg
+            if LFG and LFG.SaveApplicantPopupAnchorFromFrame then
+                LFG.SaveApplicantPopupAnchorFromFrame(self)
+                RepositionAppPopupsImpl()
+                print("|cff88ccffFrostSeek:|r FrostNet popup anchor saved. Hold |cffffcc00Shift|r and drag a popup to move it again.")
+            end
+        end
+    end)
     local borderTex = popup:CreateTexture(nil, "BACKGROUND")
     borderTex:SetAllPoints()
     borderTex:SetColorTexture(ar * 0.3, ag * 0.3, ab * 0.3, 0.65)
@@ -547,7 +582,7 @@ function Listings:ShowApplicantPopup(applicant)
     end)
 
     table.insert(appPopups, popup)
-    RepositionAppPopups()
+    RepositionAppPopupsImpl()
 end
 
 function Listings:HandleIncomingApplicant(applicant)

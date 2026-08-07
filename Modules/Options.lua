@@ -861,7 +861,22 @@ local SETTINGS_CATEGORIES = {
                 if not anyActive then FrostSeekDB.LFG.popupCategories.ALL = true end
             end
         end },
-        { type = "button", id = "popupInfo", name = "How Popup Categories Work", desc = "Click for information", onClick = function() print("|cff88ccff========== POPUP CATEGORIES INFO ==========|r") print("Read logic: ALL overrides individuals. If none selected, ALL is forced ON.") print("|cff88ccff==========================================|r") end }
+        { type = "button", id = "popupInfo", name = "How Popup Categories Work", desc = "Click for information", onClick = function() print("|cff88ccff========== POPUP CATEGORIES INFO ==========|r") print("Read logic: ALL overrides individuals. If none selected, ALL is forced ON.") print("|cff88ccff==========================================|r") end },
+        { type = "header", id = "popupAnchorHeader", name = "", desc = L["options_popup_anchor_desc"] },
+        { type = "button", id = "popupAnchorUnlock", name = L["options_popup_anchor_unlock"], desc = L["options_popup_anchor_desc"], onClick = function()
+            local LFG = _G.FrostSeek and _G.FrostSeek.Modules and _G.FrostSeek.Modules.lfg
+            if LFG and LFG.SetPopupUnlockMode then
+                LFG.SetPopupUnlockMode(true)
+            else
+                print("|cffff5555FrostSeek:|r LFG module not loaded.")
+            end
+        end },
+        { type = "button", id = "popupAnchorReset", name = L["options_popup_anchor_reset"], desc = L["options_popup_anchor_desc"], onClick = function()
+            local LFG = _G.FrostSeek and _G.FrostSeek.Modules and _G.FrostSeek.Modules.lfg
+            if LFG and LFG.ResetPopupAnchor then
+                LFG.ResetPopupAnchor()
+            end
+        end }
     }},
     { id = "sounds", name = L["options_sound"], icon = "Interface\\AddOns\\FrostSeek\\Media\\texture\\bottoni\\generale.tga", settings = {
         { type = "header", id = "soundsHeader", name = "", desc = "Configure sound notifications" },

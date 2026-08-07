@@ -15,7 +15,7 @@ La struttura finale deve essere:
    Interface\AddOns\FrostSeek\Modules\...
    ```
 Apri WoW. Al login vedrai in chat:
-`FrostSeek v2.1.6 loaded!`
+`FrostSeek v2.2.4 loaded!`
 Fatto. Se non vedi il messaggio, controlla che l'addon sia attivo nella schermata dei Personaggi → pulsante AddOns (in basso a sinistra) → spunta FrostSeek.
 ---
 2) Come si apre
@@ -31,13 +31,13 @@ Slash dedicati:
 ---
 3) Le 6 schede in alto (i "Tab")
 Quando apri FrostSeek vedi 6 pulsanti in alto. Ecco a cosa servono:
-Tab	Cosa fa
-Dashboard	Panoramica generale: il tuo iLvl, GS, online su FrostNet, statistiche di sessione
-FrostNet	Il cuore dell'addon. Sfogli i gruppi aperti, crei il tuo gruppo, vedi chi si è candidato
-LFG	"Looking For Group" — ti avvisa con popup quando qualcuno cerca membri in chat
-LFM	"Looking For Members" — quando SEI TU che cerchi membri e vuoi spammare il tuo annuncio
-Community	Gilde e community: bacheca eventi, reclutamento
-Options	Tutte le impostazioni
+Tab     Cosa fa
+Dashboard       Panoramica generale: il tuo iLvl, online su FrostNet, statistiche di sessione
+FrostNet        Il cuore dell'addon. Sfogli i gruppi aperti, crei il tuo gruppo, vedi chi si è candidato
+LFG     "Looking For Group" — ti avvisa con popup quando qualcuno cerca membri in chat
+LFM     "Looking For Members" — quando SEI TU che cerchi membri e vuoi spammare il tuo annuncio
+Community       Gilde e community: bacheca eventi, reclutamento
+Options Tutte le impostazioni
 ---
 4) Tab LFG — Trovare un gruppo (modalità pascolatore)
 Qui FrostSeek ascolta la chat e ti avvisa con un popup quando qualcuno cerca membri.
@@ -52,11 +52,34 @@ WBoss — World Boss
 PvP — arena/BG
 Mana — Manastorm
 Key — Mythic+ / Keystone
-Quando qualcuno scrive "lfm tank icc" in chat, ti appare un popup in alto
+Quando qualcuno scrive "lfm tank icc" in chat, ti appare un popup nella posizione che hai configurato
 Sul popup clicca:
 Whisper → mandi un sussurro al tizio per farti invitare
 Invite → lo inviti tu (se sei leader)
 Mute → silenzia quel player per 30 minuti
+Mute Boss → (solo nei popup World Boss) silenzia quel boss specifico finché non lo riabiliti in Options → Activity Filter. Perfetto per i boss con lockout settimanale che hai già pulito.
+Icone raid target nei messaggi
+Se un player scrive `{star}`, `{square}`, `{circle}`, `{diamond}`, `{triangle}`, `{moon}`, `{cross}`, `{skull}` nel messaggio (o qualunque variante maiuscola tipo `{STAR}`), FrostSeek ora renderizza la vera icona raid target come texture nel popup, nella lista recruiter e nel tooltip — esattamente come fa la chat di gioco.
+Nomi dungeon colorati
+Nella lista recruiter, i nomi di dungeon/raid/boss sono ora colorati per categoria e renderizzati in un font più piccolo e compatto:
+🟢 Verde = Dungeon
+🟠 Arancione = Raid
+🔴 Rosso = World Boss / PvP
+🟣 Viola = Manastorm
+🌸 Rosa = Keystone
+Nomi canonici (niente più abbreviazioni)
+Anche se un player scrive solo un'abbreviazione come "zg", "mc", "bwl", "kara", "naxx", "kaldros", "atal azul" (typo), il popup e la lista recruiter mostrano sempre il nome canonico completo: "Zul'Gurub", "Molten Core", "Blackwing Lair", "Karazhan", "Naxxramas", "Kaldros Depthbreaker", "Atal'Zul".
+Filtro spam più intelligente
+Il filtro spam non uccide più messaggi LFM legittimi che contengono per caso una parola spam (es. "staff" dentro "Int Staff"). Gli indicatori forti LFM/LFG (lfm, lfg, need tank/heal/dps, 24/25, ecc.) rendono il filtro più permissivo, mentre lo spam reale di boost/carry/reclutamento gilda resta bloccato.
+Sotto-categorie PvP
+I messaggi PvP sono ora sotto-categorizzati:
+- Arena 2v2 / 3v3 / 5v5 (rilevati da "2s", "3s", "5v5", ecc.)
+- Arena generica
+- Warsong Gulch, Arathi Basin, Alterac Valley, Eye of the Storm, Wintergrasp
+- Battleground generico
+I messaggi arena ranked (contenenti "ranked", "yolo", "rating", "cr") mostrano un tag rosso [Ranked] nel popup.
+RDF non più flaggato come Mythic
+"RDF" e "RDF hc" ora vengono classificati correttamente come Random Dungeon Finder con difficoltà Normal/Heroic — non più etichettati erroneamente come Mythic.
 Filtri utili (in Options → LFG)
 Filter Words — parole bannate (es. "wts", "boost", "gold") — i messaggi con queste parole non ti danno popup
 Popup Duration — quanto resta visibile il popup (in secondi)
@@ -64,6 +87,7 @@ Popup Cooldown — secondi tra due popup identici
 Max Popups — quanti popup contemporanei (max 4)
 No Alerts in Combat — non ti disturbano in combattimento
 No Alerts in Group — non ti disturbano se sei già in gruppo
+Activity Filter (Options → Activity Filter) — checkbox granulari per singolo dungeon e singolo boss. Deseleziona i boss/dungeon che non ti interessano. I world boss con lockout settimanale che hai già pulito possono essere deselezionati singolarmente.
 ---
 5) Tab LFM — Spammare il tuo annuncio
 Qui sei tu che hai un gruppo e cerchi membri.
@@ -76,7 +100,6 @@ Scrivi il messaggio nel box in basso. Puoi usare variabili tipo:
 `{role}` — chi ti serve
 `{class}` — la tua classe
 `{ilvl}` — il tuo item level
-`{gs}` — il tuo gear score
 Esempio: `LFM ICC 10 hc need {role} {class} {ilvl} ilvl`
 Sotto trovi i canali spam: sono 10 pulsanti (1-10). Ognuno corrisponde a uno slot canale di WoW.
 Per vedere quali canali hai attivi: chat → `/chatlist` oppure guarda la lista in alto a destra della chat
@@ -113,7 +136,7 @@ Note (es. "link achievement")
 Premi Publish Group
 Il gruppo appare nella lista Browse di tutti i player FrostNet connessi
 Ricevere candidature
-Quando qualcuno si candida al tuo gruppo, ti appare un popup in alto a sinistra
+Quando qualcuno si candida al tuo gruppo, ti appare un popup nella posizione che hai configurato per i popup FrostNet
 Clicca Accept per accettare (auto-invito) o Decline per rifiutare
 Vedi tutte le candidature nel tab Applications
 Candidarsi a un gruppo
@@ -132,15 +155,27 @@ Comandi utili
 ---
 8) Tab Options — Tutte le impostazioni
 Le opzioni sono divise in categorie:
-Categoria	Cosa fare qui
-General	Tema, scala UI, posizione finestra, minimap button, auto-open al login
-LFG System	Tutte le impostazioni LFG (popup, filtri, ruoli)
-LFM System	Timer spam, auto-invite, canali spam, reset canali
-Popup Categories	Scegli quali categorie fanno apparire i popup
-Custom Keywords	Aggiungi parole chiave personalizzate per ogni categoria
-Custom Messages	Personalizza il messaggio sussurrato quando accetti qualcuno
-Sound	Suoni per popup, listing, applicant
-Advanced	Reset posizione, reset stats, pulisci favoriti, debug mode
+Categoria       Cosa fare qui
+General Tema, scala UI, posizione finestra, minimap button, auto-open al login, lingua, log level
+LFG System      Tutte le impostazioni LFG (popup, filtri, ruoli, toggle popup LFG/LFM)
+Activity Filter Checkbox granulari per singolo dungeon e singolo boss — deseleziona quello che non ti interessa
+LFM System      Timer spam, auto-invite, canali spam, reset canali
+Popup Categories        Scegli quali categorie fanno apparire i popup + checkbox Mostra Popup LFG / Mostra Popup LFM + editor Posizione Ancora Popup (pulsanti Unlock / Reset)
+Custom Keywords Aggiungi parole chiave personalizzate per ogni categoria
+Custom Messages Personalizza il messaggio sussurrato quando accetti qualcuno
+Sound   Suoni per popup, listing, applicant
+Advanced        Reset posizione, reset stats, pulisci favoriti, debug mode
+Posizione Ancora Popup (NOVITÀ)
+Puoi decidere esattamente dove appaiono i popup LFG e FrostNet sullo schermo — niente comandi in chat.
+Come posizionare i popup:
+Vai in Options → Popup Categories
+Clicca "Unlock Popup Anchor" — si apre un editor visuale con due riquadri demo trascinabili:
+🔵 Riquadro blu "LFG Popup Anchor" — posiziona i popup LFG (gruppi rilevati in chat)
+🟢 Riquadro verde "FrostNet Applicant Popup Anchor" — posiziona i popup applicant di FrostNet (quando qualcuno si candida al tuo gruppo)
+Trascina entrambi i riquadri dove vuoi che appaiano i popup
+Clicca il pulsante verde "Save" in basso — entrambe le posizioni vengono salvate e persistono tra le sessioni
+Clicca "Reset" se vuoi tornare ai valori predefiniti (LFG alto-centro, FrostNet alto-sinistra)
+Riposizionamento rapido: tieni Shift e trascina un popup live (LFG o FrostNet) per spostare istantaneamente la sua ancora senza aprire l'editor.
 Temi disponibili
 Cambia tema da Options → General → Select Theme. Dopo aver cambiato tema serve `/reload` (te lo chiede lui).
 ---
@@ -182,27 +217,27 @@ Se dice "Out of date", spunta Load out of date AddOns in alto a destra
 Options → Advanced → Clear All Data → conferma → `/reload`
 ---
 11) Comandi rapidi — Tabella riassuntiva
-Comando	Cosa fa
-`/fs`	Apre/chiude FrostSeek
-`/fsdisable`	Disabilita LFG + Popups (stesso del Ctrl+Click minimap)
-`/fsenable`	Riattiva LFG + Popups
-`/fstoggle`	Altera LFG + Popups acceso/spento
-`/fslfg`	Apre sul tab LFG
-`/fslfm`	Apre sul tab LFM
-`/fscommunity`	Apre sul tab Community
-`/fsoptions`	Apre sul tab Options
-`/fsnet`	Stato rete FrostNet
-`/fsopen`	Apre sul tab Dashboard
-`/fsdebug`	Info di debug
-`/fsdebugtoggle`	Toggle debug mode
-`/fsclass set <classe>`	Forza classe (per Ascension)
-`/fsclass reset`	Reset classe
-`/fsloadtemplate <nome>`	Carica template gilda
-`/fsdeltemplate <nome>`	Cancella template gilda
+Comando Cosa fa
+`/fs`   Apre/chiude FrostSeek
+`/fsdisable`    Disabilita LFG + Popups (stesso del Ctrl+Click minimap)
+`/fsenable`     Riattiva LFG + Popups
+`/fstoggle`     Altera LFG + Popups acceso/spento
+`/fslfg`        Apre sul tab LFG
+`/fslfm`        Apre sul tab LFM
+`/fscommunity`  Apre sul tab Community
+`/fsoptions`    Apre sul tab Options
+`/fsnet`        Stato rete FrostNet
+`/fsopen`       Apre sul tab Dashboard
+`/fsdebug`      Info di debug
+`/fsdebugtoggle`        Toggle debug mode
+`/fsclass set <classe>` Forza classe (per Ascension)
+`/fsclass reset`        Reset classe
+`/fsloadtemplate <nome>`        Carica template gilda
+`/fsdeltemplate <nome>` Cancella template gilda
+`/fspopup`      Apre l'editor visuale ancora popup (stesso di Options → Popup Categories → Unlock Popup Anchor). Sub-comandi opzionali: `/fspopup reset`, `/fspopup status`.
 ---
 12) Consigli pratici
 Per Ascension: usa `/fsclass set <NomeClasse>` se l'addon non rileva correttamente la tua classe custom
-Per 3.3.5: Gear Score funziona solo se hai un addon GS installato (FrostSeek lo legge automaticamente)
 Per fare gruppo raid: crea il gruppo in FrostNet (più visibile) E fai partire lo spam LFM in chat (per chi non ha l'addon). Le due cose non si escludono
 Per non essere bannato per spam: imposta il timer LFM a 30+ secondi e usa massimo 2-3 canali alla volta
 ---
@@ -259,3 +294,53 @@ Quando cambi lingua, appare un popup "Ricarica Ora / Più tardi" — clicca "Ric
 📦 Retrocompatibilità
 - Il protocollo di rete è passato da FSK1 a FSK2. I client vecchi (2.1.x) continuano a vedere i tuoi messaggi e tu vedi i loro. Non serve fare nulla.
 - Al primo login dopo l'upgrade, FrostSeek crea un backup del vecchio DB in `FrostSeekDB._backup_v1`. Se qualcosa va storto, puoi tornare indietro a mano.
+---
+16) Novità v2.2.3 → v2.2.4 (LEGGI SE HAI GIA' USATO FROSTSEEK)
+Questa versione aggiunge diverse funzioni nuove e fix. Niente paura: tutto quello che già usavi continua a funzionare uguale.
+
+🎯 Rilevamento LFG più intelligente (v2.2.4)
+- Fixato: messaggi LFM World Boss legittimi come `{square} LFM Kaldros wb instanced need dps 24/25 (1 Int Staff HR) MS>OS /w me class/spec/ilvl {square}` venivano scartati dal filtro spam perché "staff" appariva in "Int Staff". Il filtro spam ora è permissivo quando ci sono indicatori forti LFM/LFG.
+- Aggiunto: `wb`, `worldboss`, `world boss` come keyword generiche World Boss così i messaggi che dicono solo "wb" (senza nominare il boss) vengono categorizzati correttamente.
+- Aggiunto: pulsante "Mute Boss" sui popup World Boss — disabilita istantaneamente i popup per quel boss specifico finché non lo riabiliti in Options → Activity Filter. Perfetto per i boss con lockout settimanale.
+- Fixato: l'Activity Filter aveva un bug di collisione keyword — selezionare solo "Zul'Gurub" (Classic) non matchava i messaggi che dicevano "zg" perché la lookup puntava anche a "Zul'Gurub (Cata)". Ora selezionare una qualunque delle due varianti funziona.
+- Fixato: "Atal azul" (typo di "Atal'zul") ora viene riconosciuto correttamente come world boss Atal'Zul invece di cadere in Manastorm.
+
+🏷️ Nomi dungeon canonici (v2.2.3)
+- I popup e la lista recruiter ora mostrano sempre il nome canonico completo ("Zul'Gurub", "Molten Core", "Kaldros Depthbreaker", "Atal'Zul") invece della keyword matchata ("ZG", "MC", "KALDROS", "ATAL AZUL").
+- Anche typo e abbreviazioni vengono normalizzati al nome corretto.
+- La casella di ricerca nella lista recruiter ora matcha sia la keyword sia il nome canonico.
+
+⭐ Icone raid target (v2.2.4)
+- `{star}`, `{square}`, `{circle}`, `{diamond}`, `{triangle}`, `{moon}`, `{cross}`, `{skull}` (e qualunque variante maiuscola) ora vengono renderizzati come vere texture icona nei popup, nella lista recruiter e nei tooltip — esattamente come la chat di gioco.
+- I `{placeholder}` sconosciuti perdono le parentesi ma mantengono il testo interno.
+
+🎨 Nomi dungeon colorati (v2.2.4)
+- Nella lista recruiter, i nomi di dungeon/raid/boss sono ora colorati per categoria (verde= Dungeon, arancione= Raid, rosso= World Boss/PvP, viola= Manastorm, rosa= Keystone) e renderizzati in un font più piccolo e compatto.
+
+⚔️ Sotto-categorie PvP (v2.2.4)
+- I messaggi PvP sono ora sotto-categorizzati: Arena 2v2 / 3v3 / 5v5, Arena generica, Warsong Gulch, Arathi Basin, Alterac Valley, Eye of the Storm, Wintergrasp, Battleground generico.
+- I messaggi arena ranked (contenenti "ranked", "yolo", "rating", "cr") mostrano un tag rosso [Ranked].
+
+🔄 RDF non più flaggato come Mythic (v2.2.4)
+- "RDF" e "RDF hc" ora vengono classificati correttamente come Random Dungeon Finder con difficoltà Normal/Heroic. Prima venivano etichettati erroneamente come Mythic quando la parola "mythic" appariva nel messaggio.
+
+📍 Posizione ancora popup (v2.2.3 → v2.2.4)
+- Puoi ora decidere esattamente dove appaiono i popup LFG e FrostNet sullo schermo — niente comandi in chat.
+- Vai in Options → Popup Categories → clicca "Unlock Popup Anchor".
+- Si apre un editor visuale con due riquadri demo trascinabili:
+  - 🔵 Blu "LFG Popup Anchor" — posiziona i popup LFG
+  - 🟢 Verde "FrostNet Applicant Popup Anchor" — posiziona i popup applicant di FrostNet
+- Trascina entrambi i riquadri dove vuoi, poi clicca il pulsante verde "Save". Entrambe le posizioni persistono tra le sessioni.
+- Clicca "Reset" per tornare ai default.
+- Riposizionamento rapido: tieni Shift e trascina un popup live (LFG o FrostNet) per spostare istantaneamente la sua ancora.
+- Il comando `/fspopup` apre anch'esso l'editor visuale (opzionale — i pulsanti in Options sono la via principale).
+
+✅ Due toggle separati popup LFG/LFM (v2.2.2)
+- Il vecchio dropdown "Popup Mode Filter" (All / LFG / LFM) è stato sostituito con due checkbox pulite:
+  - "Mostra Popup LFG" — mostra popup per i player che cercano un gruppo a cui unirsi
+  - "Mostra Popup LFM" — mostra popup per i player che stanno formando un gruppo e cercano membri
+- Se deselezioni entrambe, una viene riattivata automaticamente (vedi sempre almeno un tipo).
+- La tua precedente scelta del dropdown viene migrata automaticamente.
+
+🌐 Aggiornamenti locale
+- Tutte le nuove funzioni sono tradotte in en, it, de, es, fr, pt.

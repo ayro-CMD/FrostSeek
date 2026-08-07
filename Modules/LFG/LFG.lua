@@ -93,6 +93,17 @@ local WORLD_BOSS_KEYWORDS = {
     "worldboss", "world boss", "wb",
 }
 
+local WORLD_BOSS_GENERIC_KEYWORDS = {
+    "worldboss", "world boss", "wb",
+}
+
+local function IsGenericWorldBossKeyword(kw)
+    for _, gkw in ipairs(WORLD_BOSS_GENERIC_KEYWORDS) do
+        if kw == gkw then return true end
+    end
+    return false
+end
+
 local PVP_KEYWORDS = {
     "2v2", "2s", "3v3", "3s", "5v5", "5s", "arena", "bg", "battleground", "pvp",
     "wsg", "warsong", "ab", "arathi", "av", "alterac", "eots", "wg", "wintergrasp",
@@ -146,8 +157,7 @@ local DUNGEON_KEYWORDS = {
     "msp", "mogu'shan palace", "mogushan palace",
     "scarlet halls", "siege of niuzao temple", "niuzao",
     "gss", "gate of the setting sun", "setting sun",
-    -- General dungeon indicators
-    "dg", "aura", "mythic", "mythic+", "keystone",
+    "dg", "aura",
     "rdf", "lfd", "random dungeon", "random heroic", "rhc", "heroic random",
     "daily heroic", "daily dungeon", "graveyard",
     -- retail porting  Dungeons
@@ -382,6 +392,19 @@ local KEYSTONE_SPECIAL_NAMES = {
     MC = "Molten Core",
 }
 
+local PVP_SUBTYPE_NAMES = {
+    ARENA_2V2 = "Arena 2v2",
+    ARENA_3V3 = "Arena 3v3",
+    ARENA_5V5 = "Arena 5v5",
+    ARENA     = "Arena",
+    BG_WSG    = "Warsong Gulch",
+    BG_AB     = "Arathi Basin",
+    BG_AV     = "Alterac Valley",
+    BG_EOTS   = "Eye of the Storm",
+    BG_WG     = "Wintergrasp",
+    BATTLEGROUND = "Battleground",
+}
+
 function LFG.GetCanonicalDungeonName(category, dungeon)
     if not dungeon or dungeon == "" then
         return ""
@@ -391,6 +414,9 @@ function LFG.GetCanonicalDungeonName(category, dungeon)
     end
     if KEYSTONE_SPECIAL_NAMES[dungeon] and category == "KEYSTONE" then
         return KEYSTONE_SPECIAL_NAMES[dungeon]
+    end
+    if category == "PVP" and PVP_SUBTYPE_NAMES[dungeon] then
+        return PVP_SUBTYPE_NAMES[dungeon]
     end
     if KEYWORD_TO_NAME[dungeon] then
         return KEYWORD_TO_NAME[dungeon]
@@ -402,8 +428,111 @@ function LFG.GetCanonicalDungeonName(category, dungeon)
     if dungeon == "MANASTORM" then return L["cat_manastorm"] end
     if dungeon == "KEYSTONE" then return L["cat_keystone"] end
     if dungeon == "MISC" then return L["cat_misc"] end
-    if dungeon == "RDF" then return L["cat_dungeon"] .. " (RDF)" end
+    if dungeon == "RDF" then return "Random Dungeon Finder" end
     return dungeon
+end
+
+local SHORT_NAME_OVERRIDES = {
+    ["Kaldros Depthbreaker"] = "Kaldros",
+    ["Silithid Lurker"] = "Silithid",
+    ["Corrupted Ancient"] = "Corrupted",
+    ["Lord Kazzak"] = "Kazzak",
+    ["Random Dungeon Finder"] = "RDF",
+    ["World Boss (generic wb)"] = "World Boss",
+    ["Warsong Gulch"] = "WSG",
+    ["Arathi Basin"] = "AB",
+    ["Alterac Valley"] = "AV",
+    ["Eye of the Storm"] = "EotS",
+    ["Wintergrasp"] = "WG",
+    ["Temple of the Jade Serpent"] = "Jade Serpent",
+    ["Siege of Orgrimmar"] = "SoO",
+    ["Throne of Thunder"] = "ToT",
+    ["Terrace of Endless Spring"] = "ToES",
+    ["Mogu'shan Vaults"] = "MSV",
+    ["Heart of Fear"] = "HoF",
+    ["Bastion of Twilight"] = "BoT",
+    ["Blackwing Descent"] = "BWD",
+    ["Throne of the Four Winds"] = "T4W",
+    ["Halls of Origination"] = "Origination",
+    ["Lost City of the Tol'vir"] = "Tol'vir",
+    ["Culling of Stratholme"] = "CoS",
+    ["Halls of Reflection"] = "HoR",
+    ["Halls of Lightning"] = "HoL",
+    ["Utgarde Pinnacle"] = "UP",
+    ["Drak'Tharon Keep"] = "DTK",
+    ["Lower Blackrock Spire"] = "LBRS",
+    ["Upper Blackrock Spire"] = "UBRS",
+    ["Blackrock Depths"] = "BRD",
+    ["Razorfen Kraul"] = "RFK",
+    ["Razorfen Downs"] = "RFD",
+    ["Scarlet Monastery"] = "SM",
+    ["Hellfire Ramparts"] = "Ramps",
+    ["Auchenai Crypts"] = "AC",
+    ["Sethekk Halls"] = "SH",
+    ["Shadow Labyrinth"] = "SL",
+    ["The Shattered Halls"] = "SHH",
+    ["The Steamvault"] = "SV",
+    ["The Black Morass"] = "BM",
+    ["Magister's Terrace"] = "MgT",
+    ["Old Hillsbrad"] = "OHF",
+    ["Gate of the Setting Sun"] = "Setting Sun",
+    ["Siege of Niuzao Temple"] = "Niuzao",
+    ["Stormstout Brewery"] = "Brewery",
+    ["Shado-Pan Monastery"] = "Shado-Pan",
+    ["Mogu'shan Palace"] = "Mogu'shan",
+    ["Vault of the Inquisition"] = "Vault",
+    ["Road to De' Other Side"] = "Roads",
+    ["The Radiant Spring"] = "TRS",
+    ["GlitteMurk Mines"] = "GMM",
+    ["Karazhan Crypt"] = "KC",
+    ["World Boss Tour"] = "WB Tour",
+    ["Emerald Dream"] = "Dream",
+    ["Serpentshrine Cavern"] = "SSC",
+    ["Sunwell Plateau"] = "SWP",
+    ["Blackwing Lair"] = "BWL",
+    ["Molten Core"] = "MC",
+    ["Ruins of Ahn'Qiraj"] = "AQ20",
+    ["Temple of Ahn'Qiraj"] = "AQ40",
+    ["Zul'Gurub"] = "ZG",
+    ["Zul'Aman"] = "ZA",
+    ["Icecrown Citadel"] = "ICC",
+    ["Trial of the Crusader"] = "ToC",
+    ["Trial of the Champion"] = "ToC",
+    ["Ruby Sanctum"] = "RS",
+    ["Baradin Hold"] = "BH",
+    ["Dragon Soul"] = "DS",
+    ["Vault of Archavon"] = "VoA",
+    ["Obsidian Sanctum"] = "OS",
+    ["Eye of Eternity"] = "EoE",
+    ["Black Temple"] = "BT",
+    ["Mount Hyjal"] = "Hyjal",
+    ["Tempest Keep"] = "TK",
+    ["The Vortex Pinnacle"] = "Vortex",
+    ["Throne of the Tides"] = "Tides",
+    ["Blackrock Caverns"] = "BRC",
+    ["Stonecore"] = "SC",
+    ["Grim Batol"] = "GB",
+    ["End Time"] = "ET",
+    ["Well of Eternity"] = "WoE",
+    ["Hour of Twilight"] = "HoT",
+    ["Firelands"] = "FL",
+    ["Dire Maul"] = "DM",
+    ["Scholomance"] = "Scholo",
+    ["Stratholme"] = "Strat",
+}
+
+function LFG.GetShortDungeonName(category, dungeon)
+    local name = LFG.GetCanonicalDungeonName(category, dungeon)
+    if not name or name == "" then return "" end
+    if SHORT_NAME_OVERRIDES[name] then
+        return SHORT_NAME_OVERRIDES[name]
+    end
+    if string.len(name) <= 14 then return name end
+    local firstWord = string.match(name, "^(%S+)")
+    if firstWord and string.len(firstWord) <= 14 then
+        return firstWord
+    end
+    return string.sub(name, 1, 12) .. "..."
 end
 
 function LFG.PassesActivityFilter(category, dungeon)
@@ -459,7 +588,7 @@ local SPAM_WORDS = {
     "account", "heirloom","help","bazaar","token","don't", "shit",
     "wtt","how","do","pets","stress","test","here","xd",
     "farmers","chez","plf","test","pasticcio","nearby","never",
-    "tSM", "mRP", "trp", "total rp","?","other",
+    "tSM", "mRP", "trp", "total rp","?","other","escort",
     "gamble", "bet", "wager", "jackpot", "lottery", "lucky draw", "spin the wheel",
     "selling.*run", "gold.*run","where is","24/7",
     "alchemy", "alch", "blacksmithing", "bs", "enchanting", "ench", "engineering", "eng", "inscription",
@@ -595,6 +724,31 @@ local function wholeWordFind(text, word)
     if not text or not word then return false end
     return string.find(text, "%f[%a%d]" .. word .. "%f[^%a%d]") ~= nil
 end
+
+local RAID_ICON_TEXTURES = {
+    ["star"]     = "Interface\\TargetingFrame\\UI-RaidTargetingIcon_1",
+    ["circle"]   = "Interface\\TargetingFrame\\UI-RaidTargetingIcon_2",
+    ["diamond"]  = "Interface\\TargetingFrame\\UI-RaidTargetingIcon_3",
+    ["triangle"] = "Interface\\TargetingFrame\\UI-RaidTargetingIcon_4",
+    ["moon"]     = "Interface\\TargetingFrame\\UI-RaidTargetingIcon_5",
+    ["square"]   = "Interface\\TargetingFrame\\UI-RaidTargetingIcon_6",
+    ["cross"]    = "Interface\\TargetingFrame\\UI-RaidTargetingIcon_7",
+    ["skull"]    = "Interface\\TargetingFrame\\UI-RaidTargetingIcon_8",
+    ["x"]        = "Interface\\TargetingFrame\\UI-RaidTargetingIcon_7",
+    ["todo"]     = "Interface\\TargetingFrame\\UI-RaidTargetingIcon_6",
+}
+
+function LFG.FormatMessageWithIcons(msg)
+    if not msg or msg == "" then return msg end
+    return (string.gsub(msg, "%{(%a+)%}", function(name)
+        local lower = string.lower(name)
+        local tex = RAID_ICON_TEXTURES[lower]
+        if tex then
+            return "|T" .. tex .. ":14:14:0:0|t"
+        end
+        return name
+    end))
+end
 --shynga
 function LFG.IsLFMMessage(msg)
     if not msg then return false end
@@ -673,6 +827,20 @@ function LFG.GetMessageMode(msg)
            string.match(lowerMsg, "^%a+%s+%d+%s*lvl%s+lf") then
             return true
         end
+        if string.match(lowerMsg, "^%d+%s+dps%s+lf") or
+           string.match(lowerMsg, "^%d+%s+tank%s+lf") or
+           string.match(lowerMsg, "^%d+%s+heal[a-z]*%s+lf") or
+           string.match(lowerMsg, "^%d+%s+support%s+lf") or
+           string.match(lowerMsg, "^%d+%s+supp%s+lf") then
+            return true
+        end
+        if string.match(lowerMsg, "^%d+%s+dps%s+%a+%s+lf") or
+           string.match(lowerMsg, "^%d+%s+tank%s+%a+%s+lf") or
+           string.match(lowerMsg, "^%d+%s+heal[a-z]*%s+%a+%s+lf") or
+           string.match(lowerMsg, "^%d+%s+support%s+%a+%s+lf") or
+           string.match(lowerMsg, "^%d+%s+supp%s+%a+%s+lf") then
+            return true
+        end
         return false
     end
 
@@ -711,6 +879,49 @@ function LFG.GetMessageMode(msg)
 
     return "LFG"
 end
+function LFG.ClassifyPvP(lowerMsg)
+    if not lowerMsg then return "PVP", false end
+    local isRanked = false
+    if string.find(lowerMsg, "ranked") or string.find(lowerMsg, "rank") then
+        isRanked = true
+    elseif string.find(lowerMsg, "yolo") then
+        isRanked = true
+    elseif string.find(lowerMsg, "rating") or string.find(lowerMsg, "cr ") or string.find(lowerMsg, "%scr") then
+        isRanked = true
+    end
+
+    if wholeWordFind(lowerMsg, "2v2") or wholeWordFind(lowerMsg, "2s") then
+        return "ARENA_2V2", isRanked
+    end
+    if wholeWordFind(lowerMsg, "3v3") or wholeWordFind(lowerMsg, "3s") then
+        return "ARENA_3V3", isRanked
+    end
+    if wholeWordFind(lowerMsg, "5v5") or wholeWordFind(lowerMsg, "5s") then
+        return "ARENA_5V5", isRanked
+    end
+    if wholeWordFind(lowerMsg, "arena") then
+        return "ARENA", isRanked
+    end
+    if wholeWordFind(lowerMsg, "wsg") or wholeWordFind(lowerMsg, "warsong") then
+        return "BG_WSG", false
+    end
+    if wholeWordFind(lowerMsg, "ab") or wholeWordFind(lowerMsg, "arathi") then
+        return "BG_AB", false
+    end
+    if wholeWordFind(lowerMsg, "av") or wholeWordFind(lowerMsg, "alterac") then
+        return "BG_AV", false
+    end
+    if wholeWordFind(lowerMsg, "eots") then
+        return "BG_EOTS", false
+    end
+    if wholeWordFind(lowerMsg, "wg") or wholeWordFind(lowerMsg, "wintergrasp") then
+        return "BG_WG", false
+    end
+    if wholeWordFind(lowerMsg, "bg") or wholeWordFind(lowerMsg, "battleground") then
+        return "BATTLEGROUND", false
+    end
+    return "PVP", isRanked
+end
 
 function LFG.ClassifyMessage(msg)
     if not msg then
@@ -729,10 +940,18 @@ function LFG.ClassifyMessage(msg)
             return "KEYSTONE", "KEYSTONE", false, false, false, true, false
         end
     end
+    local wbGenericMatch = nil
     for _, kw in ipairs(WORLD_BOSS_KEYWORDS) do
         if wholeWordFind(lowerMsg, kw) then
-            return "WORLD_BOSS", string.upper(kw), false, false, false, false, false
+            if not IsGenericWorldBossKeyword(kw) then
+                return "WORLD_BOSS", string.upper(kw), false, false, false, false, false
+            elseif not wbGenericMatch then
+                wbGenericMatch = kw
+            end
         end
+    end
+    if wbGenericMatch then
+        return "WORLD_BOSS", string.upper(wbGenericMatch), false, false, false, false, false
     end
     for _, kw in ipairs(KEYSTONE_KEYWORDS) do
         if wholeWordFind(lowerMsg, kw) then
@@ -762,7 +981,8 @@ function LFG.ClassifyMessage(msg)
     end
     for _, kw in ipairs(PVP_KEYWORDS) do
         if wholeWordFind(lowerMsg, kw) then
-            return "PVP", "PVP", false, false, false, false, true
+            local pvpSub, pvpRanked = LFG.ClassifyPvP(lowerMsg)
+            return "PVP", pvpSub, false, false, false, false, true, pvpRanked
         end
     end
     for _, kw in ipairs(MANASTORM_KEYWORDS) do
@@ -775,10 +995,10 @@ function LFG.ClassifyMessage(msg)
         if not msg then return false end
         if wholeWordFind(msg, "mythic") then return true end
         if wholeWordFind(msg, "m+") then return true end
-        if string.match(msg, "%sm(%d+)") then return true end     
-        if string.match(msg, "^m(%d+)") then return true end   
-        if string.match(msg, "%[m%d*%]") then return true end    
-        if string.match(msg, "%[mythic%]") then return true end 
+        if string.match(msg, "%sm(%d+)") then return true end
+        if string.match(msg, "^m(%d+)") then return true end
+        if string.match(msg, "%[m%d*%]") then return true end
+        if string.match(msg, "%[mythic%]") then return true end
         return false
     end
 
@@ -788,7 +1008,10 @@ function LFG.ClassifyMessage(msg)
             local isHeroic = wholeWordFind(lowerMsg, "hc") or
                              wholeWordFind(lowerMsg, "heroic") or
                              wholeWordFind(lowerMsg, "rhc")
-            local isMythic = DetectMythicDungeon(lowerMsg)
+            local isMythic = wholeWordFind(lowerMsg, "mythic") or
+                             wholeWordFind(lowerMsg, "m+") or
+                             string.match(lowerMsg, "%sm(%d+)") or
+                             string.match(lowerMsg, "^m(%d+)")
             for _, d in ipairs(DUNGEON_KEYWORDS) do
                 if wholeWordFind(lowerMsg, d) then
                     return "DUNGEON", string.upper(d), isHeroic, isMythic, false, false, false
@@ -1008,7 +1231,7 @@ function LFG.RecordActiveSearch(sender, message, channel)
     if IsSpamMessage(message) then
         return
     end
-    local category, dungeon, isHeroic, isMythic, isRaid, isKeystone, isPvp = LFG.ClassifyMessage(message)
+    local category, dungeon, isHeroic, isMythic, isRaid, isKeystone, isPvp, isRanked = LFG.ClassifyMessage(message)
     if not LFG.PassesActivityFilter(category, dungeon) then
         return
     end
@@ -1030,6 +1253,7 @@ function LFG.RecordActiveSearch(sender, message, channel)
             record.isMythic = isMythic
             record.isRaid = isRaid
             record.isPvp = isPvp
+            record.isRanked = isRanked or false
             record.isKeystone = isKeystone
             record.isManastorm = isManastorm
             record.isWorldBoss = isWorldBoss
@@ -1050,6 +1274,7 @@ function LFG.RecordActiveSearch(sender, message, channel)
         isMythic = isMythic,
         isRaid = isRaid,
         isPvp = isPvp,
+        isRanked = isRanked or false,
         isKeystone = isKeystone,
         isManastorm = isManastorm,
         isWorldBoss = isWorldBoss,
@@ -1432,17 +1657,277 @@ function LFG.RemovePopupFrame(frame)
     end
 end
 
+function LFG.GetPopupAnchorPoint()
+    local a = FrostSeekDB and FrostSeekDB.LFG and FrostSeekDB.LFG.popupAnchor
+    if a and a.point and a.relativePoint and a.x and a.y then
+        return a.point, UIParent, a.relativePoint, a.x, a.y
+    end
+    return "TOP", UIParent, "TOP", 0, -40
+end
+
 function LFG.RepositionPopups()
     local activeCount = 0
+    local point, relFrame, relPoint, xOfs, yOfs = LFG.GetPopupAnchorPoint()
     for _, frame in ipairs(openFrames) do
         if frame and frame:IsShown() then
             local h = frame:GetHeight() or 90
-            local yOffset = 40 + (activeCount * (h + 6))
+            local cascadeY
+            if yOfs <= 0 then
+                cascadeY = yOfs - (activeCount * (h + 6))
+            else
+                cascadeY = yOfs + (activeCount * (h + 6))
+            end
             frame:ClearAllPoints()
-            frame:SetPoint("TOP", UIParent, "TOP", 0, -yOffset)
+            frame:SetPoint(point, relFrame, relPoint, xOfs, cascadeY)
             activeCount = activeCount + 1
         end
     end
+end
+
+local popupUnlockFrame = nil
+local popupUnlockFrames = {}
+
+local function BuildDemoPopup(kind)
+    local frame = CreateFrame("Frame", nil, UIParent)
+    frame:SetSize(340, 100)
+    frame:SetFrameStrata("DIALOG")
+    frame:SetClampedToScreen(true)
+    frame:EnableMouse(true)
+    frame:SetMovable(true)
+    frame:RegisterForDrag("LeftButton")
+    frame.kind = kind
+
+    frame.bg = frame:CreateTexture(nil, "BACKGROUND")
+    frame.bg:SetAllPoints()
+    if kind == "LFG" then
+        frame.bg:SetColorTexture(0.18, 0.36, 0.55, 0.35)
+    else
+        frame.bg:SetColorTexture(0.18, 0.50, 0.32, 0.35)
+    end
+
+    frame.border = frame:CreateTexture(nil, "BORDER")
+    frame.border:SetAllPoints()
+    if kind == "LFG" then
+        frame.border:SetColorTexture(0.53, 0.80, 1.0, 0.85)
+    else
+        frame.border:SetColorTexture(0.35, 0.95, 0.55, 0.85)
+    end
+
+    frame.title = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
+    frame.title:SetPoint("TOP", frame, "TOP", 0, -10)
+    if kind == "LFG" then
+        frame.title:SetText("LFG Popup Anchor")
+    else
+        frame.title:SetText("FrostNet Applicant Popup Anchor")
+    end
+    frame.title:SetTextColor(1.0, 1.0, 1.0, 1.0)
+
+    frame.hint = frame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    frame.hint:SetPoint("CENTER", frame, "CENTER", 0, 0)
+    frame.hint:SetText("Drag me to position")
+    frame.hint:SetTextColor(1.0, 0.95, 0.3, 1.0)
+
+    frame.footer = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    frame.footer:SetPoint("BOTTOM", frame, "BOTTOM", 0, 8)
+    frame.footer:SetText("Shift+drag any live popup to reposition later")
+    frame.footer:SetTextColor(0.92, 0.92, 0.92, 1.0)
+
+    frame:SetScript("OnDragStart", function(self)
+        self:StartMoving()
+    end)
+    frame:SetScript("OnDragStop", function(self)
+        self:StopMovingOrSizing()
+    end)
+
+    return frame
+end
+
+function LFG.SetPopupUnlockMode(enabled)
+    if enabled then
+        if popupUnlockFrame and popupUnlockFrame:IsShown() then return end
+
+        if not popupUnlockFrame then
+            popupUnlockFrame = CreateFrame("Frame", nil, UIParent)
+            popupUnlockFrame:SetSize(420, 110)
+            popupUnlockFrame:SetFrameStrata("DIALOG")
+            popupUnlockFrame:SetClampedToScreen(true)
+            popupUnlockFrame:EnableMouse(true)
+            popupUnlockFrame:SetPoint("BOTTOM", UIParent, "BOTTOM", 0, 120)
+
+            local panelBg = popupUnlockFrame:CreateTexture(nil, "BACKGROUND")
+            panelBg:SetAllPoints()
+            panelBg:SetColorTexture(0.05, 0.08, 0.12, 0.92)
+
+            local panelBorder = popupUnlockFrame:CreateTexture(nil, "BORDER")
+            panelBorder:SetAllPoints()
+            panelBorder:SetColorTexture(0.53, 0.80, 1.0, 0.85)
+
+            local title = popupUnlockFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
+            title:SetPoint("TOP", popupUnlockFrame, "TOP", 0, -10)
+            title:SetText("FrostSeek Popup Anchor Editor")
+            title:SetTextColor(0.53, 0.80, 1.0, 1.0)
+
+            local hint = popupUnlockFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+            hint:SetPoint("TOP", title, "BOTTOM", 0, -8)
+            hint:SetText("Drag the LFG and FrostNet demo boxes to position popups")
+            hint:SetTextColor(1.0, 0.95, 0.3, 1.0)
+
+            local subHint = popupUnlockFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+            subHint:SetPoint("TOP", hint, "BOTTOM", 0, -4)
+            subHint:SetText("Tip: hold Shift and drag any live popup to reposition it instantly")
+            subHint:SetTextColor(0.85, 0.85, 0.85, 1.0)
+
+            local function makeBtn(label, color, xOff)
+                local b = CreateFrame("Button", nil, popupUnlockFrame)
+                b:SetSize(120, 24)
+                b:SetPoint("BOTTOM", popupUnlockFrame, "BOTTOM", xOff, 10)
+                b.bg = b:CreateTexture(nil, "BACKGROUND")
+                b.bg:SetAllPoints()
+                b.bg:SetColorTexture(color[1] * 0.30, color[2] * 0.30, color[3] * 0.30, 0.95)
+                b.border = b:CreateTexture(nil, "BORDER")
+                b.border:SetAllPoints()
+                b.border:SetColorTexture(color[1], color[2], color[3], 0.95)
+                b.text = b:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+                b.text:SetPoint("CENTER")
+                b.text:SetText(label)
+                b.text:SetTextColor(1, 1, 1, 1.0)
+                b:SetScript("OnEnter", function(self)
+                    self.bg:SetColorTexture(color[1] * 0.50, color[2] * 0.50, color[3] * 0.50, 0.95)
+                end)
+                b:SetScript("OnLeave", function(self)
+                    self.bg:SetColorTexture(color[1] * 0.30, color[2] * 0.30, color[3] * 0.30, 0.95)
+                end)
+                return b
+            end
+
+            local saveBtn = makeBtn("Save", {0.2, 0.85, 0.2}, -70)
+            saveBtn:SetScript("OnClick", function()
+                LFG.SetPopupUnlockMode(false)
+            end)
+
+            local resetBtn = makeBtn("Reset", {0.95, 0.55, 0.2}, 70)
+            resetBtn:SetScript("OnClick", function()
+                LFG.ResetPopupAnchor()
+            end)
+
+            popupUnlockFrames.LFG = BuildDemoPopup("LFG")
+            popupUnlockFrames.FrostNet = BuildDemoPopup("FrostNet")
+        end
+
+        local lfgPoint, lfgRel, lfgRelPoint, lfgX, lfgY = LFG.GetPopupAnchorPoint()
+        popupUnlockFrames.LFG:ClearAllPoints()
+        popupUnlockFrames.LFG:SetPoint(lfgPoint, lfgRel, lfgRelPoint, lfgX, lfgY)
+
+        local fnPoint, fnRel, fnRelPoint, fnX, fnY = LFG.GetApplicantPopupAnchorPoint()
+        popupUnlockFrames.FrostNet:ClearAllPoints()
+        popupUnlockFrames.FrostNet:SetPoint(fnPoint, fnRel, fnRelPoint, fnX, fnY)
+
+        popupUnlockFrame:Show()
+        popupUnlockFrames.LFG:Show()
+        popupUnlockFrames.FrostNet:Show()
+        print("|cff88ccffFrostSeek:|r Popup anchor editor open. Drag the demo boxes, then click |cff44ff44Save|r.")
+    else
+        if popupUnlockFrames.LFG and popupUnlockFrames.LFG:IsShown() then
+            LFG.SavePopupAnchorFromFrame(popupUnlockFrames.LFG)
+            popupUnlockFrames.LFG:Hide()
+        end
+        if popupUnlockFrames.FrostNet and popupUnlockFrames.FrostNet:IsShown() then
+            LFG.SaveApplicantPopupAnchorFromFrame(popupUnlockFrames.FrostNet)
+            popupUnlockFrames.FrostNet:Hide()
+        end
+        if popupUnlockFrame and popupUnlockFrame:IsShown() then
+            popupUnlockFrame:Hide()
+            print("|cff88ccffFrostSeek:|r Popup anchors saved.")
+        end
+        LFG.RepositionPopups()
+        if _G.FrostSeek and _G.FrostSeek.Listings and _G.FrostSeek.Listings.RepositionAppPopups then
+            _G.FrostSeek.Listings.RepositionAppPopups()
+        end
+    end
+end
+
+function LFG.IsPopupUnlockMode()
+    return popupUnlockFrame ~= nil and popupUnlockFrame:IsShown()
+end
+
+function LFG.SavePopupAnchorFromFrame(frame)
+    if not frame then return end
+    local point, _, relPoint, x, y = frame:GetPoint()
+    if point and relPoint and x and y then
+        if not FrostSeekDB.LFG then FrostSeekDB.LFG = {} end
+        FrostSeekDB.LFG.popupAnchor = {
+            point = point,
+            relativePoint = relPoint,
+            x = x,
+            y = y,
+        }
+    end
+end
+
+function LFG.GetApplicantPopupAnchorPoint()
+    local a = FrostSeekDB and FrostSeekDB.Listings and FrostSeekDB.Listings.appPopupAnchor
+    if a and a.point and a.relativePoint and a.x and a.y then
+        return a.point, UIParent, a.relativePoint, a.x, a.y
+    end
+    return "TOPLEFT", UIParent, "TOPLEFT", 10, -40
+end
+
+function LFG.SaveApplicantPopupAnchorFromFrame(frame)
+    if not frame then return end
+    local point, _, relPoint, x, y = frame:GetPoint()
+    if point and relPoint and x and y then
+        if not FrostSeekDB.Listings then FrostSeekDB.Listings = {} end
+        FrostSeekDB.Listings.appPopupAnchor = {
+            point = point,
+            relativePoint = relPoint,
+            x = x,
+            y = y,
+        }
+    end
+end
+
+function LFG.ResetPopupAnchor()
+    if FrostSeekDB and FrostSeekDB.LFG then
+        FrostSeekDB.LFG.popupAnchor = nil
+    end
+    if FrostSeekDB and FrostSeekDB.Listings then
+        FrostSeekDB.Listings.appPopupAnchor = nil
+    end
+    if popupUnlockFrames.LFG then
+        popupUnlockFrames.LFG:ClearAllPoints()
+        popupUnlockFrames.LFG:SetPoint("TOP", UIParent, "TOP", 0, -40)
+    end
+    if popupUnlockFrames.FrostNet then
+        popupUnlockFrames.FrostNet:ClearAllPoints()
+        popupUnlockFrames.FrostNet:SetPoint("TOPLEFT", UIParent, "TOPLEFT", 10, -40)
+    end
+    LFG.RepositionPopups()
+    if _G.FrostSeek and _G.FrostSeek.Listings and _G.FrostSeek.Listings.RepositionAppPopups then
+        _G.FrostSeek.Listings.RepositionAppPopups()
+    end
+    print("|cff88ccffFrostSeek:|r Popup anchors reset to defaults.")
+end
+
+function LFG.AttachPopupDragHandler(popup)
+    if not popup then return end
+    popup:EnableMouse(true)
+    popup:SetMovable(true)
+    popup:RegisterForDrag("LeftButton")
+    popup:SetScript("OnDragStart", function(self)
+        if IsShiftKeyDown() then
+            self:StartMoving()
+            self._dragging = true
+        end
+    end)
+    popup:SetScript("OnDragStop", function(self)
+        if self._dragging then
+            self:StopMovingOrSizing()
+            self._dragging = false
+            LFG.SavePopupAnchorFromFrame(self)
+            LFG.RepositionPopups()
+            print("|cff88ccffFrostSeek:|r Popup anchor saved. Hold |cffffcc00Shift|r and drag a popup to move it again.")
+        end
+    end)
 end
 
 function LFG.CreateLFGPopup(sender, message, dungeon, isHeroic, isMythic, isRaid, isPvp, isKeystone, isManastorm, category)
@@ -1505,10 +1990,17 @@ function LFG.CreateLFGPopup(sender, message, dungeon, isHeroic, isMythic, isRaid
     bgTex:SetPoint("BOTTOMRIGHT", -1, 1)
     bgTex:SetColorTexture(bgPopupColor[1], bgPopupColor[2], bgPopupColor[3], bgPopupColor[4])
 
-    local yOffset = 40 + (activePopupCount * (H + 6))
-    popup:SetPoint("TOP", UIParent, "TOP", 0, -yOffset)
+    local aPoint, aRel, aRelPoint, aX, aY = LFG.GetPopupAnchorPoint()
+    local cascadeY
+    if aY <= 0 then
+        cascadeY = aY - (activePopupCount * (H + 6))
+    else
+        cascadeY = aY + (activePopupCount * (H + 6))
+    end
+    popup:SetPoint(aPoint, aRel, aRelPoint, aX, cascadeY)
     popup:SetAlpha(0)
     UIFrameFadeIn(popup, 0.2, 0, 1)
+    LFG.AttachPopupDragHandler(popup)
 
     
     local topAccent = popup:CreateTexture(nil, "ARTWORK")
@@ -1578,6 +2070,16 @@ function LFG.CreateLFGPopup(sender, message, dungeon, isHeroic, isMythic, isRaid
     elseif isHeroic then
         diffTag = L["diff_heroic"]
         diffColor = "|cff44cc44"
+    elseif category == "PVP" then
+        local lowerForPvP = string.lower(message or "")
+        local _, pvpRanked = LFG.ClassifyPvP(lowerForPvP)
+        if pvpRanked then
+            diffTag = L["diff_ranked"]
+            diffColor = "|cffff4444"
+        else
+            diffTag = L["diff_normal"]
+            diffColor = "|cffcccccc"
+        end
     elseif category == "DUNGEON" or category == "RAID" then
         diffTag = L["diff_normal"]
         diffColor = "|cffcccccc"
@@ -1585,7 +2087,7 @@ function LFG.CreateLFGPopup(sender, message, dungeon, isHeroic, isMythic, isRaid
 
     local catHex = string.format("%02x%02x%02x", math.floor(ar*255), math.floor(ag*255), math.floor(ab*255))
     local dungeonDisplay = ""
-    local canonicalDungeon = LFG.GetCanonicalDungeonName(category, dungeon)
+    local shortDungeon = LFG.GetShortDungeonName(category, dungeon)
     if isKeystone then
         local ksName, ksLevel = LFG.ParseKeystoneInfo(message)
         if ksName then
@@ -1595,18 +2097,18 @@ function LFG.CreateLFGPopup(sender, message, dungeon, isHeroic, isMythic, isRaid
                 diffColor = "|cffff44ff"
             end
         else
-            dungeonDisplay = canonicalDungeon ~= "" and canonicalDungeon or L["cat_keystone"]
+            dungeonDisplay = shortDungeon ~= "" and shortDungeon or L["cat_keystone"]
         end
     elseif category == "RAID" then
-        dungeonDisplay = canonicalDungeon ~= "" and canonicalDungeon or L["cat_raid"]
+        dungeonDisplay = shortDungeon ~= "" and shortDungeon or L["cat_raid"]
     elseif category == "WORLD_BOSS" then
-        dungeonDisplay = canonicalDungeon ~= "" and canonicalDungeon or L["cat_world_boss"]
+        dungeonDisplay = shortDungeon ~= "" and shortDungeon or L["cat_world_boss"]
     elseif category == "MANASTORM" then
-        dungeonDisplay = canonicalDungeon ~= "" and canonicalDungeon or L["cat_manastorm"]
+        dungeonDisplay = shortDungeon ~= "" and shortDungeon or L["cat_manastorm"]
     elseif category == "PVP" then
-        dungeonDisplay = canonicalDungeon ~= "" and canonicalDungeon or L["cat_pvp"]
+        dungeonDisplay = shortDungeon ~= "" and shortDungeon or L["cat_pvp"]
     else
-        dungeonDisplay = canonicalDungeon ~= "" and canonicalDungeon or L["cat_dungeon"]
+        dungeonDisplay = shortDungeon ~= "" and shortDungeon or L["cat_dungeon"]
     end
 
     local row1Y = -22
@@ -1616,6 +2118,7 @@ function LFG.CreateLFGPopup(sender, message, dungeon, isHeroic, isMythic, isRaid
     dungeonFS:SetPoint("TOPLEFT", popup, "TOPLEFT", iconX, row1Y)
     dungeonFS:SetPoint("RIGHT", popup, "RIGHT", -10, 0)
     dungeonFS:SetJustifyH("LEFT")
+    dungeonFS:SetWordWrap(false)
     local dungeonColorHex = catHex
     if diffColor == "|cffaa44ff" then dungeonColorHex = "aa44ff"
     elseif diffColor == "|cffff8800" then dungeonColorHex = "ff8800"
@@ -1650,9 +2153,10 @@ function LFG.CreateLFGPopup(sender, message, dungeon, isHeroic, isMythic, isRaid
     msgFS:SetPoint("RIGHT", popup, "RIGHT", -10, 0)
     msgFS:SetJustifyH("LEFT")
     msgFS:SetWordWrap(false)
-    local truncMsg = message and #message > 60 and string.sub(message, 1, 57) .. "..." or (message or "")
+    local rawForDisplay = message or ""
+    local truncMsg = #rawForDisplay > 80 and string.sub(rawForDisplay, 1, 77) .. "..." or rawForDisplay
     msgFS:SetTextColor(1, 1, 1, 1)
-    msgFS:SetText(truncMsg)
+    msgFS:SetText(LFG.FormatMessageWithIcons(truncMsg))
 
     local footerY = 6
 
@@ -1989,9 +2493,9 @@ function LFG.InitRowPool(parent)
         roleText:SetJustifyH("LEFT")
         roleText:SetText("")
         roleText:SetTextColor(unpack(_tc("textNorm")))
-        local dungeonText = row:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+        local dungeonText = row:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
         dungeonText:SetPoint("LEFT", row, "LEFT", 266, 0)
-        dungeonText:SetWidth(80)
+        dungeonText:SetWidth(82)
         dungeonText:SetJustifyH("LEFT")
         dungeonText:SetText("")
         dungeonText:SetTextColor(unpack(_tc("textNorm")))
@@ -2118,9 +2622,9 @@ function LFG.CreateRowForPool(parent, idx)
     roleText:SetJustifyH("LEFT")
     roleText:SetText("")
     roleText:SetTextColor(unpack(_tc("textNorm")))
-    local dungeonText = row:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    local dungeonText = row:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
     dungeonText:SetPoint("LEFT", row, "LEFT", 266, 0)
-    dungeonText:SetWidth(80)
+    dungeonText:SetWidth(82)
     dungeonText:SetJustifyH("LEFT")
     dungeonText:SetText("")
     dungeonText:SetTextColor(unpack(_tc("textNorm")))
@@ -2359,7 +2863,15 @@ function LFG.UpdateRecruitersList()
                     diffTag = L["diff_normal"]
                     diffColor = "|cffcccccc"
                 end
-                local dungeonDisplay = record.dungeonName or record.dungeon or ""
+                local fullDungeonName = record.dungeonName or record.dungeon or ""
+                local dungeonName = LFG.GetShortDungeonName(record.category, record.dungeon) or fullDungeonName
+                local catAccent = CATEGORY_ACCENT[record.category] or CATEGORY_ACCENT.MISC
+                local ar2, ag2, ab2 = catAccent[1] or 0.7, catAccent[2] or 0.7, catAccent[3] or 0.7
+                local nameColorHex = string.format("|cff%02x%02x%02x",
+                    math.floor(math.max(0, math.min(1, ar2)) * 255),
+                    math.floor(math.max(0, math.min(1, ag2)) * 255),
+                    math.floor(math.max(0, math.min(1, ab2)) * 255))
+                local dungeonDisplay = nameColorHex .. dungeonName .. "|r"
                 if diffTag and diffTag ~= "" then
                     dungeonDisplay = dungeonDisplay .. " " .. diffColor .. "[" .. diffTag .. "]|r"
                 end
@@ -2367,14 +2879,14 @@ function LFG.UpdateRecruitersList()
             else
                 poolRow.dungeonText:SetText("")
             end
-            poolRow.msgText:SetText(LFG.ShortenMessage(record.message) or "")
+            poolRow.msgText:SetText(LFG.FormatMessageWithIcons(LFG.ShortenMessage(record.message) or ""))
             local timeSinceForTooltip = timeSince
             poolRow.tooltipFrame:SetScript("OnEnter", function(self)
                 GameTooltip:SetOwner(self, "ANCHOR_TOP", 0, 10)
                 GameTooltip:SetText("|cFFFFFF00" .. (record.player or "Unknown") .. "|r", 1, 1, 1)
                 GameTooltip:AddLine(" ")
                 GameTooltip:AddLine("|cFF00FF00Full Message:|r", 0, 1, 0)
-                GameTooltip:AddLine(record.message or "", 1, 1, 1, true)
+                GameTooltip:AddLine(LFG.FormatMessageWithIcons(record.message or ""), 1, 1, 1, true)
                 GameTooltip:AddLine(" ")
                 if roleFullStr and roleFullStr ~= "" then
                     GameTooltip:AddLine("|cFF88CCFFLooking for:|r " .. roleFullStr, 0.9, 0.85, 0.4)
