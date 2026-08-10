@@ -13,4 +13,5 @@
 <Include file="Modules\Community\community.xml"/>
 <Include file="Modules\VoiceBridge\voicebridge.xml"/>
 <Include file="Modules\Module.xml"/>
+<Include file="Modules\Setup\setup.xml"/>
 </Ui>

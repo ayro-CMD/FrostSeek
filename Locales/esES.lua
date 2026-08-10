@@ -23,11 +23,12 @@
 local FrostSeek = _G.FrostSeek
 
 local ES = {
-    -- Core UI
     ["addon_name"] = "FrostSeek",
     ["version"] = "Version",
     ["enabled"] = "Activado",
     ["disabled"] = "Desactivado",
+    ["select"] = "Select",
+    ["deselect"] = "Deselect",
     ["settings"] = "Ajustes",
     ["close"] = "Cerrar",
     ["save"] = "Guardar",
@@ -45,7 +46,6 @@ local ES = {
     ["off"] = "Off",
     ["any"] = "Cualquiera",
 
-    -- LFG
     ["lfg_title"] = "Sistema LFG",
     ["lfg_disable_popups"] = "Desactivar Popups",
     ["lfg_silent_notifications"] = "Notificaciones Silenciosas",
@@ -73,7 +73,6 @@ local ES = {
     ["lfg_click_enable"] = "Clic para activar el radar LFG",
     ["lfg_click_disable"] = "Clic para desactivar el radar LFG",
 
-    -- Categories
     ["cat_dungeon"] = "Mazmorra",
     ["cat_raid"] = "Banda",
     ["cat_world_boss"] = "Jefe del Mundo",
@@ -84,7 +83,6 @@ local ES = {
     ["cat_quest"] = "Mision",
     ["cat_all"] = "Todos",
 
-    -- Difficulty
     ["diff_normal"] = "N",
     ["diff_heroic"] = "HC",
     ["diff_mythic"] = "M",
@@ -92,7 +90,6 @@ local ES = {
     ["diff_trial"] = "Trial",
     ["diff_ranked"] = "Ranked",
 
-    -- LFM
     ["lfm_title"] = "Sistema LFM",
     ["lfm_publish"] = "Publicar en FrostNet",
     ["lfm_auto_spam"] = "Spam Automatico",
@@ -122,7 +119,6 @@ local ES = {
     ["lfm_auto_invite_enabled"] = "Auto-Invitar activado",
     ["lfm_auto_invite_disabled"] = "Auto-Invitar desactivado",
 
-    -- Listings
     ["listings_title"] = "Listados",
     ["listings_browse"] = "Explorar",
     ["listings_my_listing"] = "Mi Grupo",
@@ -152,7 +148,6 @@ local ES = {
     ["listings_cannot_apply_own"] = "No puedes postular a tu propio grupo!",
     ["listings_group_created"] = "Grupo creado: %s",
 
-    -- Applicants
     ["app_new_applied"] = "Nuevo candidato",
     ["app_level"] = "Nv",
     ["app_note"] = "Nota",
@@ -162,7 +157,6 @@ local ES = {
     ["app_withdrawn"] = "Retirado",
     ["app_expired"] = "Expirado",
 
-    -- FrostNet
     ["frostnet_title"] = "FrostNet",
     ["frostnet_connected"] = "Conectado al canal %s",
     ["frostnet_disconnected"] = "Desconectado del canal %s",
@@ -176,7 +170,6 @@ local ES = {
     ["frostnet_connecting"] = "Conectando...",
     ["frostnet_offline"] = "Desconectado",
 
-    -- Profile
     ["profile_title"] = "Perfil",
     ["profile_role"] = "Rol",
     ["profile_spec"] = "Spec",
@@ -192,7 +185,6 @@ local ES = {
     ["profile_preview"] = "Vista Previa del Perfil",
     ["profile_voice_url_inline"] = "URL Voice  (Discord/TS - adjuntado automaticamente a tus listados)",
 
-    -- Options
     ["options_title"] = "Opciones",
     ["options_general"] = "General",
     ["options_lfg"] = "Sistema LFG",
@@ -278,8 +270,37 @@ local ES = {
     ["options_keywords_desc"] = "Anade palabras clave personalizadas para cada categoria. Separa con comas.\nLos mensajes que contengan estas palabras seran clasificados en la categoria correspondiente.",
     ["options_custom_disabled"] = "Mensajes personalizados desactivados - Activa la casilla arriba",
     ["options_icon_credit"] = "Icono por|cFF88CCFF Ernestodx|r",
+    ["setup_title"] = "Configuración de FrostSeek",
+    ["setup_page_1_title"] = "Bienvenido a FrostSeek",
+    ["setup_page_1_desc"] = "Vamos a configurar el addon. Primero, elige tu idioma preferido.",
+    ["setup_page_2_title"] = "Cómo funciona FrostSeek",
+    ["setup_page_2_body"] = "FrostSeek es un gestor avanzado LFG/LFM con FrostNet (una red de presencia en tiempo real integrada).\n\n• Pestaña LFG: Explora grupos y postúlate. Los popups te avisan cuando alguien busca tu rol.\n• Pestaña LFM: Publica tu grupo, auto-spam de canales, gestiona solicitantes.\n• FrostNet: Ver quién está en línea entre reinos (separado del canal LFG).\n• Opciones: Ajusta todo — popups, sonidos, temas, palabras clave personalizadas.\n\nConsejo: Ctrl+Clic en el botón del minimapa para desactivar rápidamente LFG + popups sin abrir la ventana principal.",
+    ["setup_page_3_title"] = "Tu Perfil",
+    ["setup_page_3_desc"] = "Configura popups y sonidos. El rol y el tema se configuran en sus propias ventanas.",
+    ["setup_page_4_title"] = "¡Todo Listo!",
+    ["setup_page_4_body"] = "¡Gracias por instalar FrostSeek!\n\nSi encuentras bugs o tienes sugerencias, únete a nuestro Discord o abre un issue en GitHub (enlaces en la pestaña Opciones).\n\n— Ayro",
+    ["setup_next"] = "Siguiente",
+    ["setup_back"] = "Atrás",
+    ["setup_finish"] = "Finalizar",
+    ["setup_skip"] = "Saltar configuración",
+    ["setup_select_role"] = "Selecciona tu rol:",
+    ["setup_enable_popups"] = "Activar popups LFG",
+    ["setup_enable_sounds"] = "Activar sonidos",
+    ["setup_select_theme"] = "Seleccionar tema:",
+    ["setup_frostnet_discord"] = "Enlace de Discord FrostNet (opcional):",
+    ["server_profile_auto"] = "Detección automática (recomendado)",
+    ["server_profile_classic"] = "Classic WoW",
+    ["server_profile_tbc"] = "The Burning Crusade",
+    ["server_profile_wotlk"] = "Wrath of the Lich King",
+    ["server_profile_cata"] = "Cataclysm",
+    ["server_profile_mop"] = "Mists of Pandaria",
+    ["server_profile_epoch"] = "Epoch (servidor custom 3.3.5)",
+    ["server_profile_ascension"] = "Ascension (Project Ascension / CoA)",
+    ["server_profile_desc"] = "Filtra el contenido LFM y FrostNet según la expansión de tu servidor. Los servidores Ascension también muestran contenido personalizado de Ascension.",
+    ["options_server_profile"] = "Perfil del Servidor",
+    ["options_server_profile_desc"] = "Filtra el contenido LFM y FrostNet según la expansión de tu servidor. Los servidores Ascension también muestran contenido personalizado de Ascension.",
+    ["options_toggle_hint"] = "Clic para alternar",
 
-    -- Presence
     ["presence_online"] = "%d usuarios en linea",
     ["presence_offline"] = "No hay usuarios en linea",
     ["presence_user_tooltip"] = "Usuario FrostNet",
@@ -295,7 +316,6 @@ local ES = {
     ["presence_who_list"] = "Lista Quien",
     ["presence_ping_sent"] = "Ping enviado!",
 
-    -- Dashboard
     ["dashboard_title"] = "Panel de FrostSeek",
     ["dashboard_lfg_tab"] = "LFG",
     ["dashboard_lfm_tab"] = "LFM",
@@ -310,12 +330,10 @@ local ES = {
     ["dashboard_today"] = "Hoy",
     ["dashboard_frostnet_label"] = "FROSTNET",
 
-    -- Sound
     ["sound_popup"] = "Sonido de Popup",
     ["sound_listing"] = "Sonido de Listado",
     ["sound_applicant"] = "Sonido de Candidato",
 
-    -- Clear / Reset
     ["clear_all_data"] = "Limpiar Todos los Datos",
     ["clear_all_confirm"] = "Esto reiniciara todos los ajustes de FrostSeek. Seguro?",
     ["clear_all_done"] = "Todos los datos de FrostSeek han sido borrados. Ejecuta /reload.",
@@ -324,11 +342,9 @@ local ES = {
     ["deselect_all"] = "Deseleccionar Todo",
     ["toggle_all"] = "Invertir Todo",
 
-    -- Minimap
     ["minimap_show"] = "Mostrar Boton del Minimapa",
     ["minimap_hide"] = "Ocultar Boton del Minimapa",
 
-    -- Stats labels
     ["item_level"] = "iLvl",
     ["level"] = "Nivel",
     ["class"] = "Clase",
@@ -339,7 +355,6 @@ local ES = {
     ["role_support"] = "Soporte",
     ["unknown"] = "Desconocido",
 
-    -- Column headers
     ["col_player"] = "Jugador",
     ["col_time"] = "Tiempo",
     ["col_type"] = "Tipo",
@@ -351,7 +366,6 @@ local ES = {
     ["col_leader"] = "Leader",
     ["col_status"] = "Estado",
 
-    -- Labels
     ["label_leader"] = "Leader",
     ["label_members"] = "Miembros",
     ["label_voice"] = "Voice",
@@ -371,13 +385,11 @@ local ES = {
     ["label_expansion"] = "Expansion",
     ["label_activity"] = "Actividad",
 
-    -- Status (presence)
     ["status_free"] = "Libre",
     ["status_busy"] = "Ocupado",
     ["status_afk"] = "AFK",
     ["status_bored"] = "Aburrido",
 
-    -- Tooltip
     ["tooltip_left_click"] = "Clic izquierdo para abrir",
     ["tooltip_right_click"] = "Clic derecho para opciones",
     ["tooltip_full_message"] = "Mensaje Completo",
@@ -387,17 +399,14 @@ local ES = {
     ["tooltip_activity_filter"] = "Filtro de Actividad",
     ["tooltip_activity_filter_desc"] = "Clic para configurar que mazmorras\\ny bandas aparecen en LFG",
 
-    -- Popup actions
     ["popup_whisper"] = "Susurrar",
     ["popup_mute"] = "Silenciar",
     ["popup_muted"] = "%s silenciado por 30 minutos",
     ["popup_whisper_sent"] = "Susurro enviado a %s",
     ["popup_invite"] = "Invitar",
 
-    -- Filter
     ["filter_all"] = "Todos",
 
-    -- Event board
     ["event_board_title"] = "Tablon de Eventos de la Comunidad",
     ["event_board_subtab"] = "Tablon de Eventos",
     ["event_board_discovered"] = "Eventos de comunidad descubiertos",
@@ -420,7 +429,6 @@ local ES = {
     ["event_board_section_events"] = "Eventos",
     ["event_board_recent"] = "Recientes",
 
-    -- Community tab labels and buttons
     ["community_title"] = "Comunidad",
     ["community_subtab_browser"] = "Navegador de Hermandades",
     ["community_subtab_recruitment"] = "Creador de Reclutamiento",
@@ -441,7 +449,6 @@ local ES = {
     ["community_clear_guilds_title"] = "Limpiar Base de Datos de Hermandades",
     ["community_clear_guilds_msg"] = "Eliminar todas las hermandades descubiertas?",
 
-    -- protocol & networking
     ["net_connected"] = "Conectado al canal %s (slot %s)",
     ["net_disconnected"] = "Desconectado del canal %s, reintentando...",
     ["net_no_loopback"] = "Sin eco del servidor en 2s - el servidor puede estar descartando tus mensajes. Usa /fsnet para verificar.",
@@ -464,7 +471,6 @@ local ES = {
     ["net_app_accepted_invited"] = "Aceptado e invitado %s",
     ["net_app_declined_sent"] = "Postulacion rechazada",
 
-    -- schema migration & reset
     ["migration_failed"] = "migracion de esquema a v%s fallo: %s",
     ["reset_warning"] = "Esto BORRARA todos los ajustes, listados, historial, voice links.",
     ["reset_confirm_hint"] = "Escribe /fsreset confirm para proceder (tus plantillas LFM favoritas se preservaran).",
@@ -473,7 +479,6 @@ local ES = {
     ["log_header"] = "FROSTSEEK LOG (ultimos %s eventos)",
     ["log_footer"] = "==================================================",
 
-    -- voice bridge
     ["voice_join"] = "Unirse al Voice",
     ["voice_link_set"] = "Link de voice guardado para %s",
     ["voice_link_cleared"] = "Link de voice eliminado para %s",
@@ -490,7 +495,6 @@ local ES = {
     ["voice_popup_hint1"] = "Selecciona la URL de abajo y presiona Ctrl+C para copiar,",
     ["voice_popup_hint2"] = "o haz clic en Copiar para copiar automaticamente (solo Retail+).",
 
-    -- settings panel
     ["settings_language"] = "Idioma",
     ["settings_language_desc"] = "auto = sigue el idioma del cliente WoW",
     ["settings_log_level"] = "Nivel de Log",
@@ -500,7 +504,6 @@ local ES = {
     ["settings_reload_later"] = "Mas tarde",
     ["settings_language_set"] = "Idioma establecido a %s",
 
-    -- Core addon messages
     ["core_loaded"] = "FrostSeek v%s cargado!",
     ["core_modules_loaded"] = "FrostSeek: v%s -- Todos los modulos cargados",
     ["core_module_init_error"] = "FrostSeek Core: Error inicializando '%s': %s",

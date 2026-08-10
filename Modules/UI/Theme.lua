@@ -929,7 +929,6 @@ function ThemeAPI.Apply()
         FS.MainFrame:SetBackdropColor(unpack(T.Get("bgMain")))
         FS.MainFrame:SetBackdropBorderColor(unpack(T.Get("border")))
 
-        local title = FS.MainFrame:GetChildren()
         for _, child in ipairs({FS.MainFrame:GetRegions()}) do
             if child:GetObjectType() == "FontString" then
                 local txt = child:GetText() or ""
@@ -970,7 +969,7 @@ function ThemeAPI.Apply()
             if mod and mod.ApplyTheme then
                 local ok, err = pcall(function() mod:ApplyTheme() end)
                 if not ok and FrostSeekDB and FrostSeekDB.Settings and FrostSeekDB.Settings.debugMode then
-                    print("|cffff0000FrostSeek Theme:|r Error applying theme to module: " .. tostring(err))
+                    print(_G.FrostSeek.L["theme_error_applying"] .. tostring(err))
                 end
             end
         end
@@ -1007,7 +1006,7 @@ local function InitTheme()
     ThemeAPI.RegisterModule("theme")
 
     if FrostSeekDB and FrostSeekDB.Settings and FrostSeekDB.Settings.debugMode then
-        print("|cff88ccffFrostSeek Theme:|r Initialized - Active theme: " .. _currentName)
+        print(_G.FrostSeek.L["theme_initialized_active"] .. _currentName)
     end
 end
 

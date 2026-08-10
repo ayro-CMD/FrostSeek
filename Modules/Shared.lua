@@ -276,14 +276,14 @@ function Shared.ConfirmDialog(title, text, onConfirm, onCancel)
 
     frame.title = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
     frame.title:SetPoint("TOP", frame, "TOP", 0, -16)
-    frame.title:SetText(title or "Confirm")
+    frame.title:SetText(title or _G.FrostSeek.L["dialog_confirm"])
     local titleColor = _tc("textBright") or {1, 1, 1}
     frame.title:SetTextColor(titleColor[1], titleColor[2], titleColor[3])
 
     frame.text = frame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     frame.text:SetPoint("TOP", frame.title, "BOTTOM", 0, -8)
     frame.text:SetWidth(280)
-    frame.text:SetText(text or "Are you sure?")
+    frame.text:SetText(text or _G.FrostSeek.L["dialog_are_you_sure"])
     local textColor = _tc("textNorm") or {0.8, 0.8, 0.8}
     frame.text:SetTextColor(textColor[1], textColor[2], textColor[3])
 
@@ -305,7 +305,7 @@ function Shared.ConfirmDialog(title, text, onConfirm, onCancel)
     frame.confirmBtn.accent:SetColorTexture(unpack(confirmColor))
     frame.confirmBtn.text = frame.confirmBtn:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     frame.confirmBtn.text:SetPoint("CENTER")
-    frame.confirmBtn.text:SetText("|cff44ff66" .. (YES or "Yes") .. "|r")
+    frame.confirmBtn.text:SetText("|cff44ff66" .. (YES or _G.FrostSeek.L["yes"]) .. "|r")
     frame.confirmBtn:SetScript("OnClick", function()
         frame:Hide()
         if onConfirm then onConfirm() end
@@ -329,7 +329,7 @@ function Shared.ConfirmDialog(title, text, onConfirm, onCancel)
     frame.cancelBtn.accent:SetColorTexture(unpack(dangerColor))
     frame.cancelBtn.text = frame.cancelBtn:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     frame.cancelBtn.text:SetPoint("CENTER")
-    frame.cancelBtn.text:SetText("|cffff5555" .. (NO or "No") .. "|r")
+    frame.cancelBtn.text:SetText("|cffff5555" .. (NO or _G.FrostSeek.L["no"]) .. "|r")
     frame.cancelBtn:SetScript("OnClick", function()
         frame:Hide()
         if onCancel then onCancel() end
@@ -376,6 +376,103 @@ end
 Shared._tc = _tc
 Shared._hex = _hex
 Shared._cmul = _cmul
+
+function Shared.GetServerProfile()
+    local dbProfile = FrostSeekDB and FrostSeekDB.Settings and FrostSeekDB.Settings.serverProfile or "auto"
+    if dbProfile ~= "auto" then return dbProfile end
+
+    local Compat = _G.FrostSeekCompat
+    if not Compat then return "wotlk" end
+
+    if Compat.IsEpoch and Compat.IsEpoch() then return "epoch" end
+    if Compat.IsAscension and Compat.IsAscension() then return "ascension" end
+    if Compat.IsVanilla and Compat.IsVanilla() then return "classic" end
+    if Compat.IsTBC and Compat.IsTBC() then return "tbc" end
+    if Compat.Is335 and Compat.Is335() then return "wotlk" end
+    if Compat.IsWotLKClassic and Compat.IsWotLKClassic() then return "wotlk" end
+    if Compat.IsCata and Compat.IsCata() then return "cata" end
+    if Compat.IsMists and Compat.IsMists() then return "mop" end
+    if Compat.IsMainline and Compat.IsMainline() then return "mop" end
+    return "wotlk"
+end
+
+function Shared.GetServerProfileExpansionLevel()
+    local profile = Shared.GetServerProfile()
+    local map = {
+        classic = 0, tbc = 1, wotlk = 2, cata = 3, mop = 4,
+        ascension = 2, epoch = 2,
+    }
+    return map[profile] or 2
+end
+
+function Shared.IsExpansionVisibleForServer(expansionKey)
+    local profile = Shared.GetServerProfile()
+    local upper = string.upper(expansionKey or "")
+
+    if upper == "WORLD BOSSES" or upper == "PVP" or upper == "MANASTORM"
+       or upper == "KEYSTONE" or upper == "MISC" then
+        return true
+    end
+
+    if profile == "ascension" then
+        if upper == "EPOCH DUNGEONS" then return false end
+        if upper == "CUSTOM DUNGEONS" or upper == "CUSTOM RAIDS"
+           or upper == "CLASSIC DUNGEONS" or upper == "CLASSIC RAIDS"
+           or upper == "TBC DUNGEONS" or upper == "TBC RAIDS"
+           or upper == "WOTLK DUNGEONS" or upper == "WOTLK RAIDS" then
+            return true
+        end
+        return false
+    end
+
+    if profile == "epoch" then
+        if upper == "EPOCH DUNGEONS" then return true end
+        if upper == "CUSTOM DUNGEONS" or upper == "CUSTOM RAIDS" then return false end
+        if upper == "CLASSIC DUNGEONS" or upper == "CLASSIC RAIDS"
+           or upper == "TBC DUNGEONS" or upper == "TBC RAIDS"
+           or upper == "WOTLK DUNGEONS" or upper == "WOTLK RAIDS" then
+            return true
+        end
+        return false
+    end
+
+    if upper == "CUSTOM DUNGEONS" or upper == "CUSTOM RAIDS"
+       or upper == "EPOCH DUNGEONS" then
+        return false
+    end
+
+    local expLevel = Shared.GetServerProfileExpansionLevel()
+    local keyToLevel = {
+        ["CLASSIC DUNGEONS"] = 0, ["CLASSIC RAIDS"] = 0,
+        ["TBC DUNGEONS"] = 1, ["TBC RAIDS"] = 1,
+        ["WOTLK DUNGEONS"] = 2, ["WOTLK RAIDS"] = 2,
+        ["CATA DUNGEONS"] = 3, ["CATA RAIDS"] = 3,
+        ["MoP DUNGEONS"] = 4, ["MoP RAIDS"] = 4, ["MoP WORLD BOSSES"] = 4,
+    }
+    local lvl = keyToLevel[upper]
+    if lvl == nil then return true end
+    return lvl <= expLevel
+end
+
+function Shared.GetRelevantExpansionsForProfile()
+    local profile = Shared.GetServerProfile()
+    if profile == "classic" then
+        return { "Classic" }
+    elseif profile == "tbc" then
+        return { "Classic", "TBC" }
+    elseif profile == "wotlk" then
+        return { "Classic", "TBC", "WotLK" }
+    elseif profile == "cata" then
+        return { "Classic", "TBC", "WotLK", "Cata" }
+    elseif profile == "mop" then
+        return { "Classic", "TBC", "WotLK", "Cata", "MoP" }
+    elseif profile == "ascension" then
+        return { "Classic", "TBC", "WotLK", "Ascension" }
+    elseif profile == "epoch" then
+        return { "Classic", "TBC", "WotLK", "Epoch" }
+    end
+    return { "Classic", "TBC", "WotLK" }
+end
 
 _G.FrostSeekShared = Shared
 

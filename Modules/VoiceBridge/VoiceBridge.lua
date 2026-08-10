@@ -59,6 +59,7 @@ function VoiceBridge:Set(leaderName, url)
         print("|cffff5555FrostSeek:|r " .. L["voice_link_invalid"])
         return false, "invalid_url"
     end
+    if not FrostSeekDB then FrostSeekDB = {} end
     if not FrostSeekDB.VoiceLinks then FrostSeekDB.VoiceLinks = {} end
     FrostSeekDB.VoiceLinks[leaderName] = {
         url = url,
@@ -70,14 +71,14 @@ end
 
 function VoiceBridge:Get(leaderName)
     if not leaderName then return nil end
-    if not FrostSeekDB.VoiceLinks then return nil end
+    if not FrostSeekDB or not FrostSeekDB.VoiceLinks then return nil end
     local entry = FrostSeekDB.VoiceLinks[leaderName]
     if not entry then return nil end
     return entry.url, entry.ts
 end
 
 function VoiceBridge:Remove(leaderName)
-    if not leaderName or not FrostSeekDB.VoiceLinks then return false end
+    if not leaderName or not FrostSeekDB or not FrostSeekDB.VoiceLinks then return false end
     if not FrostSeekDB.VoiceLinks[leaderName] then return false end
     FrostSeekDB.VoiceLinks[leaderName] = nil
     print("|cff88ccffFrostSeek:|r " .. Lf("voice_link_cleared", leaderName))
@@ -85,8 +86,8 @@ function VoiceBridge:Remove(leaderName)
 end
 
 function VoiceBridge:List()
-    if not FrostSeekDB.VoiceLinks then
-        print("|cff88ccffFrostSeek VoiceBridge:|r no links stored")
+    if not FrostSeekDB or not FrostSeekDB.VoiceLinks then
+        print(L["msg_no_voice_links"])
         return
     end
     local any = false
@@ -96,7 +97,7 @@ function VoiceBridge:List()
             leader, entry.url))
     end
     if not any then
-        print("|cff88ccffFrostSeek VoiceBridge:|r no links stored")
+        print(L["voice_no_links_stored"])
     end
 end
 
@@ -126,7 +127,7 @@ end
 function VoiceBridge:JoinVoice(leaderName)
     local url = VoiceBridge:Get(leaderName)
     if not url then
-        print("|cffff5555FrostSeek:|r " .. (L["voice_no_link"] or "No voice link set for this group"))
+        print("|cffff5555FrostSeek:|r " .. (L["voice_no_link"] or L["voice_no_link"]))
         return false
     end
 
@@ -141,7 +142,7 @@ function VoiceBridge._ShowVoicePopup(url, leaderName)
     if voicePopup then
         voicePopup.urlEdit:SetText(url or "")
         if voicePopup.urlLabel then
-            voicePopup.urlLabel:SetText("|cff88ccff" .. (L["voice_join"] or "Join Voice") .. "|r  |cff888888— " .. tostring(leaderName or "") .. "|r")
+            voicePopup.urlLabel:SetText("|cff88ccff" .. (L["voice_join"] or L["voice_join"]) .. "|r  |cff888888— " .. tostring(leaderName or "") .. "|r")
         end
         voicePopup:Show()
         return
@@ -166,13 +167,13 @@ function VoiceBridge._ShowVoicePopup(url, leaderName)
     f:SetScript("OnDragStop", f.StopMovingOrSizing)
     f.urlLabel = f:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
     f.urlLabel:SetPoint("TOPLEFT", f, "TOPLEFT", 16, -14)
-    f.urlLabel:SetText("|cff88ccff" .. (L["voice_join"] or "Join Voice") .. "|r  |cff888888— " .. tostring(leaderName or "") .. "|r")
+    f.urlLabel:SetText("|cff88ccff" .. (L["voice_join"] or L["voice_join"]) .. "|r  |cff888888— " .. tostring(leaderName or "") .. "|r")
     f.hint = f:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     f.hint:SetPoint("TOPLEFT", f.urlLabel, "BOTTOMLEFT", 0, -4)
-    f.hint:SetText("|cff888888" .. (L["voice_popup_hint1"] or "Select the URL below and press Ctrl+C to copy,") .. "|r")
+    f.hint:SetText("|cff888888" .. (L["voice_popup_hint1"] or L["voice_popup_hint1"]) .. "|r")
     f.hint2 = f:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     f.hint2:SetPoint("TOPLEFT", f.hint, "BOTTOMLEFT", 0, -2)
-    f.hint2:SetText("|cff888888" .. (L["voice_popup_hint2"] or "or click Copy to copy automatically (Retail+ only).") .. "|r")
+    f.hint2:SetText("|cff888888" .. (L["voice_popup_hint2"] or L["voice_popup_hint2"]) .. "|r")
     local eb = CreateFrame("EditBox", nil, f)
     eb:SetSize(488, 24)
     eb:SetPoint("TOPLEFT", f, "TOPLEFT", 16, -76)
@@ -197,7 +198,7 @@ function VoiceBridge._ShowVoicePopup(url, leaderName)
     local copyBtn = CreateFrame("Button", nil, f, "UIPanelButtonTemplate")
     copyBtn:SetSize(120, 26)
     copyBtn:SetPoint("BOTTOMLEFT", f, "BOTTOMLEFT", 16, 12)
-    copyBtn:SetText("|cff44ff44" .. (L["voice_copy"] or "Copy") .. "|r")
+    copyBtn:SetText("|cff44ff44" .. (L["voice_copy"] or L["voice_copy"]) .. "|r")
     copyBtn:SetScript("OnClick", function()
         local text = f.urlEdit:GetText() or ""
         local ok = false
@@ -205,11 +206,11 @@ function VoiceBridge._ShowVoicePopup(url, leaderName)
             ok = pcall(CopyToClipboard, text)
         end
         if ok then
-            print("|cff44ff44FrostSeek:|r " .. (L["voice_copy_ok"] or "URL copied to clipboard"))
+            print("|cff44ff44FrostSeek:|r " .. (L["voice_copy_ok"] or L["voice_copy_ok"]))
         else
             f.urlEdit:SetFocus()
             f.urlEdit:HighlightText(0, -1)
-            print("|cffffcc00FrostSeek:|r " .. (L["voice_select_hint"] or "CopyToClipboard not available - URL selected, press Ctrl+C"))
+            print("|cffffcc00FrostSeek:|r " .. (L["voice_select_hint"] or L["voice_select_hint"]))
         end
     end)
     f.copyBtn = copyBtn
@@ -217,7 +218,7 @@ function VoiceBridge._ShowVoicePopup(url, leaderName)
     local closeBtn = CreateFrame("Button", nil, f, "UIPanelButtonTemplate")
     closeBtn:SetSize(100, 26)
     closeBtn:SetPoint("BOTTOMRIGHT", f, "BOTTOMRIGHT", -16, 12)
-    closeBtn:SetText("|cffff5555" .. (L["close"] or "Close") .. "|r")
+    closeBtn:SetText("|cffff5555" .. (L["close"] or L["close"]) .. "|r")
     closeBtn:SetScript("OnClick", function()
         f:Hide()
     end)
@@ -238,7 +239,7 @@ SlashCmdList["FSVOICE"] = function(msg)
     local cmd = (args[1] or "list"):lower()
     if cmd == "set" then
         if #args < 3 then
-            print("|cffff5555Usage:|r /fsvoice set <leaderName> <URL>")
+            print(L["msg_usage_set"])
             return
         end
         local leader = args[2]
@@ -246,18 +247,18 @@ SlashCmdList["FSVOICE"] = function(msg)
         VoiceBridge:Set(leader, url)
     elseif cmd == "get" then
         if not args[2] then
-            print("|cffff5555Usage:|r /fsvoice get <leaderName>")
+            print(L["msg_usage_get"])
             return
         end
         local url = VoiceBridge:Get(args[2])
         if url then
             print(string.format("|cff88ccff%s|r -> %s", args[2], url))
         else
-            print("|cffff5555No voice link for " .. tostring(args[2]) .. "|r")
+            print(L["msg_no_voice_link_for"] .. tostring(args[2]) .. "|r")
         end
     elseif cmd == "remove" then
         if not args[2] then
-            print("|cffff5555Usage:|r /fsvoice remove <leaderName>")
+            print(L["msg_usage_remove"])
             return
         end
         VoiceBridge:Remove(args[2])

@@ -300,7 +300,8 @@ function Profile:Initialize(parentFrame)
     discToggle:SetScript("OnEnter", function(self)
         self.hoverTex:Show()
         local p2 = EnsureProfileDB()
-        self.border:SetColorTexture(p2.discord and _tc("borderHover") or unpack(_tc("borderHover")))
+        local c = _tc("borderHover")
+        self.border:SetColorTexture(c[1], c[2], c[3], c[4] or 1)
     end)
 
     discToggle:SetScript("OnLeave", function(self)
@@ -319,7 +320,7 @@ function Profile:Initialize(parentFrame)
         Profile:UpdateDiscordToggle()
         Profile:UpdateAutoInfo()
         Profile:UpdateRoleButtons()
-        print("|cff88ccffFrostNet:|r Discord " .. (p.discord and "|cff44ff44Ready|r" or "|cffff5555Not Available|r"))
+        print(L["profile_discord_print_prefix"] .. (p.discord and L["profile_discord_ready_status"] or L["profile_discord_not_available_status"]))
     end)
     self.discToggle = discToggle
     curY = curY - 45
@@ -328,6 +329,7 @@ function Profile:Initialize(parentFrame)
     wispLabel:SetPoint("LEFT", discLabel, "RIGHT", 175, 0)
     wispLabel:SetText(_hex("accent") .. L["options_whisper_on_apply"] .. "|r")
 
+    if not FrostSeekDB then FrostSeekDB = {} end
     if not FrostSeekDB.Settings then FrostSeekDB.Settings = {} end
     if FrostSeekDB.Settings.applyWhisper == nil then FrostSeekDB.Settings.applyWhisper = false end
 
@@ -360,7 +362,7 @@ function Profile:Initialize(parentFrame)
 
     local function UpdateWispToggleVisual()
         local on = FrostSeekDB.Settings.applyWhisper == true
-        wispToggle.text:SetText(on and "|cff44ff44Whisper ON|r" or "|cff888888Whisper OFF|r")
+        wispToggle.text:SetText(on and L["profile_whisper_on"] or L["profile_whisper_off"])
         if on then
             wispToggle.border:SetColorTexture(0.3, 0.7, 0.4, 0.9)
             wispToggle.bg:SetColorTexture(unpack(_tc("bgTabActive")))
@@ -376,8 +378,8 @@ function Profile:Initialize(parentFrame)
         self.border:SetColorTexture(unpack(_tc("borderHover")))
         GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
         GameTooltip:SetText(L["options_whisper_on_apply"], 0.8, 0.9, 1)
-        GameTooltip:AddLine("When applying to a group, also send a [FrostSeek] whisper to the leader.", 0.8, 0.8, 0.8, true)
-        GameTooltip:AddLine("Useful if the leader does not run FrostSeek; the FSK APP message alone is enough for addon users.", 0.6, 0.6, 0.6, true)
+        GameTooltip:AddLine(L["tip_apply_whisper_explain"], 0.8, 0.8, 0.8, true)
+        GameTooltip:AddLine(L["tip_apply_whisper_useful"], 0.6, 0.6, 0.6, true)
         GameTooltip:Show()
     end)
     wispToggle:SetScript("OnLeave", function(self)
@@ -388,7 +390,7 @@ function Profile:Initialize(parentFrame)
     wispToggle:SetScript("OnClick", function(self)
         FrostSeekDB.Settings.applyWhisper = not (FrostSeekDB.Settings.applyWhisper == true)
         UpdateWispToggleVisual()
-        print("|cff88ccffFrostSeek:|r Apply-whisper " .. (FrostSeekDB.Settings.applyWhisper and "enabled" or "disabled"))
+        print(L["msg_apply_whisper_prefix"] .. (FrostSeekDB.Settings.applyWhisper and L["profile_enabled"] or L["profile_disabled"]))
     end)
     self.wispToggle = wispToggle
     self.UpdateWispToggleVisual = UpdateWispToggleVisual
@@ -446,7 +448,7 @@ function Profile:Initialize(parentFrame)
     self.voiceUrlEdit:SetScript("OnEscapePressed", function(self) self:ClearFocus() end)
 
     if FrostSeek and FrostSeek.UI and FrostSeek.UI.CreateModernButton then
-        self.voiceSaveBtn = FrostSeek.UI.CreateModernButton(F, 110, 24, "Save", _tc("accent"))
+        self.voiceSaveBtn = FrostSeek.UI.CreateModernButton(F, 110, 24, L["save"], _tc("accent"))
     else
         self.voiceSaveBtn = CreateFrame("Button", nil, F, "UIPanelButtonTemplate")
         self.voiceSaveBtn:SetSize(110, 24)
@@ -455,7 +457,7 @@ function Profile:Initialize(parentFrame)
     self.voiceSaveBtn:SetPoint("TOPLEFT", F, "TOPLEFT", pad + 370, curY)
     self.voiceSaveBtn:SetScript("OnClick", function()
         if not VB then
-            print("|cffff5555FrostSeek:|r VoiceBridge module not loaded.")
+            print(L["msg_voicebridge_not_loaded"])
             return
         end
         local url = Profile.voiceUrlEdit and Profile.voiceUrlEdit.GetText and Profile.voiceUrlEdit:GetText() or ""
@@ -465,12 +467,12 @@ function Profile:Initialize(parentFrame)
             if not ok then return end
         else
             VB:Remove(pn)
-            print("|cff88ccffFrostSeek:|r Voice link removed for " .. tostring(pn))
+            print(L["msg_voice_link_removed_for"] .. tostring(pn))
         end
     end)
 
     if FrostSeek and FrostSeek.UI and FrostSeek.UI.CreateModernButton then
-        self.voiceTestBtn = FrostSeek.UI.CreateModernButton(F, 90, 24, "Test", _tc("accent"))
+        self.voiceTestBtn = FrostSeek.UI.CreateModernButton(F, 90, 24, L["profile_test_btn"], _tc("accent"))
     else
         self.voiceTestBtn = CreateFrame("Button", nil, F, "UIPanelButtonTemplate")
         self.voiceTestBtn:SetSize(90, 24)
@@ -567,28 +569,28 @@ function Profile:UpdateAutoInfo()
 
     local lines = {}
     table.insert(lines, "|cffffffff" .. tostring(UnitName("player") or "?") .. "|r  " ..
-        _hex("textDim") .. "Lv " .. tostring(UnitLevel("player") or 60) .. " " ..
+        _hex("textDim") .. L["profile_lv_label"] .. tostring(UnitLevel("player") or 60) .. " " ..
         tostring(classFile or "") .. "|r")
-    table.insert(lines, "|cff88ccffiLvl:|r |cff44ff44" .. tostring(ilvl or 0) .. "|r   " ..
-        "|cff88ccffRole:|r " .. (roleColors[p.role] or "|cffffffff") .. roleName .. "|r   " ..
-        "|cff88ccffDiscord:|r " .. (p.discord and "|cff44ff44Yes|r" or "|cffff5555No|r"))
+    table.insert(lines, L["profile_ilvl_label"] .. tostring(ilvl or 0) .. "|r   " ..
+        L["profile_role_label"] .. (roleColors[p.role] or "|cffffffff") .. roleName .. "|r   " ..
+        L["profile_discord_label"] .. (p.discord and L["profile_yes_label"] or L["profile_no_label"]))
 
     self.autoInfo:SetText(table.concat(lines, "\n"))
 
     if self.preview then
         local app = self:GetProfileForApp()
         local previewLines = {}
-        table.insert(previewLines, _hex("textDim") .. "--- Application Profile ---|r")
-        table.insert(previewLines, "|cff88ccffName:|r " .. app.name .. "  |cff88ccffClass:|r " .. app.classFile)
-        table.insert(previewLines, "|cff88ccffiLvl:|r " .. app.itemLevel .. "  |cff88ccffRole:|r " .. app.role)
+        table.insert(previewLines, _hex("textDim") .. L["profile_application_profile_header"])
+        table.insert(previewLines, L["profile_name_label"] .. app.name .. L["profile_class_label"] .. app.classFile)
+        table.insert(previewLines, L["profile_ilvl_colon_label"] .. app.itemLevel .. L["profile_role_inline_label"] .. app.role)
         if app.roleType and app.roleType ~= "" then
-            table.insert(previewLines, "|cff88ccffSpec:|r " .. app.roleType)
+            table.insert(previewLines, L["profile_spec_label"] .. app.roleType)
         end
         if app.discord == "Yes" then
-            table.insert(previewLines, "|cff88ccffDiscord:|r |cff44ff44Available|r")
+            table.insert(previewLines, L["profile_discord_available"])
         end
         if app.note and app.note ~= "" then
-            table.insert(previewLines, "|cff88ccffNotes:|r " .. app.note)
+            table.insert(previewLines, L["profile_notes_label"] .. app.note)
         end
         self.preview:SetText(table.concat(previewLines, "\n"))
     end

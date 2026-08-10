@@ -19,6 +19,7 @@
 ==============================================================================
 ]]
 
+
 local FrostSeek = _G.FrostSeek
 local Shared = _G.FrostSeekShared
 local UI = _G.FrostSeekUIUtils
@@ -111,37 +112,26 @@ local function ExtractGuildName(msg)
 end
 
 local RECRUIT_KEYWORDS = {
-    -- English
     "recruit", "recruiting", "recruitment", "lfm guild", "guild lf", "looking for members",
     "we are", "join us", "wts guild", "guild recruiting",
-    -- Italian
     "reclutiamo", "arruoliamo", "cerchiamo membri", "unisciti", "unitevi", "gilda cerca",
     "gilda recluta", "reclutamento gilda", "stiamo cercando", "guild recluta",
-    -- Spanish
     "reclutamos", "buscamos miembros", "únete", "unete", "uníos", "unios",
     "hermandad busca", "hermandad recluta", "reclutamiento",
-    -- Portuguese
     "recrutamos", "procuramos membros", "junte-se", "junte se", "junte-se a nós",
     "guilda recruta", "guilda procura", "recrutamento",
-    -- German
     "rekrutieren", "rekrutierung", "wir suchen", "suchen mitglieder", "tritt bei",
     "tretet bei", "gilde sucht", "gilde rekrutiert",
-    -- French
     "recrutons", "rejoignez", "rejoignez-nous", "cherchons membres", "guilde recrute",
     "guilde cherche", "recrutement de guilde",
-    -- Polish
     "rekrutujemy", "szukamy", "dolacz", "dolacz do", "gildia", "czlonkow",
     "przywitaj", "zapraszamy", "gildie", "rekrutacja",
-    -- Czech
     "rekrutujeme", "hledame", "pripoj", "pripojte se", "guilda", "clenu",
     "vitejte", "zveme", "rekrutace", "hleda",
-    -- Russian
     "rekrytiryem", "ishchem", "prisoedinyaytes", "gildiyu", "chlenov",
     "privetstvuyem", "priglashaem", "rekrutatsiya", "gilda ishchet",
-    -- Romanian
     "recrutam", "cautam membri", "alturati", "alturatu", "vineti",
     "breasla cauta", "breasla recruteaza", "recrutare",
-    --mimi
 }
 
 local LANG_HINTS = {
@@ -156,7 +146,6 @@ local LANG_HINTS = {
     ru = { "rekrytiryem", "ishchem", "prisoedinyaytes", "gildiyu", "chlenov", "priglashaem", "privetstvuyem", "rekrutatsiya", "gilda", "k nam", "[RU]" },
     ro = { "recrutam", "cautam", "alturati", "alturatu", "vineti", "breasla", "membri", "suntem", "avem", "alaturi","recruteaza", },
 }
-
 local LANG_LABELS = {
     it = "IT", es = "ES", pt = "PT", de = "DE", fr = "FR", en = "EN",
     pl = "PL", cs = "CZ", ru = "RU", ro = "RO",
@@ -181,7 +170,8 @@ local function DetectLanguage(msg)
     local scores = { it = 0, es = 0, pt = 0, de = 0, fr = 0, en = 0, pl = 0, cs = 0, ru = 0, ro = 0 }
     for lang, words in pairs(LANG_HINTS) do
         for _, w in ipairs(words) do
-            local count = select(2, string.gsub(lower, w, ""))
+            local escaped = string.gsub(w, "([%%%.%*%+%-%?%^%$%[%]%(%)])", "%%%1")
+            local count = select(2, string.gsub(lower, escaped, ""))
             scores[lang] = scores[lang] + count
         end
     end
@@ -211,8 +201,6 @@ local function HookChatForGuildDiscovery()
     if chatFrameHooked then return end
     chatFrameHooked = true
 
-    local orig = ChatFrame_OnEvent
-    if not orig then return end
 
     local f = CreateFrame("Frame")
     f:RegisterEvent("CHAT_MSG_CHANNEL")
@@ -221,7 +209,7 @@ local function HookChatForGuildDiscovery()
     f:RegisterEvent("CHAT_MSG_SAY")
     f:SetScript("OnEvent", function(_, event, msg, sender)
         if not msg or not sender then return end
-        if not FrostSeekDB.Settings or FrostSeekDB.Settings.guildDiscoveryEnabled == false then
+        if not (FrostSeekDB and FrostSeekDB.Settings) or FrostSeekDB.Settings.guildDiscoveryEnabled == false then
             return
         end
         pcall(function()
@@ -482,7 +470,7 @@ local function EventNow()
 end
 
 local function EventPlayer()
-    return UnitName("player") or "Unknown"
+    return UnitName("player") or L["community_default_player_name"]
 end
 
 local function EventClean(s, maxLen)
@@ -520,9 +508,9 @@ end
 
 local function EventExpireText(expires)
     expires = tonumber(expires or 0) or 0
-    if expires == 0 then return "Never" end
+    if expires == 0 then return L["event_never_label"] end
     local left = expires - EventNow()
-    if left <= 0 then return "Expired" end
+    if left <= 0 then return L["event_expired_label"] end
     if left < 3600 then return tostring(math.max(1, math.floor(left / 60))) .. "m" end
     if left < 86400 then return tostring(math.floor(left / 3600)) .. "h" end
     return tostring(math.floor(left / 86400)) .. "d"
@@ -581,7 +569,7 @@ local function EventStore(id, sender, created, expires, typeName, name, timeText
         created = created,
         expires = expires,
         type = EventNormalizeType(typeName),
-        name = EventClean(name or "Community Event", 64),
+        name = EventClean(name or L["community_default_event_name"], 64),
         timeText = EventClean(timeText or "", 40),
         host = EventClean(host or sender or "", 40),
         contact = EventClean(contact or "", 64),
@@ -676,7 +664,7 @@ local function EventSerialize(row)
         EVENT_PREFIX,
         EventClean(row.id, 64),
         EventClean(row.type or "Other", 18),
-        EventClean(row.name or "Community Event", 64),
+        EventClean(row.name or L["community_default_event_name"], 64),
         EventClean(row.timeText or "", 40),
         EventClean(row.host or "", 40),
         EventClean(row.contact or "", 64),
@@ -838,11 +826,14 @@ local function EventInstallListener()
         end
     end)
     local Compat = _G.FrostSeekCompat
-    if Compat and Compat.ChannelAPI and Compat.ChannelAPI.JoinChannel then
-        pcall(function() Compat.ChannelAPI.JoinChannel(EVENT_CHANNEL, nil, EVENT_CHANNEL_SLOT) end)
-    else
-        pcall(function() JoinChannelByName(EVENT_CHANNEL, nil, nil, EVENT_CHANNEL_SLOT) end)
+    local function JoinEventChannel()
+        if Compat and Compat.ChannelAPI and Compat.ChannelAPI.JoinChannel then
+            pcall(function() Compat.ChannelAPI.JoinChannel(EVENT_CHANNEL, nil, EVENT_CHANNEL_SLOT) end)
+        else
+            pcall(function() JoinChannelByName(EVENT_CHANNEL, nil, nil, EVENT_CHANNEL_SLOT) end)
+        end
     end
+    C_Timer.After(10, JoinEventChannel)
     C_Timer.NewTicker(300, function()
         EventClearExpired(true)
     end)
@@ -878,10 +869,15 @@ function Community:PostEvent(typeName, name, timeText, host, contact, descriptio
         return false
     end
     local payload = EventSerialize(row)
+    local sentOK = false
     if payload then
-        EventSend(payload)
+        sentOK = EventSend(payload)
     end
-    print("|cff88ccffFrostSeek:|r " .. L["event_board_posted"])
+    if sentOK then
+        print("|cff88ccffFrostSeek:|r " .. L["event_board_posted"])
+    else
+        print("|cffffaa00FrostSeek:|r " .. (L["event_board_queued"] or L["event_board_queued"]))
+    end
     self:RefreshEventBoard()
     return true
 end
@@ -1030,7 +1026,7 @@ function Community:BuildEventBoardFrame()
     refreshBtn:SetScript("OnClick", function()
         Community:RequestEventsFromPeers()
         Community:RefreshEventBoard()
-        print("|cff88ccffFrostSeek:|r Requested events from other players")
+        print(L["msg_events_requested"])
     end)
     self.eventRefreshBtn = refreshBtn
 
@@ -1049,12 +1045,12 @@ function Community:BuildEventBoardFrame()
 
     local hY = -2
     local headers = {
-        { text = "Type",        x = 5,   w = 80 },
-        { text = "Name",        x = 90,  w = 180 },
-        { text = "Time",        x = 275, w = 100 },
-        { text = "Host",        x = 380, w = 110 },
-        { text = "Expires",     x = 495, w = 60 },
-        { text = "Description", x = 560, w = 180 },
+        { text = L["event_board_type"],        x = 5,   w = 80 },
+        { text = L["event_board_name"],        x = 90,  w = 180 },
+        { text = L["event_board_time"],        x = 275, w = 100 },
+        { text = L["event_board_host"],        x = 380, w = 110 },
+        { text = L["event_board_expires"],     x = 495, w = 60 },
+        { text = L["event_board_description"], x = 560, w = 180 },
     }
     for _, h in ipairs(headers) do
         local hs = scrollChild:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
@@ -1123,23 +1119,23 @@ function Community:BuildEventBoardFrame()
                 GameTooltip:SetOwner(self, "ANCHOR_TOPLEFT", 0, -4)
                 GameTooltip:ClearLines()
                 local color = EVENT_TYPE_COLOR[self.eventData.type or "Other"] or "|cffffcc00"
-                GameTooltip:AddLine(color .. "[" .. tostring(self.eventData.type or "Other") .. "]|r " .. EventShort(self.eventData.name or "Community Event", 48), 1, 1, 1)
+                GameTooltip:AddLine(color .. "[" .. tostring(self.eventData.type or "Other") .. "]|r " .. EventShort(self.eventData.name or L["community_default_event_name"], 48), 1, 1, 1)
                 GameTooltip:AddLine(" ")
                 if self.eventData.timeText and self.eventData.timeText ~= "" then
-                    GameTooltip:AddLine("|cff88ccffWhen:|r " .. self.eventData.timeText, 0.9, 0.9, 0.9)
+                    GameTooltip:AddLine(L["tip_when_label"] .. self.eventData.timeText, 0.9, 0.9, 0.9)
                 end
                 if self.eventData.host and self.eventData.host ~= "" then
-                    GameTooltip:AddLine("|cff88ccffHost:|r " .. self.eventData.host, 0.9, 0.9, 0.9)
+                    GameTooltip:AddLine(L["tip_host_label"] .. self.eventData.host, 0.9, 0.9, 0.9)
                 end
                 if self.eventData.contact and self.eventData.contact ~= "" then
-                    GameTooltip:AddLine("|cff88ccffContact:|r " .. self.eventData.contact, 0.9, 0.9, 0.9)
+                    GameTooltip:AddLine(L["tip_contact_label"] .. self.eventData.contact, 0.9, 0.9, 0.9)
                 end
                 if self.eventData.description and self.eventData.description ~= "" then
                     GameTooltip:AddLine(" ")
                     GameTooltip:AddLine(self.eventData.description, 0.85, 0.85, 0.85, true)
                 end
                 GameTooltip:AddLine(" ")
-                GameTooltip:AddLine("|cff888888Right-click: dismiss  |  Left-click: copy to chat|r", 0.5, 0.5, 0.5)
+                GameTooltip:AddLine(L["tip_right_dismiss_left_copy"], 0.5, 0.5, 0.5)
                 GameTooltip:Show()
             end
         end)
@@ -1152,12 +1148,12 @@ function Community:BuildEventBoardFrame()
             if button == "RightButton" then
                 Community:DismissEvent(self.eventData.id)
             else
-                local snippet = "[" .. tostring(self.eventData.type or "Other") .. "] " .. tostring(self.eventData.name or "Community Event")
+                local snippet = "[" .. tostring(self.eventData.type or "Other") .. "] " .. tostring(self.eventData.name or L["community_default_event_name"])
                 if self.eventData.timeText and self.eventData.timeText ~= "" then
                     snippet = snippet .. " - " .. self.eventData.timeText
                 end
                 if self.eventData.host and self.eventData.host ~= "" then
-                    snippet = snippet .. " - Host: " .. self.eventData.host
+                    snippet = snippet .. L["community_snippet_host_label"] .. self.eventData.host
                 end
                 if FrostSeekCompat and FrostSeekCompat.OpenChat then
                     FrostSeekCompat.OpenChat(snippet .. " ")
@@ -1173,7 +1169,7 @@ function Community:BuildEventBoardFrame()
 
     self.eventStats = ef:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     self.eventStats:SetPoint("BOTTOMLEFT", ef, "BOTTOMLEFT", 0, 220)
-    self.eventStats:SetText(_hex("textDim") .. "0 events|r")
+    self.eventStats:SetText(_hex("textDim") .. L["community_events_count_zero"])
 
     local createHeader = ef:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     createHeader:SetPoint("BOTTOMLEFT", ef, "BOTTOMLEFT", 0, 200)
@@ -1288,7 +1284,7 @@ function Community:BuildEventBoardFrame()
 
     local contactLabel = ef:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     contactLabel:SetPoint("BOTTOMLEFT", ef, "BOTTOMLEFT", 240, 118)
-    contactLabel:SetText(_hex("textDim") .. "Contact:|r")
+    contactLabel:SetText(_hex("textDim") .. L["community_contact_label"])
 
     if UI and UI.CreateModernEditBox then
         self.eventContact = UI.CreateModernEditBox(ef, 240, 20)
@@ -1382,7 +1378,7 @@ function Community:RefreshEventBoard()
         if entry then
             local color = EVENT_TYPE_COLOR[entry.type or "Other"] or "|cffffcc00"
             row.typeText:SetText(color .. "[" .. tostring(entry.type or "Other") .. "]|r")
-            row.nameText:SetText("|cffffffff" .. EventShort(entry.name or "Community Event", 32) .. "|r")
+            row.nameText:SetText("|cffffffff" .. EventShort(entry.name or L["community_default_event_name"], 32) .. "|r")
             row.timeText:SetText(_hex("textNorm") .. EventShort(entry.timeText or "", 22) .. "|r")
             row.hostText:SetText("|cff88ccff" .. EventShort(entry.host or "", 22) .. "|r")
             row.expiresText:SetText(_hex("textDim") .. EventExpireText(entry.expires) .. "|r")
@@ -1398,7 +1394,7 @@ function Community:RefreshEventBoard()
         end
     end
     if self.eventStats then
-        self.eventStats:SetText(_hex("textDim") .. tostring(#rows) .. " events|r")
+        self.eventStats:SetText(_hex("textDim") .. tostring(#rows) .. L["community_events_count_suffix"])
     end
 end
 
@@ -1425,7 +1421,7 @@ function Community:BuildBrowserFrame()
 
     local searchLabel = bf:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     searchLabel:SetPoint("TOPLEFT", bf, "TOPLEFT", 0, curY)
-    searchLabel:SetText(_hex("textDim") .. "Search:|r")
+    searchLabel:SetText(_hex("textDim") .. L["community_search_label"])
 
     if UI and UI.CreateModernEditBox then
         self.browserSearch = UI.CreateModernEditBox(bf, 160, 18)
@@ -1444,7 +1440,7 @@ function Community:BuildBrowserFrame()
 
     local langLabel = bf:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     langLabel:SetPoint("LEFT", self.browserSearch, "RIGHT", 20, 0)
-    langLabel:SetText(_hex("textDim") .. "Lang:|r")
+    langLabel:SetText(_hex("textDim") .. L["community_lang_label"])
 
     self.browserLangFilter = "all"
     local langBtn = CreateFrame("Button", nil, bf)
@@ -1467,7 +1463,7 @@ function Community:BuildBrowserFrame()
         end
         idx = (idx % #order) + 1
         self.browserLangFilter = order[idx]
-        local labels = { all = "All", it = "IT", es = "ES", pt = "PT", de = "DE", fr = "FR", en = "EN", pl = "PL", cs = "CZ", ru = "RU", ro = "RO" }
+        local labels = { all = L["filter_all"], it = "IT", es = "ES", pt = "PT", de = "DE", fr = "FR", en = "EN", pl = "PL", cs = "CZ", ru = "RU", ro = "RO" }
         langBtn.text:SetText(labels[self.browserLangFilter])
         self:RefreshBrowser()
     end)
@@ -1475,7 +1471,7 @@ function Community:BuildBrowserFrame()
 
     local sortLabel = bf:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     sortLabel:SetPoint("LEFT", langBtn, "RIGHT", 16, 0)
-    sortLabel:SetText(_hex("textDim") .. "Sort:|r")
+    sortLabel:SetText(_hex("textDim") .. L["community_sort_label"])
 
     self.browserSort = "recent" 
     local sortBtn = CreateFrame("Button", nil, bf)
@@ -1489,12 +1485,12 @@ function Community:BuildBrowserFrame()
     sortBtn.border:SetColorTexture(unpack(_tc("border")))
     sortBtn.text = sortBtn:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     sortBtn.text:SetPoint("CENTER")
-    sortBtn.text:SetText(L["event_board_recent"] or "Recent")
+    sortBtn.text:SetText(L["event_board_recent"] or L["event_board_recent"])
     sortBtn:SetScript("OnClick", function()
         if self.browserSort == "recent" then self.browserSort = "name"
         elseif self.browserSort == "name" then self.browserSort = "sender"
         else self.browserSort = "recent" end
-        local labels = { recent = "Recent", name = "Name", sender = "Sender" }
+        local labels = { recent = L["community_recent_label"], name = L["community_name_label"], sender = L["community_sender_label"] }
         sortBtn.text:SetText(labels[self.browserSort])
         self:RefreshBrowser()
     end)
@@ -1535,7 +1531,7 @@ function Community:BuildBrowserFrame()
             Shared.ConfirmDialog(L["community_clear_guilds_title"], L["community_clear_guilds_msg"], function()
                 FrostSeekDB.Guilds = {}
                 self:RefreshBrowser()
-                print("|cff88ccffFrostSeek:|r Guild database cleared")
+                print(L["msg_guild_db_cleared"])
             end)
         end
     end)
@@ -1556,12 +1552,12 @@ function Community:BuildBrowserFrame()
 
     local hY = -2
     local headers = {
-        { text = "Guild",     x = 5,   w = 145 },
-        { text = "Lang",      x = 155, w = 50 },
-        { text = "Focus",     x = 210, w = 160 },
-        { text = "Discord",   x = 375, w = 165 },
-        { text = "Sender",    x = 545, w = 110 },
-        { text = "Seen",      x = 660, w = 75 },
+        { text = L["label_guild"],     x = 5,   w = 145 },
+        { text = L["lbl_lang"],      x = 155, w = 50 },
+        { text = L["lbl_focus"],     x = 210, w = 160 },
+        { text = L["lbl_discord"],   x = 375, w = 165 },
+        { text = L["lbl_sender"],    x = 545, w = 110 },
+        { text = L["lbl_seen"],      x = 660, w = 75 },
     }
     for _, h in ipairs(headers) do
         local hs = scrollChild:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
@@ -1619,10 +1615,10 @@ function Community:BuildBrowserFrame()
                     local displayMsg = #msg > maxLen and string.sub(msg, 1, maxLen - 3) .. "..." or msg
                     GameTooltip:AddLine("|cffffffff" .. displayMsg .. "|r", 0.9, 0.9, 0.9, true)
                 else
-                    GameTooltip:AddLine("|cff888888No message captured|r", 0.6, 0.6, 0.6)
+                    GameTooltip:AddLine(L["tip_no_message_captured"], 0.6, 0.6, 0.6)
                 end
                 GameTooltip:AddLine(" ")
-                GameTooltip:AddLine("|cff888888Left-click: details  |  Right-click: whisper|r", 0.5, 0.5, 0.5)
+                GameTooltip:AddLine(L["tip_left_details_right_whisp"], 0.5, 0.5, 0.5)
                 GameTooltip:Show()
             end
         end)
@@ -1637,7 +1633,7 @@ function Community:BuildBrowserFrame()
 
     self.browserStats = bf:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     self.browserStats:SetPoint("BOTTOMLEFT", bf, "BOTTOMLEFT", 0, 4)
-    self.browserStats:SetText(_hex("textDim") .. "0 guilds discovered|r")
+    self.browserStats:SetText(_hex("textDim") .. L["community_guilds_count_zero"])
 end
 
 function Community:RefreshBrowser()
@@ -1698,10 +1694,10 @@ function Community:RefreshBrowser()
             local ago = ""
             if entry.data.lastSeen then
                 local delta = time() - entry.data.lastSeen
-                if delta < 60 then ago = delta .. "s ago"
-                elseif delta < 3600 then ago = math.floor(delta / 60) .. "m ago"
-                elseif delta < 86400 then ago = math.floor(delta / 3600) .. "h ago"
-                else ago = math.floor(delta / 86400) .. "d ago"
+                if delta < 60 then ago = delta .. L["community_time_seconds_ago"]
+                elseif delta < 3600 then ago = math.floor(delta / 60) .. L["community_time_minutes_ago"]
+                elseif delta < 86400 then ago = math.floor(delta / 3600) .. L["community_time_hours_ago"]
+                else ago = math.floor(delta / 86400) .. L["community_time_days_ago"]
                 end
             end
             row.seen:SetText(_hex("textDim") .. ago .. "|r")
@@ -1717,9 +1713,9 @@ function Community:RefreshBrowser()
                         elseif ChatFrame_OpenChat then
                             ChatFrame_OpenChat("/w " .. sender .. " ")
                         end
-                        print("|cff88ccffFrostSeek:|r Whispering " .. sender .. " (last recruiter of " .. tostring(self.guildName) .. ")")
+                        print(L["msg_whispering"] .. sender .. L["community_last_recruiter_of_prefix"] .. tostring(self.guildName) .. ")")
                     else
-                        print("|cffff5555FrostSeek:|r No sender known for this guild")
+                        print(L["msg_no_sender_known"])
                     end
                 else
                     Community:ShowGuildDetail(self.guildName, self.guildData)
@@ -1732,7 +1728,7 @@ function Community:RefreshBrowser()
     end
 
     if self.browserStats then
-        self.browserStats:SetText(_hex("textDim") .. tostring(#list) .. " guilds discovered|r")
+        self.browserStats:SetText(_hex("textDim") .. tostring(#list) .. L["community_guilds_count_suffix"])
     end
 end
 
@@ -1745,23 +1741,23 @@ function Community:ShowGuildDetail(name, data)
     if data.language then
         local langLabel = LANG_LABELS[data.language] or "EN"
         local langColor = LANG_COLORS[data.language] or "|cff888888"
-        GameTooltip:AddLine("Language: " .. langColor .. "[" .. langLabel .. "]|r", 0.9, 0.9, 0.9)
+        GameTooltip:AddLine(L["tip_language_label"] .. langColor .. "[" .. langLabel .. "]|r", 0.9, 0.9, 0.9)
     end
     if data.focus and data.focus ~= "" then
-        GameTooltip:AddLine("Focus: " .. data.focus, 0.8, 0.9, 1)
+        GameTooltip:AddLine(L["tip_focus_label"] .. data.focus, 0.8, 0.9, 1)
     end
     if data.discord and data.discord ~= "" then
-        GameTooltip:AddLine("Discord: |cff4aa3ff" .. data.discord .. "|r", 0.9, 0.9, 0.9)
+        GameTooltip:AddLine(L["tip_discord_label"] .. data.discord .. "|r", 0.9, 0.9, 0.9)
     end
     if data.lastSender and data.lastSender ~= "" then
-        GameTooltip:AddLine("Last recruiter: |cff88ccff" .. data.lastSender .. "|r", 0.9, 0.9, 0.9)
+        GameTooltip:AddLine(L["tip_last_recruiter"] .. data.lastSender .. "|r", 0.9, 0.9, 0.9)
     end
     local online = self:GetGuildOnlineCount(name)
-    GameTooltip:AddLine("Online now: " .. tostring(online), 0.4, 1, 0.4)
-    GameTooltip:AddLine("Seen " .. tostring(data.seenCount or 1) .. " time(s)", 0.6, 0.6, 0.6)
+    GameTooltip:AddLine(L["tip_online_now"] .. tostring(online), 0.4, 1, 0.4)
+    GameTooltip:AddLine(L["tip_seen_label"] .. tostring(data.seenCount or 1) .. L["community_times_suffix"], 0.6, 0.6, 0.6)
     GameTooltip:AddLine(" ")
-    GameTooltip:AddLine("Right-click to whisper last recruiter", 0.4, 1, 0.4)
-    GameTooltip:AddLine("Shift-click to remove from DB", 0.7, 0.4, 0.4)
+    GameTooltip:AddLine(L["tip_right_click_whisper_rec"], 0.4, 1, 0.4)
+    GameTooltip:AddLine(L["tip_shift_click_remove_db"], 0.7, 0.4, 0.4)
     GameTooltip:Show()
 end
 
@@ -1783,7 +1779,7 @@ function Community:BuildRecruitmentFrame()
 
     local gNameLabel = rf:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     gNameLabel:SetPoint("TOPLEFT", rf, "TOPLEFT", 0, curY)
-    gNameLabel:SetText(_hex("textDim") .. "Guild Name:|r")
+    gNameLabel:SetText(_hex("textDim") .. L["community_guild_name_label"])
     curY = curY - 16
 
     if UI and UI.CreateModernEditBox then
@@ -1805,7 +1801,7 @@ function Community:BuildRecruitmentFrame()
 
     local discLabel = rf:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     discLabel:SetPoint("TOPLEFT", rf, "TOPLEFT", 0, curY)
-    discLabel:SetText(_hex("textDim") .. "Discord:|r")
+    discLabel:SetText(_hex("textDim") .. L["community_discord_label"])
     curY = curY - 18
 
     if UI and UI.CreateModernEditBox then
@@ -1823,7 +1819,7 @@ function Community:BuildRecruitmentFrame()
 
     local focusLabel = rf:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     focusLabel:SetPoint("TOPLEFT", rf, "TOPLEFT", 0, curY)
-    focusLabel:SetText(_hex("textDim") .. "Focus:|r")
+    focusLabel:SetText(_hex("textDim") .. L["community_focus_label"])
     curY = curY - 18
 
     self.recFocusToggles = {}
@@ -1854,7 +1850,7 @@ function Community:BuildRecruitmentFrame()
 
     local rolesLabel = rf:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     rolesLabel:SetPoint("TOPLEFT", rf, "TOPLEFT", 0, curY)
-    rolesLabel:SetText(_hex("textDim") .. "Roles Needed:|r")
+    rolesLabel:SetText(_hex("textDim") .. L["community_roles_needed_label"])
     curY = curY - 18
 
     self.recRoleToggles = {}
@@ -1881,7 +1877,7 @@ function Community:BuildRecruitmentFrame()
 
     local noteLabel = rf:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     noteLabel:SetPoint("TOPLEFT", rf, "TOPLEFT", 0, curY)
-    noteLabel:SetText(_hex("textDim") .. "Note:|r")
+    noteLabel:SetText(_hex("textDim") .. L["community_note_label"])
     curY = curY - 18
 
     if UI and UI.CreateModernEditBox then
@@ -1900,7 +1896,7 @@ function Community:BuildRecruitmentFrame()
 
     local prevLabel = rf:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     prevLabel:SetPoint("TOPLEFT", rf, "TOPLEFT", 0, curY)
-    prevLabel:SetText(_hex("textDim") .. "Preview:|r")
+    prevLabel:SetText(_hex("textDim") .. L["community_preview_label"])
     curY = curY - 16
 
     self.recPreview = rf:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
@@ -1914,9 +1910,10 @@ function Community:BuildRecruitmentFrame()
 
     local chanLabel = rf:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     chanLabel:SetPoint("TOPLEFT", rf, "TOPLEFT", 0, curY)
-    chanLabel:SetText(_hex("textDim") .. "Channel:|r")
+    chanLabel:SetText(_hex("textDim") .. L["community_channel_label"])
     curY = curY - 16
 
+    if not FrostSeekDB then FrostSeekDB = {} end
     if not FrostSeekDB.Settings then FrostSeekDB.Settings = {} end
     if not FrostSeekDB.Settings.recruitSpamChannel then
         FrostSeekDB.Settings.recruitSpamChannel = "GUILD"
@@ -1972,8 +1969,8 @@ function Community:BuildRecruitmentFrame()
 
     local intLabel = rf:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     intLabel:SetPoint("LEFT", self.recSpamChannelBtn, "RIGHT", 14, 0)
-    intLabel.SetText(intLabel, _hex("textDim") .. "Interval:|r")
-    intLabel:SetText(_hex("textDim") .. "Interval:|r")
+    intLabel.SetText(intLabel, _hex("textDim") .. L["community_interval_label"])
+    intLabel:SetText(_hex("textDim") .. L["community_interval_label"])
 
     self.recSpamIntervalBtn = CreateFrame("Button", nil, rf)
     self.recSpamIntervalBtn:SetSize(100, 22)
@@ -2112,7 +2109,7 @@ function Community:StartSpam()
     end
     local interval = FrostSeekDB.Settings.recruitSpamInterval or 600
     self:SendRecruitmentToChat()
-    print("|cff88ccffFrostSeek:|r Recruitment spam started (every " .. self:FormatIntervalLabel(interval) .. ")")
+    print(L["msg_recruit_spam_started"] .. self:FormatIntervalLabel(interval) .. ")")
     self.spamTicker = C_Timer.NewTicker(interval, function()
         Community:SendRecruitmentToChat()
     end)
@@ -2122,7 +2119,7 @@ function Community:StopSpam()
     if self.spamTicker then
         self.spamTicker:Cancel()
         self.spamTicker = nil
-        print("|cff88ccffFrostSeek:|r Recruitment spam stopped")
+        print(L["msg_recruit_spam_stopped"])
     end
 end
 
@@ -2170,15 +2167,15 @@ function Community:BuildRecruitmentMessage()
     local parts = {}
     table.insert(parts, "[" .. guild .. "]")
     if #focusParts > 0 then
-        table.insert(parts, "Looking for " .. table.concat(focusParts, "/") .. " players")
+        table.insert(parts, L["community_looking_for_prefix"] .. table.concat(focusParts, "/") .. L["community_players_suffix"])
     else
-        table.insert(parts, "Looking for new members")
+        table.insert(parts, L["community_looking_for_members"])
     end
     if #roleParts > 0 then
-        table.insert(parts, "Need: " .. table.concat(roleParts, "/"))
+        table.insert(parts, L["community_need_prefix"] .. table.concat(roleParts, "/"))
     end
     if discord and discord ~= "" then
-        table.insert(parts, "Discord: " .. discord)
+        table.insert(parts, L["community_discord_prefix"] .. discord)
     end
     if note and note ~= "" then
         table.insert(parts, note)
@@ -2242,7 +2239,7 @@ end
 function Community:SaveTemplateDialog()
     local config = self:GetCurrentRecruitmentConfig()
     if config.guild == "" then
-        print("|cffff5555FrostSeek:|r Cannot save template without a guild name")
+        print(L["msg_cannot_save_no_guild"])
         return
     end
     local name = config.guild
@@ -2254,7 +2251,7 @@ function Community:SaveTemplateDialog()
     end
     if not FrostSeekDB.GuildTemplates then FrostSeekDB.GuildTemplates = {} end
     FrostSeekDB.GuildTemplates[name] = config
-    print("|cff88ccffFrostSeek:|r Template saved as '" .. name .. "'")
+    print(L["msg_template_saved_as"] .. " '" .. name .. "'")
 end
 
 function Community:LoadTemplateDialog()
@@ -2262,14 +2259,14 @@ function Community:LoadTemplateDialog()
     local count = 0
     for _ in pairs(FrostSeekDB.GuildTemplates) do count = count + 1 end
     if count == 0 then
-        print("|cffffaa00FrostSeek:|r No saved templates")
+        print(L["msg_no_saved_templates"])
         return
     end
-    print("|cff88ccffFrostSeek Templates:|r")
+    print(L["msg_templates_header"])
     for name, config in pairs(FrostSeekDB.GuildTemplates) do
         print("  |cff88ccff-|r " .. name .. " |cff888888[" .. (config.guild or "?") .. "]|r")
     end
-    print("|cff888888Use /fsloadtemplate <name> to load|r")
+    print(L["msg_use_fsloadtemplate"])
 end
 
 function Community:DeleteTemplateDialog()
@@ -2277,10 +2274,10 @@ function Community:DeleteTemplateDialog()
     local count = 0
     for _ in pairs(FrostSeekDB.GuildTemplates) do count = count + 1 end
     if count == 0 then
-        print("|cffffaa00FrostSeek:|r No templates to delete")
+        print(L["msg_no_templates_to_delete"])
         return
     end
-    print("|cff88ccffFrostSeek Templates (deletable via /fsdeltemplate <name>):|r")
+    print(L["msg_templates_deletable_hdr"])
     for name, _ in pairs(FrostSeekDB.GuildTemplates) do
         print("  |cffff5555-|r " .. name)
     end
@@ -2291,7 +2288,7 @@ function Community:LoadTemplateByName(name)
     local config = FrostSeekDB.GuildTemplates[name]
     if not config then return false end
     self:ApplyRecruitmentConfig(config)
-    print("|cff88ccffFrostSeek:|r Loaded template '" .. name .. "'")
+    print(L["msg_loaded_template"] .. " '" .. name .. "'")
     return true
 end
 
@@ -2299,17 +2296,17 @@ function Community:DeleteTemplateByName(name)
     if not name or not FrostSeekDB.GuildTemplates then return false end
     if not FrostSeekDB.GuildTemplates[name] then return false end
     FrostSeekDB.GuildTemplates[name] = nil
-    print("|cff88ccffFrostSeek:|r Deleted template '" .. name .. "'")
+    print(L["msg_deleted_template"] .. " '" .. name .. "'")
     return true
 end
 
 function Community:SendRecruitmentToChat()
     local msg = self:BuildRecruitmentMessage()
     if not msg or msg == "" then
-        print("|cffff5555FrostSeek:|r Empty recruitment message")
+        print(L["msg_empty_recruitment_msg"])
         return
     end
-    local channel = FrostSeekDB.Settings.recruitSpamChannel or "GUILD"
+    local channel = (FrostSeekDB and FrostSeekDB.Settings and FrostSeekDB.Settings.recruitSpamChannel) or "GUILD"
     local ok = false
     if string.match(channel, "CHANNEL%d+") then
         local channelNum = tonumber(string.match(channel, "CHANNEL(%d+)"))
@@ -2326,25 +2323,25 @@ function Community:SendRecruitmentToChat()
             if realId then
                 ok = pcall(function() SendChatMessage(msg, "CHANNEL", nil, realId) end)
                 if ok then
-                    print("|cff88ccffFrostSeek:|r Recruitment message sent to " .. tostring(chName) .. " (channel " .. channelNum .. ")")
+                    print(L["msg_recruit_sent_to"] .. tostring(chName) .. L["community_channel_prefix"] .. channelNum .. ")")
                     return
                 end
             end
         end
         ok = pcall(function() SendChatMessage(msg, "GUILD") end)
         if ok then
-            print("|cff88ccffFrostSeek:|r Recruitment message sent to GUILD (channel " .. channel .. " not available)")
+            print(L["msg_recruit_sent_to_guild"] .. channel .. L["community_not_available_suffix"])
             return
         end
     else
         ok = pcall(function() SendChatMessage(msg, channel) end)
         if ok then
-            print("|cff88ccffFrostSeek:|r Recruitment message sent to " .. channel)
+            print(L["community_recruit_sent_to_prefix"] .. channel)
             return
         end
     end
     pcall(function() SendChatMessage(msg, "SAY") end)
-    print("|cffffaa00FrostSeek:|r Recruitment message sent to SAY (configured channel failed)")
+    print(L["msg_recruit_sent_to_say"])
 end
 
 if _G.FrostSeek and _G.FrostSeek.RegisterModule then
@@ -2371,4 +2368,4 @@ C_Timer.After(3, function()
     HookRefreshOnEdit(Community.recNote)
 end)
 
-print("|cff88ccffFrostSeek Community:|r Module loaded")
+print(L["msg_community_module_loaded"])

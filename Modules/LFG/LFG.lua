@@ -78,9 +78,7 @@ local RAID_KEYWORDS = {
     "mogu'shan vaults", "msv", "heart of fear", "hof", "shek'zeer",
     "terrace of endless spring", "toes", "throne of thunder", "tot", "lei shen",
     "siege of orgrimmar", "soo", "garrosh",
-    --warmane
     "icc10","icc25","icc10n","icc25n","icc10hc","icc25hc","rs25n","rs25hc","rs10n","rs25n",
-    -- Ascension/CoA Raid
     "the radiant spring","trs"
 }
 
@@ -114,21 +112,18 @@ local MANASTORM_KEYWORDS = {
 }
 
 local DUNGEON_KEYWORDS = {
-    -- Classic Dungeons
     "rfc", "ragefire", "ragefire chasm", "dm", "deadmines", "vc", "wc", "wailing", "wailing caverns",
     "sfk", "shadowfang", "shadowfang keep", "stocks", "stockade", "bfd", "blackfathom", "blackfathom deeps",
     "gnomer", "gnomeregan", "rfk", "razorfen kraul", "sm", "scarlet", "scarlet monastery", "gy", "lib", "arm", "cath",
     "rfd", "razorfen downs", "ulda", "uldaman", "zf", "zul'farrak", "mara", "maraudon","blackcock spire",
     "st", "sunken temple", "brd", "blackrock depths", "dire", "dire maul", "maul", "dme", "dmn", "dmw",
     "strat", "stratholme", "scholo", "scholomance", "lbrs", "lower blackrock spire", "ubrs", "upper blackrock spire",
-    -- TBC Dungeons
     "ramps", "hellfire ramparts", "ramparts", "bf", "blood furnace", "sp", "slave pens", "ub", "underbog",
     "mt", "mana-tombs", "mana tombs", "ac", "auchenai crypts", "auchenai", "sh", "sethekk halls", "sethekk",
     "ohf", "old hillsbrad", "old hillsbrad foothills", "bm", "black morass", "the black morass",
     "mecha", "mechanar", "shh", "shattered halls", "the shattered halls", "bota", "botanica",
     "sl", "shadow labyrinth", "shadow lab", "slabs", "sv", "steamvault", "the steamvault",
     "arca", "arcatraz", "mgt", "magisters terrace", "magister's terrace",
-    -- WotLK Dungeons
     "uk", "utgarde keep", "up", "utgarde pinnacle", "pinnacle", "kcm",
     "nexus", "the nexus", "nex", "oculus", "the oculus", "ocu",
     "ak", "ahn'kahet", "azjol", "azjol-nerub", "dtk", "drak'tharon", "drak'tharon keep",
@@ -138,19 +133,16 @@ local DUNGEON_KEYWORDS = {
     "toc_d", "champion", "trial of the champion",
     "fos", "forge of souls", "forge", "pos", "pit of saron", "pit",
     "hor", "halls of reflection", "reflection",
-    -- Cata Dungeons
     "brc", "blackrock caverns", "blackrock cavern", "tott", "throne of the tides", "naz'jar",
     "vp", "vortex pinnacle", "the vortex pinnacle", "sc", "stonecore",
     "lct", "lost city", "tol'vir", "lost city of tol'vir",
     "hoo", "halls of origination", "origination", "gb", "grim batol",
     "zg_cata", "zul'gurub", "za_cata", "zul'aman",
     "et", "end time", "woe", "well of eternity", "hot", "hour of twilight",
-    -- Ascension/CoA Dungeons
     "gmm", "glittermurk", "karazhan crypt", "glittermurk mines",
     "kc", "vault", "vaults", "vault of the inquisition", "vaults of inquisition",
     "roads", "road to de", "de' other side","temple of embers","toe","sbd",
     "tor'watha", "tor watha","voult of the inquisition","voult","shadowbone depths", "the temple of embers", "shadowbone",
-    -- MoP Dungeons
     "tjs", "jade serpent", "temple of the jade serpent",
     "sb", "stormstout", "stormstout brewery", "brewery",
     "spm", "shado-pan", "shado-pan monastery",
@@ -160,7 +152,6 @@ local DUNGEON_KEYWORDS = {
     "dg", "aura",
     "rdf", "lfd", "random dungeon", "random heroic", "rhc", "heroic random",
     "daily heroic", "daily dungeon", "graveyard",
-    -- retail porting  Dungeons
     "algeth academy", "aa", "ruby life pools", "rlp", "nokhud offensive", "no",
     "azure vault", "brackenhide hollow", "uldaman cata",
     "neltharus", "nelth", "freehold", "fh", "tol dagor", "td",
@@ -173,7 +164,7 @@ local DUNGEON_KEYWORDS = {
 }
 
 local ACTIVITY_FILTER_GROUPS = {
-    { header = "CLASSIC DUNGEONS", isHeader = true },
+    { header = "CLASSIC DUNGEONS", isHeader = true, level = 0 },
     { id = "RFC", name = "Ragefire Chasm", keywords = {"RFC", "RAGEFIRE", "RAGEFIRE CHASM"} },
     { id = "DM", name = "Deadmines", keywords = {"DM", "DEADMINES", "VC"} },
     { id = "WC", name = "Wailing Caverns", keywords = {"WC", "WAILING", "WAILING CAVERNS"} },
@@ -197,7 +188,7 @@ local ACTIVITY_FILTER_GROUPS = {
     { id = "LBRS", name = "Lower Blackrock Spire", keywords = {"LBRS"} },
     { id = "UBRS", name = "Upper Blackrock Spire", keywords = {"UBRS"} },
 
-    { header = "CLASSIC RAIDS", isHeader = true },
+    { header = "CLASSIC RAIDS", isHeader = true, level = 0 },
     { id = "ONYXIA", name = "Onyxia", keywords = {"ONYXIA", "ONY"} },
     { id = "MC", name = "Molten Core", keywords = {"MC", "MOLTEN CORE"} },
     { id = "BWL", name = "Blackwing Lair", keywords = {"BWL", "BLACKWING LAIR", "BLACKWING"} },
@@ -205,7 +196,7 @@ local ACTIVITY_FILTER_GROUPS = {
     { id = "AQ20", name = "Ruins of Ahn'Qiraj", keywords = {"AQ20", "RUINS", "RUINS OF AHN'QIRAJ"} },
     { id = "AQ40", name = "Temple of Ahn'Qiraj", keywords = {"AQ40", "TEMPLE", "TEMPLE OF AHN'QIRAJ"} },
 
-    { header = "TBC DUNGEONS", isHeader = true },
+    { header = "TBC DUNGEONS", isHeader = true, level = 1 },
     { id = "RAMPS", name = "Hellfire Ramparts", keywords = {"RAMPS", "RAMPARTS", "HELLFIRE RAMPARTS"} },
     { id = "BF", name = "Blood Furnace", keywords = {"BF", "BLOOD FURNACE"} },
     { id = "SP", name = "Slave Pens", keywords = {"SP", "SLAVE PENS"} },
@@ -223,7 +214,7 @@ local ACTIVITY_FILTER_GROUPS = {
     { id = "SHH", name = "The Shattered Halls", keywords = {"SHH", "SHATTERED HALLS"} },
     { id = "SV", name = "The Steamvault", keywords = {"SV", "STEAMVAULT"} },
 
-    { header = "TBC RAIDS", isHeader = true },
+    { header = "TBC RAIDS", isHeader = true, level = 1 },
     { id = "KARA", name = "Karazhan", keywords = {"KARA", "KARAZHAN"} },
     { id = "GRUUL", name = "Gruul's Lair", keywords = {"GRUUL"} },
     { id = "MAG", name = "Magtheridon", keywords = {"MAG", "MAGTHERIDON"} },
@@ -234,7 +225,7 @@ local ACTIVITY_FILTER_GROUPS = {
     { id = "ZA", name = "Zul'Aman", keywords = {"ZA", "ZUL'AMAN"} },
     { id = "SWP", name = "Sunwell Plateau", keywords = {"SWP", "SUNWELL", "SUNWELL PLATEAU"} },
 
-    { header = "WOTLK DUNGEONS", isHeader = true },
+    { header = "WOTLK DUNGEONS", isHeader = true, level = 2 },
     { id = "UK", name = "Utgarde Keep", keywords = {"UK", "UTGARDE KEEP"} },
     { id = "UP", name = "Utgarde Pinnacle", keywords = {"UP", "PINNACLE", "UTGARDE PINNACLE"} },
     { id = "NEXUS", name = "The Nexus", keywords = {"NEXUS", "NEX", "THE NEXUS"} },
@@ -252,7 +243,7 @@ local ACTIVITY_FILTER_GROUPS = {
     { id = "POS", name = "Pit of Saron", keywords = {"POS", "PIT"} },
     { id = "HOR", name = "Halls of Reflection", keywords = {"HOR", "REFLECTION"} },
 
-    { header = "WOTLK RAIDS", isHeader = true },
+    { header = "WOTLK RAIDS", isHeader = true, level = 2 },
     { id = "NAXX", name = "Naxxramas", keywords = {"NAXX", "NAXXRAMAS"} },
     { id = "VOA", name = "Vault of Archavon", keywords = {"VOA", "ARCHAVON", "VAULT OF ARCHAVON"} },
     { id = "OS", name = "Obsidian Sanctum", keywords = {"OS", "OBSIDIAN", "SARTH", "SARTHARION", "OBSIDIAN SANCTUM"} },
@@ -262,7 +253,7 @@ local ACTIVITY_FILTER_GROUPS = {
     { id = "ICC", name = "Icecrown Citadel", keywords = {"ICC", "ICECROWN", "ICECROWN CITADEL", "LICH KING", "SINDRAGOSA", "BLOOD QUEEN", "PUTRICIDE", "ANUB'ARAK"} },
     { id = "RS", name = "Ruby Sanctum", keywords = {"RS", "RUBY", "HALION", "RUBY SANCTUM"} },
 
-    { header = "CATA DUNGEONS", isHeader = true },
+    { header = "CATA DUNGEONS", isHeader = true, level = 3 },
     { id = "BRC_C", name = "Blackrock Caverns", keywords = {"BRC", "BLACKROCK CAVERNS"} },
     { id = "TOTT", name = "Throne of the Tides", keywords = {"TOTT", "THRONE TIDES", "NAZ'JAR"} },
     { id = "VP", name = "The Vortex Pinnacle", keywords = {"VP", "VORTEX PINNACLE"} },
@@ -276,7 +267,7 @@ local ACTIVITY_FILTER_GROUPS = {
     { id = "WOE", name = "Well of Eternity", keywords = {"WOE", "WELL ETERNITY"} },
     { id = "HOT", name = "Hour of Twilight", keywords = {"HOT", "HOUR TWILIGHT"} },
 
-    { header = "CATA RAIDS", isHeader = true },
+    { header = "CATA RAIDS", isHeader = true, level = 3 },
     { id = "BH", name = "Baradin Hold", keywords = {"BH", "BARADIN"} },
     { id = "BOT", name = "Bastion of Twilight", keywords = {"BOT", "BASTION", "TWILIGHT"} },
     { id = "T4W", name = "Throne of the Four Winds", keywords = {"T4W", "FOUR WINDS", "AL'AKIR"} },
@@ -284,7 +275,7 @@ local ACTIVITY_FILTER_GROUPS = {
     { id = "FL", name = "Firelands", keywords = {"FL", "FIRELANDS", "RAGNAROS"} },
     { id = "DS", name = "Dragon Soul", keywords = {"DS", "DRAGON SOUL", "DEATHWING"} },
 
-    { header = "MoP DUNGEONS", isHeader = true },
+    { header = "MoP DUNGEONS", isHeader = true, level = 4 },
     { id = "TJS", name = "Temple of the Jade Serpent", keywords = {"TJS", "JADE SERPENT"} },
     { id = "SB", name = "Stormstout Brewery", keywords = {"SB", "STORMSTOUT", "BREWERY"} },
     { id = "SPM", name = "Shado-Pan Monastery", keywords = {"SPM", "SHADO-PAN"} },
@@ -295,29 +286,31 @@ local ACTIVITY_FILTER_GROUPS = {
     { id = "GSS", name = "Gate of the Setting Sun", keywords = {"GSS", "SETTING SUN"} },
     { id = "SCHOLO_M", name = "Scholomance (MoP)", keywords = {"SCHOLO", "SCHOLOMANCE"} },
 
-    { header = "MoP RAIDS", isHeader = true },
+    { header = "MoP RAIDS", isHeader = true, level = 4 },
     { id = "MSV", name = "Mogu'shan Vaults", keywords = {"MSV", "MOGUSHAN VAULTS"} },
     { id = "HOF", name = "Heart of Fear", keywords = {"HOF", "HEART OF FEAR", "SHEK'ZEER"} },
     { id = "TOES", name = "Terrace of Endless Spring", keywords = {"TOES", "TERRACE", "ENDLESS SPRING"} },
     { id = "TOT", name = "Throne of Thunder", keywords = {"TOT", "THUNDER", "LEI SHEN"} },
     { id = "SOO", name = "Siege of Orgrimmar", keywords = {"SOO", "SIEGE", "ORGRIMMAR", "GARROSH"} },
 
-    { header = "ASCENSION DUNGEONS", isHeader = true },
+    { header = "EPOCH DUNGEONS", isHeader = true, level = 0 },
+    { id = "GMM", name = "Glittermurk Mines", keywords = {"GLITTERMURK", "GLITTEMURK", "GLITTERMURK MINES", "GLITTEMURK MINES"} },
+
+    { header = "CUSTOM DUNGEONS", isHeader = true, level = 0 },
     { id = "BRC", name = "Blackrock Cavern", keywords = {"BRC", "BLACKROCK CAVERN"} },
     { id = "KC", name = "Karazhan Crypt", keywords = {"KC", "KARAZHAN CRYPT"} },
     { id = "VAULT", name = "Vault of the Inquisition", keywords = {"VAULT", "INQUISITION"} },
     { id = "ROADS", name = "Road to De' Other Side", keywords = {"ROADS", "ROAD TO DE' OTHER SIDE"} },
-    { id = "GMM", name = "GlitteMurk Mines", keywords = {"GLITTERMURK", "GLITTEMURK", "GLITTERMURK MINES", "GLITTEMURK MINES"} },
     { id = "BH", name = "Baradin Hold", keywords = {"BARADIN", "BARADIN HOLD"} },
     { id = "TW", name = "Tor'Watha", keywords = {"TOR'WATHA"} },
     { id = "EOE", name = "Temple of Embers", keywords = {"THE TEMPLE OF EMBERS"} },
     { id = "SD", name = "Shadowbone Depths", keywords = {"SHADOWBONE DEPTHS"} },
 
-    { header = "ASCENSION RAID", isHeader = true },
+    { header = "CUSTOM RAIDS", isHeader = true, level = 0 },
     { id = "TRS", name = "The Radiant Spring", keywords = {"TRS", "radiant", "spring"} },
-    
 
-    { header = "WORLD BOSSES", isHeader = true },
+
+    { header = "WORLD BOSSES", isHeader = true, level = 0 },
     { id = "WB_GENERIC", name = "World Boss (generic wb)", keywords = {"WB", "WORLDBOSS", "WORLD BOSS"} },
     { id = "AZUREGOS", name = "Azuregos", keywords = {"AZUREGOS", "AZURE"} },
     { id = "KAZZAK", name = "Lord Kazzak", keywords = {"KAZZAK"} },
@@ -326,39 +319,39 @@ local ACTIVITY_FILTER_GROUPS = {
     { id = "LETHON", name = "Lethon", keywords = {"LETHON"} },
     { id = "TAERAR", name = "Taerar", keywords = {"TAERAR"} },
     { id = "YSONDRE", name = "Ysondre", keywords = {"YSONDRE"} },
-    { id = "SOGGOTH", name = "Soggoth", keywords = {"SOGGOTH", "SOGOTH"} },
-    { id = "SETIS", name = "Setis", keywords = {"SETIS", "SETTIS"} },
-    { id = "SNOWGRAVE", name = "Snowgrave", keywords = {"SNOWGRAVE"} },
-    { id = "ATALZUL", name = "Atal'Zul", keywords = {"ATAL'ZUL", "ATAL.ZUL", "ATAL AZUL", "ATAL'AZUL"} },
-    { id = "KALDROS", name = "Kaldros Depthbreaker", keywords = {"KALDROS", "KALDROS DEPTHBREAKER", "KALDROS.DEPTHBREAKER"} },
-    { id = "WBT", name = "World Boss Tour", keywords = {"WORLD TOUR", "WORLDBOSS TOUR", "WORLD BOSS TOUR"} },
-    { id = "DREAM", name = "Emerald Dream", keywords = {"EMERALD DREAM"} },
-    { id ="GONZOR", name = "Gonzor", keywords = {"Gonzor"} },
-    { id = "K.GNOK", name = "King Gnok", keywords = {"KING GNOK", "GNOK"} },
-    { id = "K.MOSH", name = "King Mosh", keywords = {"KING MOSH", "MOSH"} },
-    { id = "SILITHID LURKER", name = "Silithid Lurker", keywords = {"SILITHID LURKER", "SILITHID"} },
-    { id ="VOLCHAN",name = "Volchan", keywords = {"Volchan"} },
-    { id = "CORRUPTED ANCIENT", name = "Corrupted Ancient", keywords = {"CORRUPTED ANCIENT", "CORRUPTED"} },
+    { id = "SOGGOTH", name = "Soggoth", keywords = {"SOGGOTH", "SOGOTH"}, exp = 97 },
+    { id = "SETIS", name = "Setis", keywords = {"SETIS", "SETTIS"}, exp = 0 },
+    { id = "SNOWGRAVE", name = "Snowgrave", keywords = {"SNOWGRAVE"}, exp = 97 },
+    { id = "ATALZUL", name = "Atal'Zul", keywords = {"ATAL'ZUL", "ATAL.ZUL", "ATAL AZUL", "ATAL'AZUL"}, exp = 97 },
+    { id = "KALDROS", name = "Kaldros Depthbreaker", keywords = {"KALDROS", "KALDROS DEPTHBREAKER", "KALDROS.DEPTHBREAKER"}, exp = 97 },
+    { id = "WBT", name = "World Boss Tour", keywords = {"WORLD TOUR", "WORLDBOSS TOUR", "WORLD BOSS TOUR"}, exp = 0 },
+    { id = "DREAM", name = "Emerald Dream", keywords = {"EMERALD DREAM"}, exp = 0 },
+    { id ="GONZOR", name = "Gonzor", keywords = {"Gonzor"}, exp = 98 },
+    { id = "K.GNOK", name = "King Gnok", keywords = {"KING GNOK", "GNOK"}, exp = 98 },
+    { id = "K.MOSH", name = "King Mosh", keywords = {"KING MOSH", "MOSH"}, exp = 98 },
+    { id = "SILITHID LURKER", name = "Silithid Lurker", keywords = {"SILITHID LURKER", "SILITHID"}, exp = 98 },
+    { id ="VOLCHAN",name = "Volchan", keywords = {"Volchan"}, exp = 98 },
+    { id = "CORRUPTED ANCIENT", name = "Corrupted Ancient", keywords = {"CORRUPTED ANCIENT", "CORRUPTED"}, exp = 98 },
 
-    { header = "MoP WORLD BOSSES", isHeader = true },
+    { header = "MoP WORLD BOSSES", isHeader = true, level = 4 },
     { id = "SHA", name = "Sha of Anger", keywords = {"SHA", "ANGER", "SHA OF ANGER"} },
     { id = "GALLEON", name = "Galleon", keywords = {"GALLEON", "SALYIS"} },
     { id = "NALAK", name = "Nalak", keywords = {"NALAK"} },
     { id = "OONDASTA", name = "Oondasta", keywords = {"OONDASTA"} },
     { id = "CELESTIALS", name = "Celestials", keywords = {"CELESTIALS", "CELESTIAL"} },
 
-    { header = "PVP", isHeader = true },
+    { header = "PVP", isHeader = true, level = 0 },
     { id = "ARENA", name = "Arena (2v2/3v3/5v5)", keywords = {"PVP"} },
     { id = "BG", name = "Battlegrounds", keywords = {} },
     { id = "WG", name = "Wintergrasp", keywords = {} },
 
-    { header = "MANASTORM", isHeader = true },
+    { header = "MANASTORM", isHeader = true, level = 0 },
     { id = "MS", name = "Manastorm (General)", keywords = {"MANASTORM", "MS"} },
     { id = "MS_ALVA", name = "Manastorm Alva", keywords = {} },
     { id = "MS_GOLD", name = "Manastorm Gold Farm", keywords = {} },
     { id = "MS_BONZO", name = "Manastorm Bonzo", keywords = {} },
 
-    { header = "KEYSTONE", isHeader = true },
+    { header = "KEYSTONE", isHeader = true, level = 0 },
     { id = "KEYSTONE", name = "Keystone Runs", keywords = {"KEYSTONE"} },
 
 }
@@ -483,7 +476,7 @@ local SHORT_NAME_OVERRIDES = {
     ["Vault of the Inquisition"] = "Vault",
     ["Road to De' Other Side"] = "Roads",
     ["The Radiant Spring"] = "TRS",
-    ["GlitteMurk Mines"] = "GMM",
+    ["Glittermurk Mines"] = "GMM",
     ["Karazhan Crypt"] = "KC",
     ["World Boss Tour"] = "WB Tour",
     ["Emerald Dream"] = "Dream",
@@ -749,7 +742,6 @@ function LFG.FormatMessageWithIcons(msg)
         return name
     end))
 end
---shynga
 function LFG.IsLFMMessage(msg)
     if not msg then return false end
     local lowerMsg = string.lower(msg)
@@ -1062,7 +1054,7 @@ function LFG.ClassifyMessage(msg)
             end
         end
     end
-    
+
     return "MISC", "MISC", false, false, false, false, false
 end
 
@@ -1123,7 +1115,7 @@ function LFG.GetClassInfo()
         ["INSETTO"] = "Insetto", ["PIRITMAGE"] = "Piritmage",
         ["DEMON HUNTER"] = "Demon Hunter", ["DEMONHUNTER"] = "Demon Hunter",
     }
-    return classMap[classFile] or className or "Unknown"
+    return classMap[classFile] or className or L["unknown"]
 end
 
 function LFG.GetAverageItemLevel()
@@ -1148,34 +1140,15 @@ function LFG.CreateWhisperMessage()
     local roleText = FrostSeekDB.LFG.myRole ~= "" and FrostSeekDB.LFG.myRole ~= L["none"] and FrostSeekDB.LFG.myRole or ""
     local playerLevel = UnitLevel("player") or 0
     if FrostSeekDB.LFG.customMessages and FrostSeekDB.LFG.customMessages.enabled then
-        local template = FrostSeekDB.LFG.customMessages.template or "inv {role} {class} {ench} {ilvl} ilvl"
+        local template = FrostSeekDB.LFG.customMessages.template or "inv {role} {class} {spec} {ilvl} ilvl"
         local message = template
-        if FrostSeekDB.LFG.customMessages.showClass then
-            message = string.gsub(message, "{class}", classInfo or "")
-        else
-            message = string.gsub(message, "{class}", "")
-        end
-        if FrostSeekDB.LFG.customMessages.showIlvl then
-            message = string.gsub(message, "{ilvl}", tostring(ilvl or 0))
-        else
-            message = string.gsub(message, "{ilvl}", "")
-        end
+        message = string.gsub(message, "{class}", classInfo or "")
+        message = string.gsub(message, "{ilvl}", tostring(ilvl or 0))
         message = string.gsub(message, "{gs}", "")
-        if FrostSeekDB.LFG.customMessages.showEnchant then
-            message = string.gsub(message, "{ench}", enchant or "")
-        else
-            message = string.gsub(message, "{ench}", "")
-        end
-        if FrostSeekDB.LFG.customMessages.showRole then
-            message = string.gsub(message, "{role}", roleText or "")
-        else
-            message = string.gsub(message, "{role}", "")
-        end
-        if FrostSeekDB.LFG.customMessages.showLevel then
-            message = string.gsub(message, "{level}", tostring(playerLevel))
-        else
-            message = string.gsub(message, "{level}", "")
-        end
+        message = string.gsub(message, "{ench}", enchant or "")
+        message = string.gsub(message, "{spec}", enchant or "")
+        message = string.gsub(message, "{role}", roleText or "")
+        message = string.gsub(message, "{level}", tostring(playerLevel))
         if FrostSeekDB.LFG.customMessages.showAchievement and FrostSeekDB.LFG.customMessages.achievementLink ~= "" then
             message = string.gsub(message, "{achievement}", FrostSeekDB.LFG.customMessages.achievementLink)
         else
@@ -1223,7 +1196,51 @@ function LFG.SetRole(role)
         FrostSeek.Profile:UpdateRoleButtons()
         FrostSeek.Profile:UpdateAutoInfo()
     end
-    print("|cff88ccffFrostSeek LFG:|r Role set to: " .. role)
+    print(L["msg_role_set_to_lfg"] .. role)
+end
+
+SLASH_FSKEYTEST1 = "/fskeytest"
+SlashCmdList["FSKEYTEST"] = function(msg)
+    if not msg or msg == "" then
+        print("|cff88ccffUso:|r /fskeytest <messaggio con keystone>")
+        print("  Esempio: /fskeytest LF TANK [Keystone: Maraudon (6)]")
+        return
+    end
+    print("|cff88ccff=== Keystone Parser Test ===|r")
+    print("  Input: " .. msg)
+    local category, dungeon, isHeroic, isMythic, isRaid, isKeystone = LFG.ClassifyMessage(msg)
+    print("  Categoria: " .. tostring(category))
+    print("  Dungeon: " .. tostring(dungeon))
+    print("  isKeystone: " .. tostring(isKeystone))
+    local ksName, ksLevel = LFG.ParseKeystoneInfo(msg)
+    print("  ksName: " .. tostring(ksName))
+    print("  ksLevel: " .. tostring(ksLevel))
+    local minLevel = FrostSeekDB and FrostSeekDB.LFG and FrostSeekDB.LFG.keystoneMinLevel or 0
+    print("  keystoneMinLevel (DB): " .. tostring(minLevel))
+    if isKeystone and minLevel and minLevel > 0 and ksLevel then
+        local wouldFilter = ksLevel < minLevel
+        print("  Filtro attivo: " .. tostring(wouldFilter) .. " (level " .. tostring(ksLevel) .. " < min " .. tostring(minLevel) .. ")")
+    end
+end
+
+function LFG.ApplyKeystoneMinLevelFilter()
+    if not activeSearches then return end
+    local minLevel = FrostSeekDB and FrostSeekDB.LFG and FrostSeekDB.LFG.keystoneMinLevel or 0
+    if not minLevel or minLevel <= 0 then return end
+    local removed = 0
+    for i = #activeSearches, 1, -1 do
+        local record = activeSearches[i]
+        if record and record.isKeystone then
+            local _, ksLevel = LFG.ParseKeystoneInfo(record.message)
+            if ksLevel and ksLevel < minLevel then
+                table.remove(activeSearches, i)
+                removed = removed + 1
+            end
+        end
+    end
+    if removed > 0 then
+        print("|cff88ccffFrostSeek:|r Rimosse " .. removed .. " keystone sotto il livello " .. minLevel)
+    end
 end
 
 function LFG.RecordActiveSearch(sender, message, channel)
@@ -1235,8 +1252,14 @@ function LFG.RecordActiveSearch(sender, message, channel)
     if not LFG.PassesActivityFilter(category, dungeon) then
         return
     end
+    if isKeystone and FrostSeekDB.LFG.keystoneMinLevel and FrostSeekDB.LFG.keystoneMinLevel > 0 then
+        local _, ksLevel = LFG.ParseKeystoneInfo(message)
+        if ksLevel and ksLevel < FrostSeekDB.LFG.keystoneMinLevel then
+            return
+        end
+    end
     if category == "MISC" then
-        
+
     end
     if not activeSearches then activeSearches = {} end
     local isManastorm = (category == "MANASTORM")
@@ -1397,7 +1420,7 @@ local DIFFICULTY_FILTERS = {
         { label = "Farm",     match = function(d) return d and (d:lower():find("farm") or d:lower():find("gold") or d:lower():find("bonzo")) end },
         { label = "ALVA",     match = function(d) return d and d:lower():find("alva") end },
     },
-   
+
 }
 
 function LFG.GroupMatchesCategory(group, category)
@@ -1568,14 +1591,43 @@ local function FormatRolesFullText(roles)
 end
 LFG.FormatRolesFullText = FormatRolesFullText
 
+local KEYSTONE_LINKED = "|Hitem:(%d+):[^|]*|h%[Keystone:%s*([^%]]+)%]"
+local KEYSTONE_BARE = "%[Keystone:%s*([^%]]+)%]"
+local KEYSTONE_UNBRACKETED = "Keystone:%s*([%a%s'%-]-%(%d+%))"
+local KEYSTONE_NAME_MAX = 44
+
 function LFG.ParseKeystoneInfo(message)
     if not message then return nil, nil end
-    local name, level = string.match(message, "%[Keystone: ([^%]]+)%]%s*%((%d+)%)")
-    if name and level then
-        return name, tonumber(level)
+    if not string.find(message, "Keystone:", 1, true) then return nil, nil end
+
+    local itemId, inner = string.match(message, KEYSTONE_LINKED)
+    if not inner then
+        itemId, inner = nil, string.match(message, KEYSTONE_BARE)
     end
-    name = string.match(message, "%[Keystone: ([^%]]+)%]")
-    return name or nil, nil
+    if not inner then
+        inner = string.match(message, KEYSTONE_UNBRACKETED)
+        if inner and #inner > KEYSTONE_NAME_MAX then inner = nil end
+    end
+    if not inner then return nil, nil end
+
+    local level, s0, e0
+    local pos = 1
+    while true do
+        local s, e, digits = string.find(inner, "%((%d+)%)", pos)
+        if not s then break end
+        level, s0, e0 = tonumber(digits), s, e
+        pos = e + 1
+    end
+
+    local name = inner
+    if s0 then
+        name = string.sub(inner, 1, s0 - 1) .. string.sub(inner, e0 + 1)
+    end
+    name = string.gsub(name, "%s+", " ")
+    name = string.gsub(name, "^%s+", "")
+    name = string.gsub(name, "%s+$", "")
+
+    return name, level
 end
 
 function LFG.ShortenMessage(message)
@@ -1626,12 +1678,14 @@ function LFG.ProcessPopupQueue()
         nextPopup.message,
         nextPopup.dungeon,
         nextPopup.isHeroic,
+        nextPopup.isMythic,
         nextPopup.isRaid,
         nextPopup.isPvp,
         nextPopup.isKeystone,
         nextPopup.isManastorm,
         nextPopup.category
     )
+    isProcessingQueue = false
 end
 
 function LFG.RemovePopupFrame(frame)
@@ -1716,20 +1770,20 @@ local function BuildDemoPopup(kind)
     frame.title = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
     frame.title:SetPoint("TOP", frame, "TOP", 0, -10)
     if kind == "LFG" then
-        frame.title:SetText("LFG Popup Anchor")
+        frame.title:SetText(L["txt_lfg_popup_anchor"])
     else
-        frame.title:SetText("FrostNet Applicant Popup Anchor")
+        frame.title:SetText(L["txt_frostnet_app_popup_anchor"])
     end
     frame.title:SetTextColor(1.0, 1.0, 1.0, 1.0)
 
     frame.hint = frame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     frame.hint:SetPoint("CENTER", frame, "CENTER", 0, 0)
-    frame.hint:SetText("Drag me to position")
+    frame.hint:SetText(L["txt_drag_me_position"])
     frame.hint:SetTextColor(1.0, 0.95, 0.3, 1.0)
 
     frame.footer = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     frame.footer:SetPoint("BOTTOM", frame, "BOTTOM", 0, 8)
-    frame.footer:SetText("Shift+drag any live popup to reposition later")
+    frame.footer:SetText(L["txt_shift_drag_reposition"])
     frame.footer:SetTextColor(0.92, 0.92, 0.92, 1.0)
 
     frame:SetScript("OnDragStart", function(self)
@@ -1764,17 +1818,17 @@ function LFG.SetPopupUnlockMode(enabled)
 
             local title = popupUnlockFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
             title:SetPoint("TOP", popupUnlockFrame, "TOP", 0, -10)
-            title:SetText("FrostSeek Popup Anchor Editor")
+            title:SetText(L["txt_popup_anchor_editor"])
             title:SetTextColor(0.53, 0.80, 1.0, 1.0)
 
             local hint = popupUnlockFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
             hint:SetPoint("TOP", title, "BOTTOM", 0, -8)
-            hint:SetText("Drag the LFG and FrostNet demo boxes to position popups")
+            hint:SetText(L["txt_drag_demo_boxes"])
             hint:SetTextColor(1.0, 0.95, 0.3, 1.0)
 
             local subHint = popupUnlockFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
             subHint:SetPoint("TOP", hint, "BOTTOM", 0, -4)
-            subHint:SetText("Tip: hold Shift and drag any live popup to reposition it instantly")
+            subHint:SetText(L["txt_tip_hold_shift"])
             subHint:SetTextColor(0.85, 0.85, 0.85, 1.0)
 
             local function makeBtn(label, color, xOff)
@@ -1800,12 +1854,12 @@ function LFG.SetPopupUnlockMode(enabled)
                 return b
             end
 
-            local saveBtn = makeBtn("Save", {0.2, 0.85, 0.2}, -70)
+            local saveBtn = makeBtn(L["save"], {0.2, 0.85, 0.2}, -70)
             saveBtn:SetScript("OnClick", function()
                 LFG.SetPopupUnlockMode(false)
             end)
 
-            local resetBtn = makeBtn("Reset", {0.95, 0.55, 0.2}, 70)
+            local resetBtn = makeBtn(L["reset"], {0.95, 0.55, 0.2}, 70)
             resetBtn:SetScript("OnClick", function()
                 LFG.ResetPopupAnchor()
             end)
@@ -1825,7 +1879,7 @@ function LFG.SetPopupUnlockMode(enabled)
         popupUnlockFrame:Show()
         popupUnlockFrames.LFG:Show()
         popupUnlockFrames.FrostNet:Show()
-        print("|cff88ccffFrostSeek:|r Popup anchor editor open. Drag the demo boxes, then click |cff44ff44Save|r.")
+        print(L["msg_popup_editor_open"])
     else
         if popupUnlockFrames.LFG and popupUnlockFrames.LFG:IsShown() then
             LFG.SavePopupAnchorFromFrame(popupUnlockFrames.LFG)
@@ -1837,7 +1891,7 @@ function LFG.SetPopupUnlockMode(enabled)
         end
         if popupUnlockFrame and popupUnlockFrame:IsShown() then
             popupUnlockFrame:Hide()
-            print("|cff88ccffFrostSeek:|r Popup anchors saved.")
+            print(L["msg_popup_anchors_saved"])
         end
         LFG.RepositionPopups()
         if _G.FrostSeek and _G.FrostSeek.Listings and _G.FrostSeek.Listings.RepositionAppPopups then
@@ -1905,7 +1959,7 @@ function LFG.ResetPopupAnchor()
     if _G.FrostSeek and _G.FrostSeek.Listings and _G.FrostSeek.Listings.RepositionAppPopups then
         _G.FrostSeek.Listings.RepositionAppPopups()
     end
-    print("|cff88ccffFrostSeek:|r Popup anchors reset to defaults.")
+    print(L["msg_popup_anchors_reset"])
 end
 
 function LFG.AttachPopupDragHandler(popup)
@@ -1925,7 +1979,7 @@ function LFG.AttachPopupDragHandler(popup)
             self._dragging = false
             LFG.SavePopupAnchorFromFrame(self)
             LFG.RepositionPopups()
-            print("|cff88ccffFrostSeek:|r Popup anchor saved. Hold |cffffcc00Shift|r and drag a popup to move it again.")
+            print(L["msg_popup_anchor_saved"])
         end
     end)
 end
@@ -1940,12 +1994,28 @@ function LFG.CreateLFGPopup(sender, message, dungeon, isHeroic, isMythic, isRaid
     if mutedPlayers[sender] and GetTime() < mutedPlayers[sender] then
         return
     end
+    if isKeystone and FrostSeekDB.LFG.keystoneMinLevel and FrostSeekDB.LFG.keystoneMinLevel > 0 then
+        local _, ksLevel = LFG.ParseKeystoneInfo(message)
+        if ksLevel and ksLevel < FrostSeekDB.LFG.keystoneMinLevel then
+            return
+        end
+    end
+    if category ~= "MISC" and not FrostSeekDB.LFG.popupCategories[category] and not FrostSeekDB.LFG.popupCategories["ALL"] then
+        return
+    end
+    local msgModePre = LFG.GetMessageMode(message) or "LFG"
+    local showLFGPre = FrostSeekDB.LFG.popupShowLFG ~= false
+    local showLFMPre = FrostSeekDB.LFG.popupShowLFM ~= false
+    if msgModePre == "LFG" and not showLFGPre then return end
+    if msgModePre == "LFM" and not showLFMPre then return end
+    if (not showLFGPre) and (not showLFMPre) then return end
     if activePopupCount >= (FrostSeekDB.LFG.maxConcurrentPopups or 3) then
         table.insert(popupQueue, {
             sender = sender,
             message = message,
             dungeon = dungeon,
             isHeroic = isHeroic,
+            isMythic = isMythic,
             isRaid = isRaid,
             isPvp = isPvp,
             isKeystone = isKeystone,
@@ -1954,16 +2024,6 @@ function LFG.CreateLFGPopup(sender, message, dungeon, isHeroic, isMythic, isRaid
         })
         return
     end
-    if category ~= "MISC" and not FrostSeekDB.LFG.popupCategories[category] and not FrostSeekDB.LFG.popupCategories["ALL"] then
-        return
-    end
-
-    local msgMode = LFG.GetMessageMode(message) or "LFG"
-    local showLFG = FrostSeekDB.LFG.popupShowLFG ~= false
-    local showLFM = FrostSeekDB.LFG.popupShowLFM ~= false
-    if msgMode == "LFG" and not showLFG then return end
-    if msgMode == "LFM" and not showLFM then return end
-    if (not showLFG) and (not showLFM) then return end
 
     if not LFG.CanShowPopup(sender, message) then return end
 
@@ -1978,12 +2038,12 @@ function LFG.CreateLFGPopup(sender, message, dungeon, isHeroic, isMythic, isRaid
     popup:SetClampedToScreen(true)
     popup.category = category
 
-    
+
     local borderTex = popup:CreateTexture(nil, "BACKGROUND")
     borderTex:SetAllPoints()
     borderTex:SetColorTexture(ar * 0.3, ag * 0.3, ab * 0.3, 0.65)
 
-    
+
     local bgPopupColor = _tc("bgPopup")
     local bgTex = popup:CreateTexture(nil, "BORDER")
     bgTex:SetPoint("TOPLEFT", 1, -1)
@@ -2002,21 +2062,21 @@ function LFG.CreateLFGPopup(sender, message, dungeon, isHeroic, isMythic, isRaid
     UIFrameFadeIn(popup, 0.2, 0, 1)
     LFG.AttachPopupDragHandler(popup)
 
-    
+
     local topAccent = popup:CreateTexture(nil, "ARTWORK")
     topAccent:SetPoint("TOPLEFT", 1, 0)
     topAccent:SetPoint("TOPRIGHT", -1, 0)
     topAccent:SetHeight(2)
     topAccent:SetColorTexture(ar, ag, ab, 0.9)
 
-    
+
     local glassReflect = popup:CreateTexture(nil, "ARTWORK")
     glassReflect:SetPoint("TOPLEFT", 2, -3)
     glassReflect:SetPoint("TOPRIGHT", -2, -3)
     glassReflect:SetHeight(14)
     glassReflect:SetColorTexture(ar * 0.06, ag * 0.06, ab * 0.06, 0.3)
 
-    
+
     local catLabels = {
         DUNGEON = L["cat_dungeon"], RAID = L["cat_raid"],
         WORLD_BOSS = L["cat_world_boss"], PVP = L["cat_pvp"],
@@ -2130,7 +2190,7 @@ function LFG.CreateLFGPopup(sender, message, dungeon, isHeroic, isMythic, isRaid
     if diffTag ~= "" then
         dungeonLine = dungeonLine .. "  " .. diffColor .. "[" .. diffTag .. "]|r"
     end
-    dungeonLine = dungeonLine .. "  |cffffffff" .. (sender or "Unknown") .. "|r"
+    dungeonLine = dungeonLine .. "  |cffffffff" .. (sender or L["unknown"]) .. "|r"
     dungeonFS:SetText(dungeonLine)
 
     local row2Y = -40
@@ -2142,9 +2202,9 @@ function LFG.CreateLFGPopup(sender, message, dungeon, isHeroic, isMythic, isRaid
     rolesFS:SetPoint("RIGHT", popup, "RIGHT", -10, 0)
     rolesFS:SetJustifyH("LEFT")
     if roleTagStr and roleTagStr ~= "" then
-        rolesFS:SetText("|cff88ccffLooking for:|r " .. roleTagStr)
+        rolesFS:SetText(L["txt_looking_for"] .. roleTagStr)
     else
-        rolesFS:SetText("|cff888888Looking for: anyone|r")
+        rolesFS:SetText(L["txt_looking_for_anyone"])
     end
 
     local row3Y = -58
@@ -2174,6 +2234,22 @@ function LFG.CreateLFGPopup(sender, message, dungeon, isHeroic, isMythic, isRaid
         SendChatMessage(whisperMsg, "WHISPER", nil, sender)
         LFG.RemovePopupFrame(popup)
         UIErrorsFrame:AddMessage("|cff88ccff" .. FrostSeek.Lf("popup_whisper_sent", sender) .. "|r", 1, 1, 1, 3)
+    end)
+    whisperBtn:SetScript("OnEnter", function(self)
+        GameTooltip:SetOwner(self, "ANCHOR_TOP")
+        GameTooltip:SetText(L["popup_whisper"] .. " -> " .. tostring(sender), 0.8, 1, 0.8)
+        local previewMsg = LFG.CreateWhisperMessage() or ""
+        if #previewMsg > 200 then
+            previewMsg = string.sub(previewMsg, 1, 197) .. "..."
+        end
+        local isCustom = FrostSeekDB.LFG.customMessages and FrostSeekDB.LFG.customMessages.enabled
+        local label = isCustom and (L["tip_preview_custom"] or "Preview (custom):") or (L["tip_preview_base"] or "Preview (base):")
+        GameTooltip:AddLine(label, 0.7, 0.85, 1, true)
+        GameTooltip:AddLine("|cff88ccff" .. previewMsg .. "|r", 1, 1, 1, true)
+        GameTooltip:Show()
+    end)
+    whisperBtn:SetScript("OnLeave", function(self)
+        GameTooltip:Hide()
     end)
 
     local muteBtn = UI and UI.CreateModernButton and UI.CreateModernButton(popup, 48, 20, L["popup_mute"], _tc("warning"))
@@ -2294,14 +2370,14 @@ C_Timer.NewTicker(300, function()
 end)
 
 function LFG.ClearAllSearches()
-    activeSearches = {}
+    if activeSearches then wipe(activeSearches) else activeSearches = {} end
     for i = #openFrames, 1, -1 do
         LFG.RemovePopupFrame(openFrames[i])
     end
     openFrames = {}
     if LFG.recruitersScrollFrame then LFG.recruitersScrollFrame:SetVerticalScroll(0) end
     if LFG.UpdateRecruitersList then LFG.UpdateRecruitersList() end
-    print("|cff88ccffFrostSeek LFG:|r All searches cleared")
+    print(L["msg_all_searches_cleared"])
 end
 
 function LFG.ScrollRecruitersList(direction)
@@ -2331,7 +2407,7 @@ end
 function LFG.UpdatePlayerInfo()
     if not LFG.playerInfoText then return end
     local classInfo, ilvl, enchant = LFG.GetFullPlayerInfo()
-    local roleText = (FrostSeekDB.LFG.myRole ~= "" and FrostSeekDB.LFG.myRole ~= L["none"]) and ("Role: " .. FrostSeekDB.LFG.myRole) or "Role: Not Set"
+    local roleText = (FrostSeekDB.LFG.myRole ~= "" and FrostSeekDB.LFG.myRole ~= L["none"]) and (L["txt_role_prefix"] .. FrostSeekDB.LFG.myRole) or L["txt_role_not_set"]
     LFG.playerInfoText:SetText(string.format("|cffffffff%s | |cff00ff00%diLvl|r | %s %s",
         classInfo, ilvl, roleText, enchant))
 end
@@ -2359,13 +2435,13 @@ local function CreateContextMenu()
     local function OnClick_Invite()
         if not contextMenu.playerName then return end
         InviteUnit(contextMenu.playerName)
-        print("|cff88ccffFrostSeek:|r Invite sent to " .. contextMenu.playerName)
+        print(L["msg_invite_sent_to"] .. contextMenu.playerName)
     end
     local function OnClick_SendWhisperWithLFG()
         if not contextMenu.playerName then return end
         local msg = LFG.CreateWhisperMessage()
         SendChatMessage(msg, "WHISPER", nil, contextMenu.playerName)
-        print("|cff88ccffFrostSeek:|r LFG whisper sent to " .. contextMenu.playerName)
+        print(L["msg_lfg_whisper_sent_to"] .. contextMenu.playerName)
     end
     local function OnClick_AddFriend()
         if not contextMenu.playerName then return end
@@ -2374,7 +2450,7 @@ local function CreateContextMenu()
         elseif AddFriend then
             AddFriend(contextMenu.playerName)
         end
-        print("|cff88ccffFrostSeek:|r Friend request sent to " .. contextMenu.playerName)
+        print(L["msg_friend_request_sent_to"] .. contextMenu.playerName)
     end
     local function OnClick_Ignore()
         if not contextMenu.playerName then return end
@@ -2383,7 +2459,7 @@ local function CreateContextMenu()
         elseif AddIgnore then
             AddIgnore(contextMenu.playerName)
         end
-        print("|cff88ccffFrostSeek:|r " .. contextMenu.playerName .. " added to ignore list")
+        print("|cff88ccffFrostSeek:|r " .. contextMenu.playerName .. L["msg_added_to_ignore_list"])
     end
     local function OnClick_CopyName()
         if not contextMenu.playerName then return end
@@ -2399,13 +2475,13 @@ local function CreateContextMenu()
         end
     end
     local menuItems = {
-        { text = "FrostSeek Player Menu", isTitle = true, notCheckable = true },
-        { text = "|cff88ccffWhisper|r", func = OnClick_Whisper, notCheckable = true },
-        { text = "|cff2fff5fLFG Whisper (Auto)|r", func = OnClick_SendWhisperWithLFG, notCheckable = true },
-        { text = "|cffffaa00Invite to Group|r", func = OnClick_Invite, notCheckable = true },
-        { text = "Add Friend", func = OnClick_AddFriend, notCheckable = true },
-        { text = "|cffff5555Ignore|r", func = OnClick_Ignore, notCheckable = true },
-        { text = "Copy Name", func = OnClick_CopyName, notCheckable = true },
+        { text = L["txt_player_menu_title"], isTitle = true, notCheckable = true },
+        { text = L["txt_menu_whisper"], func = OnClick_Whisper, notCheckable = true },
+        { text = L["txt_menu_lfg_whisper_auto"], func = OnClick_SendWhisperWithLFG, notCheckable = true },
+        { text = L["txt_menu_invite_to_group"], func = OnClick_Invite, notCheckable = true },
+        { text = L["presence_add_friend"], func = OnClick_AddFriend, notCheckable = true },
+        { text = L["txt_menu_ignore"], func = OnClick_Ignore, notCheckable = true },
+        { text = L["txt_menu_copy_name"], func = OnClick_CopyName, notCheckable = true },
     }
     UIDropDownMenu_Initialize(contextMenu, function(self, level)
         if not level then return end
@@ -2520,9 +2596,23 @@ function LFG.InitRowPool(parent)
             if pr and pr.currentRecord then
                 local msg = LFG.CreateWhisperMessage()
                 SendChatMessage(msg, "WHISPER", nil, pr.currentRecord.player)
-                print("|cff88ccffFrostSeek LFG:|r Whisper sent to " .. pr.currentRecord.player)
+                print(L["msg_whisper_sent_to_lfg"] .. pr.currentRecord.player)
             end
         end)
+        acceptBtn:SetScript("OnEnter", function(self)
+            local pr = rowPool[i]
+            if not pr or not pr.currentRecord then return end
+            GameTooltip:SetOwner(self, "ANCHOR_TOP")
+            GameTooltip:SetText(L["listings_accept"] .. " -> " .. tostring(pr.currentRecord.player), 0.8, 1, 0.8)
+            local previewMsg = LFG.CreateWhisperMessage() or ""
+            if #previewMsg > 200 then previewMsg = string.sub(previewMsg, 1, 197) .. "..." end
+            local isCustom = FrostSeekDB.LFG.customMessages and FrostSeekDB.LFG.customMessages.enabled
+            local label = isCustom and (L["tip_preview_custom"] or "Preview (custom):") or (L["tip_preview_base"] or "Preview (base):")
+            GameTooltip:AddLine(label, 0.7, 0.85, 1, true)
+            GameTooltip:AddLine("|cff88ccff" .. previewMsg .. "|r", 1, 1, 1, true)
+            GameTooltip:Show()
+        end)
+        acceptBtn:SetScript("OnLeave", function(self) GameTooltip:Hide() end)
         row:SetScript("OnEnter", function(self)
             local pr = rowPool[i]
             local accent = pr.accent
@@ -2649,9 +2739,23 @@ function LFG.CreateRowForPool(parent, idx)
         if pr and pr.currentRecord then
             local msg = LFG.CreateWhisperMessage()
             SendChatMessage(msg, "WHISPER", nil, pr.currentRecord.player)
-            print("|cff88ccffFrostSeek LFG:|r Whisper sent to " .. pr.currentRecord.player)
+            print(L["msg_whisper_sent_to_lfg"] .. pr.currentRecord.player)
         end
     end)
+    acceptBtn:SetScript("OnEnter", function(self)
+        local pr = rowPool[idx]
+        if not pr or not pr.currentRecord then return end
+        GameTooltip:SetOwner(self, "ANCHOR_TOP")
+        GameTooltip:SetText(L["listings_accept"] .. " -> " .. tostring(pr.currentRecord.player), 0.8, 1, 0.8)
+        local previewMsg = LFG.CreateWhisperMessage() or ""
+        if #previewMsg > 200 then previewMsg = string.sub(previewMsg, 1, 197) .. "..." end
+        local isCustom = FrostSeekDB.LFG.customMessages and FrostSeekDB.LFG.customMessages.enabled
+        local label = isCustom and (L["tip_preview_custom"] or "Preview (custom):") or (L["tip_preview_base"] or "Preview (base):")
+        GameTooltip:AddLine(label, 0.7, 0.85, 1, true)
+        GameTooltip:AddLine("|cff88ccff" .. previewMsg .. "|r", 1, 1, 1, true)
+        GameTooltip:Show()
+    end)
+    acceptBtn:SetScript("OnLeave", function(self) GameTooltip:Hide() end)
     row:SetScript("OnEnter", function(self)
         local pr = rowPool[idx]
         local accent = pr.accent
@@ -2727,7 +2831,7 @@ function LFG.UpdateRecruitersList()
                 passesMode = (recMode == LFG.ModeFilter)
             end
             if not passesMode then
-                
+
             elseif activeDiffMatch then
                 local diffLabel = LFG.ParseDifficulty(search.message, search.category)
                 if activeDiffMatch(diffLabel) then
@@ -2780,9 +2884,9 @@ function LFG.UpdateRecruitersList()
     end
     if LFG.scrollIndicator then
         if totalFiltered > MAX_DISPLAY_ROWS then
-            LFG.scrollIndicator:SetText(tostring(totalFiltered) .. " recruiters")
+            LFG.scrollIndicator:SetText(tostring(totalFiltered) .. L["msg_recruiters_count"])
         else
-            LFG.scrollIndicator:SetText(tostring(totalFiltered) .. " recruiters")
+            LFG.scrollIndicator:SetText(tostring(totalFiltered) .. L["msg_recruiters_count"])
         end
     end
     local now = GetTime()
@@ -2804,7 +2908,7 @@ function LFG.UpdateRecruitersList()
             end
             poolRow.accentBar:SetColorTexture(accent[1], accent[2], accent[3], 0.7)
             poolRow.dot:SetColorTexture(accent[1], accent[2], accent[3], 0.9)
-            poolRow.nameText:SetText(record.player or "Unknown")
+            poolRow.nameText:SetText(record.player or L["unknown"])
             local timeSince = now - (record.lastUpdate or 0)
             if timeSince < 60 then
                 poolRow.timeText:SetText(string.format("%ds", timeSince))
@@ -2817,7 +2921,7 @@ function LFG.UpdateRecruitersList()
             local roleFullStr = LFG.FormatRolesFullText(roles)
             poolRow.roleText:SetText(roleStr)
             if record.dungeon and record.dungeon ~= "MISC" and record.dungeon ~= "KEYSTONE" and record.dungeon ~= "PVP" and record.dungeon ~= "MANASTORM" and record.dungeon ~= "WORLD_BOSS" then
-                
+
                 local diffLabel = LFG.ParseDifficulty(record.message, record.category)
                 local diffTag, diffColor
                 if diffLabel then
@@ -2883,20 +2987,20 @@ function LFG.UpdateRecruitersList()
             local timeSinceForTooltip = timeSince
             poolRow.tooltipFrame:SetScript("OnEnter", function(self)
                 GameTooltip:SetOwner(self, "ANCHOR_TOP", 0, 10)
-                GameTooltip:SetText("|cFFFFFF00" .. (record.player or "Unknown") .. "|r", 1, 1, 1)
+                GameTooltip:SetText("|cFFFFFF00" .. (record.player or L["unknown"]) .. "|r", 1, 1, 1)
                 GameTooltip:AddLine(" ")
-                GameTooltip:AddLine("|cFF00FF00Full Message:|r", 0, 1, 0)
+                GameTooltip:AddLine(L["tip_full_message"], 0, 1, 0)
                 GameTooltip:AddLine(LFG.FormatMessageWithIcons(record.message or ""), 1, 1, 1, true)
                 GameTooltip:AddLine(" ")
                 if roleFullStr and roleFullStr ~= "" then
-                    GameTooltip:AddLine("|cFF88CCFFLooking for:|r " .. roleFullStr, 0.9, 0.85, 0.4)
+                    GameTooltip:AddLine(L["tip_looking_for_label"] .. roleFullStr, 0.9, 0.85, 0.4)
                 end
-                GameTooltip:AddLine("|cFF88CCFFTime:|r " .. string.format("%ds ago", timeSinceForTooltip), 0.8, 0.8, 0.8)
+                GameTooltip:AddLine(L["tip_time_label"] .. string.format("%ds ago", timeSinceForTooltip), 0.8, 0.8, 0.8)
                 if record.dungeon and record.dungeon ~= "MISC" then
                     local tipDungeon = record.dungeonName or record.dungeon
-                    GameTooltip:AddLine("|cFF88CCFFDungeon:|r " .. tipDungeon, 0.8, 0.8, 0.8)
+                    GameTooltip:AddLine(L["tip_dungeon_label"] .. tipDungeon, 0.8, 0.8, 0.8)
                 end
-                GameTooltip:AddLine("|cFF88CCFFCategory:|r " .. record.category, 0.8, 0.8, 0.8)
+                GameTooltip:AddLine(L["tip_category_label"] .. record.category, 0.8, 0.8, 0.8)
                 GameTooltip:Show()
             end)
             poolRow.tooltipFrame:SetScript("OnLeave", function(self)
@@ -2957,104 +3061,20 @@ function LFG:Initialize(parentFrame)
         CloseAllDropdowns()
     end)
     self.playerFrame = CreateFrame("Frame", nil, self.mainContainer)
-    self.playerFrame:SetSize(IW, 35)
-    self.playerFrame:SetPoint("TOP", self.mainContainer, "TOP", 0, -5)
-    local playerBg = self.playerFrame:CreateTexture(nil, "BACKGROUND")
-    playerBg:SetPoint("TOPLEFT", 1, -1)
-    playerBg:SetPoint("BOTTOMRIGHT", -1, 1)
-    playerBg:SetColorTexture(unpack(_tc("bgSection")))
-    local playerBorder = self.playerFrame:CreateTexture(nil, "BORDER")
-    playerBorder:SetPoint("TOPLEFT", 0, 0)
-    playerBorder:SetPoint("BOTTOMRIGHT", 0, 0)
-    playerBorder:SetColorTexture(unpack(_tc("borderInput")))
-    local playerAccent = self.playerFrame:CreateTexture(nil, "OVERLAY")
-    playerAccent:SetPoint("BOTTOMLEFT", 2, 0)
-    playerAccent:SetPoint("BOTTOMRIGHT", -2, 0)
-    playerAccent:SetHeight(1.5)
-    playerAccent:SetColorTexture(unpack(_tc("accentBar")))
-    self.playerInfoText = self.playerFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    self.playerInfoText:SetPoint("LEFT", self.playerFrame, "LEFT", 10, 0)
-    self.playerInfoText:SetText(L["loading"])
-    self.playerInfoText:SetTextColor(unpack(_tc("textPrimary")))
-    local toggleWidth, toggleHeight = 40, 22
-    local knobSize = 18
-    local lfgToggle = CreateFrame("Button", nil, self.playerFrame)
-    lfgToggle:SetSize(toggleWidth, toggleHeight)
-    lfgToggle:SetPoint("RIGHT", self.playerFrame, "RIGHT", 0, -35)
-    lfgToggle.track = lfgToggle:CreateTexture(nil, "BACKGROUND")
-    lfgToggle.track:SetAllPoints()
-    lfgToggle.track:SetColorTexture(unpack(_tc("bgToggleOff")))
-    lfgToggle.trackBorder = lfgToggle:CreateTexture(nil, "BORDER")
-    lfgToggle.trackBorder:SetPoint("TOPLEFT", -1, 1)
-    lfgToggle.trackBorder:SetPoint("BOTTOMRIGHT", 1, -1)
-    lfgToggle.trackBorder:SetColorTexture(unpack(_tc("border")))
-    lfgToggle.knob = lfgToggle:CreateTexture(nil, "OVERLAY")
-    lfgToggle.knob:SetSize(knobSize, knobSize)
-    lfgToggle.knob:SetPoint("CENTER", lfgToggle, "LEFT", knobSize / 2, 0)
-    lfgToggle.knob:SetColorTexture(1, 1, 1, 1)
-    local lfgToggleLabel = self.playerFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-    lfgToggleLabel:SetPoint("RIGHT", lfgToggle, "LEFT", -6, 0)
-    lfgToggleLabel:SetText("LFG:")
-    lfgToggleLabel:SetTextColor(unpack(_tc("textMuted")))
+    self.playerFrame:SetSize(IW, 24)
+    self.playerFrame:SetPoint("TOP", self.mainContainer, "TOP", 0, -4)
+
     local function UpdateToggleVisual(isOn)
-        if isOn then
-            lfgToggle.track:SetColorTexture(unpack(_tc("bgToggleOn")))
-            lfgToggle.knob:ClearAllPoints()
-            lfgToggle.knob:SetPoint("CENTER", lfgToggle, "RIGHT", -knobSize / 2, 0)
-            lfgToggleLabel:SetTextColor(unpack(_tc("success")))
-        else
-            lfgToggle.track:SetColorTexture(unpack(_tc("bgToggleOff")))
-            lfgToggle.knob:ClearAllPoints()
-            lfgToggle.knob:SetPoint("CENTER", lfgToggle, "LEFT", knobSize / 2, 0)
-            lfgToggleLabel:SetTextColor(unpack(_tc("danger")))
-        end
     end
-    local isLFGEnabled = not FrostSeekDB.LFG.disableLFG
-    UpdateToggleVisual(isLFGEnabled)
-    lfgToggle:SetScript("OnClick", function()
-        FrostSeekDB.LFG.disableLFG = not FrostSeekDB.LFG.disableLFG
-        local nowOn = not FrostSeekDB.LFG.disableLFG
-        UpdateToggleVisual(nowOn)
-        if nowOn then
-            print("|cff88ccffFrostSeek:|r LFG |cff33cc33enabled|r")
-        else
-            print("|cff88ccffFrostSeek:|r LFG |cffff4444disabled|r")
-        end
-    end)
-    lfgToggle:SetScript("OnEnter", function(self)
-        GameTooltip:SetOwner(self, "ANCHOR_TOP")
-        GameTooltip:SetText(L["lfg_toggle"], 0.8, 0.9, 1)
-        if FrostSeekDB.LFG.disableLFG then
-            GameTooltip:AddLine(L["lfg_currently_disabled"], 1, 1, 1)
-            GameTooltip:AddLine(L["lfg_click_enable"], 0.7, 0.7, 0.7)
-        else
-            GameTooltip:AddLine(L["lfg_currently_enabled"], 1, 1, 1)
-            GameTooltip:AddLine(L["lfg_click_disable"], 0.7, 0.7, 0.7)
-        end
-        GameTooltip:Show()
-    end)
-    lfgToggle:SetScript("OnLeave", function()
-        GameTooltip:Hide()
-    end)
-    LFG.lfgToggle = lfgToggle
+    LFG.lfgToggle = nil
     LFG.UpdateToggleVisual = UpdateToggleVisual
-    local roleLabel = self.playerFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-    roleLabel:SetPoint("RIGHT", self.playerFrame, "RIGHT", -100, 0)
-    roleLabel:SetText(L["lfg_role"] .. ":")
-    roleLabel:SetTextColor(unpack(_tc("textMuted")))
-    self.roleDropdown = FrostSeekUIUtils.CreateModernDropdown(self.playerFrame, 95, 22)
-    self.roleDropdown:SetPoint("LEFT", roleLabel, "RIGHT", 0, 0)
-    self.roleDropdown:SetOptions({L["none"], "Tank", "Healer", "DPS", "Support"})
-    local savedRole = FrostSeekDB.LFG and (FrostSeekDB.LFG.myRole ~= "" and FrostSeekDB.LFG.myRole or L["none"]) or L["none"]
-    self.roleDropdown:SetText(savedRole)
-    self.roleDropdown.selectedValue = savedRole
-    self.roleDropdown.onChange = function(val)
-        LFG.SetRole(val)
-    end
+    self.roleDropdown = nil
     self.title = self.mainContainer:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    self.title:SetPoint("TOP", self.playerFrame, "BOTTOM", 0, -8)
+    self.title:SetPoint("TOP", self.playerFrame, "BOTTOM", 0, -4)
     self.title:SetText("|cff88ccff" .. L["lfg_title"] .. "|r")
     self.title:SetTextColor(unpack(_tc("textAccent")))
+
+
     local filterBtn = CreateFrame("Button", "FrostSeekLFGFilterBtn", self.mainContainer)
     filterBtn:SetSize(18, 18)
     filterBtn:SetPoint("LEFT", self.title, "RIGHT", 10, 0)
@@ -3193,10 +3213,51 @@ function LFG:Initialize(parentFrame)
         self.diffFilterButtons[label] = btn
     end
 
+    self.keystoneMinLabel = self.searchFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    self.keystoneMinLabel:SetText(L["lfg_min_keystone"] or "Min Key:")
+    self.keystoneMinLabel:SetTextColor(unpack(_tc("textMuted")))
+    self.keystoneMinLabel:Hide()
+    self.keystoneMinBox = FrostSeekUIUtils.CreateModernEditBox(self.searchFrame, 40, 18)
+    self.keystoneMinBox:SetNumeric(true)
+    self.keystoneMinBox:SetMaxLetters(3)
+    self.keystoneMinBox:SetText(tostring(FrostSeekDB.LFG.keystoneMinLevel or 0))
+    self.keystoneMinBox:Hide()
+    self.keystoneMinBox:SetScript("OnEnterPressed", function(self)
+        local val = tonumber(self:GetText()) or 0
+        if val < 0 then val = 0 end
+        if val > 255 then val = 255 end
+        FrostSeekDB.LFG.keystoneMinLevel = val
+        self:SetText(tostring(val))
+        self:ClearFocus()
+        LFG.ApplyKeystoneMinLevelFilter()
+        if LFG.UpdateRecruitersList then LFG.UpdateRecruitersList() end
+    end)
+    self.keystoneMinBox:SetScript("OnEscapePressed", function(self)
+        self:SetText(tostring(FrostSeekDB.LFG.keystoneMinLevel or 0))
+        self:ClearFocus()
+    end)
+    self.keystoneMinBox:SetScript("OnEditFocusLost", function(self)
+        local val = tonumber(self:GetText()) or 0
+        if val < 0 then val = 0 end
+        if val > 255 then val = 255 end
+        FrostSeekDB.LFG.keystoneMinLevel = val
+        self:SetText(tostring(val))
+        LFG.ApplyKeystoneMinLevelFilter()
+        if LFG.UpdateRecruitersList then LFG.UpdateRecruitersList() end
+    end)
+    self.keystoneMinBox:SetScript("OnEnter", function(self)
+        GameTooltip:SetOwner(self, "ANCHOR_TOP")
+        GameTooltip:SetText(L["lfg_min_keystone"] or "Min Key", 0.8, 0.9, 1)
+        GameTooltip:AddLine(L["lfg_min_keystone_desc"] or "Mostra solo keystone di questo livello o superiore. 0 = disattivato.", 0.7, 0.85, 1, true)
+        GameTooltip:Show()
+    end)
+    self.keystoneMinBox:SetScript("OnLeave", function() GameTooltip:Hide() end)
+
     function LFG.UpdateDiffFilterVisibility()
         local cat = LFG.CurrentCategory or "ALL"
         local filters = DIFFICULTY_FILTERS[cat]
         for _, btn in pairs(self.diffFilterButtons) do btn:Hide() end
+        local lastAnchor = clearSearchBtn
         if filters then
             local anchor = clearSearchBtn
             local allBtn = self.diffFilterButtons["All"]
@@ -3215,6 +3276,18 @@ function LFG:Initialize(parentFrame)
                     anchor = btn
                 end
             end
+            lastAnchor = anchor
+        end
+        if cat == "KEYSTONE" and self.keystoneMinLabel and self.keystoneMinBox then
+            self.keystoneMinLabel:ClearAllPoints()
+            self.keystoneMinLabel:SetPoint("LEFT", lastAnchor, "RIGHT", 15, 0)
+            self.keystoneMinLabel:Show()
+            self.keystoneMinBox:ClearAllPoints()
+            self.keystoneMinBox:SetPoint("LEFT", self.keystoneMinLabel, "RIGHT", 5, 0)
+            self.keystoneMinBox:Show()
+        else
+            if self.keystoneMinLabel then self.keystoneMinLabel:Hide() end
+            if self.keystoneMinBox then self.keystoneMinBox:Hide() end
         end
         LFG.UpdateDiffFilterVisuals()
     end
@@ -3224,7 +3297,7 @@ function LFG:Initialize(parentFrame)
         local cat = LFG.CurrentCategory or "ALL"
         local accent = CATEGORY_ACCENT[cat] or {0.5, 0.5, 0.5}
         for label, btn in pairs(self.diffFilterButtons) do
-            if not btn.text then btn.text = btn:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall") btn.text:SetPoint("CENTER") btn.text:SetText(label) end
+            if not btn.text then btn.text = btn:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall") btn.text:SetPoint("CENTER") end
             local isHovered = (label == hovered)
             if label == "All" then
                 if not active then
@@ -3386,20 +3459,53 @@ function LFG:Initialize(parentFrame)
     self.clearAllBtn:SetPoint("LEFT", self.refreshBtn, "RIGHT", 5, 0)
     self.clearAllBtn:SetScript("OnClick", function()
         if Shared and Shared.ConfirmDialog then
-            Shared.ConfirmDialog(L["clear_all"], "Clear all active LFG searches?", function()
+            Shared.ConfirmDialog(L["clear_all"], L["msg_clear_all_confirm"], function()
                 LFG.ClearAllSearches()
             end)
         else
             LFG.ClearAllSearches()
         end
     end)
-    self.frostnetBtn = FrostSeekUIUtils.CreateModernButton(self.controlsFrame, 100, 22, L["frostnet_title"], _tc("accent"))
-    self.frostnetBtn:SetPoint("LEFT", self.clearAllBtn, "RIGHT", 10, 0)
-    self.frostnetBtn:SetScript("OnClick", function()
-        if FrostSeek.Presence then
-            FrostSeek.Presence:TogglePanel(FrostSeek.MainFrame)
+
+
+    self.profileBtn = FrostSeekUIUtils.CreateModernButton(self.controlsFrame, 80, 22, L["tab_profile"] or "Profile", _tc("accent"))
+    self.profileBtn:SetPoint("RIGHT", self.controlsFrame, "RIGHT", -10, -30)
+    self.profileBtn:SetScript("OnClick", function()
+        if FrostSeek and FrostSeek.Tabs and FrostSeek.Tabs.listings and FrostSeek.Tabs.listings.module then
+            FrostSeek:SwitchTab("listings")
+            if FrostSeek.Listings then
+                FrostSeek.Listings.subTab = "profile"
+                FrostSeek.Listings:RefreshSubTabs()
+                FrostSeek.Listings:RefreshContent()
+            end
         end
     end)
+    self.profileBtn:SetScript("OnEnter", function(self)
+        GameTooltip:SetOwner(self, "ANCHOR_TOP")
+        GameTooltip:SetText(L["tab_profile"] or "Profile", 1, 1, 1)
+        GameTooltip:AddLine(L["options_open_profile_desc"] or "Apri il tuo profilo FrostSeek", 0.7, 0.7, 0.7, true)
+        GameTooltip:Show()
+    end)
+    self.profileBtn:SetScript("OnLeave", function() GameTooltip:Hide() end)
+
+    self.wispBtn = FrostSeekUIUtils.CreateModernButton(self.controlsFrame, 80, 22, L["options_custom_whisper"] or "Custom Wisp", _tc("accent"))
+    self.wispBtn:SetPoint("RIGHT", self.profileBtn, "LEFT", -8, 0)
+    self.wispBtn:SetScript("OnClick", function()
+        if _G.ShowOptionsWindow then
+            _G.ShowOptionsWindow()
+            if _G.SwitchSettingsCategory then
+                _G.SwitchSettingsCategory("custommessage")
+            end
+        end
+    end)
+    self.wispBtn:SetScript("OnEnter", function(self)
+        GameTooltip:SetOwner(self, "ANCHOR_TOP")
+        GameTooltip:SetText(L["options_custom_whisper"] or "Custom Wisp", 1, 1, 1)
+        GameTooltip:AddLine(L["options_custom_whisper_desc"] or "Personalizza il messaggio inviato quando accetti in LFG", 0.7, 0.7, 0.7, true)
+        GameTooltip:Show()
+    end)
+    self.wispBtn:SetScript("OnLeave", function() GameTooltip:Hide() end)
+
     LFG.CurrentCategory = "ALL"
     LFG.ChangeCategory("ALL")
     LFG.UpdatePlayerInfo()
@@ -3477,6 +3583,51 @@ EventFrame:RegisterEvent("CHAT_MSG_RAID_LEADER")
 EventFrame:RegisterEvent("CHAT_MSG_PARTY")
 EventFrame:RegisterEvent("CHAT_MSG_PARTY_LEADER")
 
+local messageQueue = {}
+local messageQueueSize = 0
+local MAX_QUEUE_SIZE = 200
+local queueProcessorFrame = nil
+local queueProcessorActive = false
+
+local function ProcessMessageQueue()
+    if messageQueueSize == 0 then
+        queueProcessorActive = false
+        if queueProcessorFrame then queueProcessorFrame:Hide() end
+        return
+    end
+    local toProcess = messageQueue
+    messageQueue = {}
+    messageQueueSize = 0
+    for i = 1, #toProcess do
+        local entry = toProcess[i]
+        if entry and LFG.IsLFMMessage(entry.message) then
+            LFG.RecordActiveSearch(entry.sender, entry.message, entry.channel)
+        end
+    end
+end
+
+local function ScheduleQueueProcessing()
+    if queueProcessorActive then return end
+    queueProcessorActive = true
+    if not queueProcessorFrame then
+        queueProcessorFrame = CreateFrame("Frame")
+        queueProcessorFrame:Hide()
+        local t = 0
+        queueProcessorFrame:SetScript("OnUpdate", function(self, elapsed)
+            t = t + elapsed
+            if t >= 0.15 then
+                t = 0
+                ProcessMessageQueue()
+                if messageQueueSize == 0 then
+                    queueProcessorActive = false
+                    self:Hide()
+                end
+            end
+        end)
+    end
+    queueProcessorFrame:Show()
+end
+
 EventFrame:SetScript("OnEvent", function(self, event, message, sender, language, channelName, ...)
     if FrostSeekDB.LFG and FrostSeekDB.LFG.disableLFG then return end
     if not message or not sender then return end
@@ -3485,28 +3636,26 @@ EventFrame:SetScript("OnEvent", function(self, event, message, sender, language,
     if IsAddonProtocolMessage(message) then return end
     local channel = event
     if event == "CHAT_MSG_CHANNEL" then
-        local cleanName = channelName and string.match(channelName, "^%s*(.-)%s*$") or ""
+        local cleanName = channelName and string.match(channelName, "^%s*%d*%.?%s*(.-)%s*$") or ""
         if CHANNEL_BLACKLIST[cleanName] then return end
-        local chNum = select(9, ...)
-        if chNum then
-            local n = GetChannelName(chNum)
-            if n then
-                n = string.match(n, "^%s*(.-)%s*$") or ""
-                if CHANNEL_BLACKLIST[n] then return end
-            end
-        end
-        local chIdx = select(8, ...)
+        local chIdx = select(4, ...)
         if chIdx then
-            local n = GetChannelName(chIdx)
-            if n then
-                n = string.match(n, "^%s*(.-)%s*$") or ""
+            local okGN, n = pcall(function() return GetChannelName(chIdx) end)
+            if okGN and n then
+                if type(n) == "string" then
+                    n = string.match(n, "^%s*%d*%.?%s*(.-)%s*$") or ""
+                end
                 if CHANNEL_BLACKLIST[n] then return end
             end
         end
+        local chBase = select(5, ...)
+        if chBase and CHANNEL_BLACKLIST[tostring(chBase)] then return end
         channel = cleanName or "CHANNEL"
     end
-    if LFG.IsLFMMessage(message) then
-        LFG.RecordActiveSearch(sender, message, channel)
+    if messageQueueSize < MAX_QUEUE_SIZE then
+        messageQueueSize = messageQueueSize + 1
+        messageQueue[messageQueueSize] = { sender = sender, message = message, channel = channel }
+        ScheduleQueueProcessing()
     end
 end)
 
@@ -3566,7 +3715,7 @@ local function InitializeLFGSystem()
     FrostSeekDB.LFG.maxConcurrentPopups = FrostSeekDB.LFG.maxConcurrentPopups or 2
     FrostSeekDB.LFG.soundEnabled = FrostSeekDB.LFG.soundEnabled ~= false
     C_Timer.NewTicker(10, LFG.CleanupActiveSearches)
-    print("|cff88ccffFrostSeek LFG:|r System initialized")
+    print(L["msg_lfg_system_initialized"])
 end
 
 C_Timer.After(2, InitializeLFGSystem)
@@ -3574,7 +3723,7 @@ C_Timer.After(2, InitializeLFGSystem)
 SLASH_FSDEBUGTOGGLE1 = "/fsdebugtoggle"
 SlashCmdList["FSDEBUGTOGGLE"] = function()
     FrostSeekDB.Settings.debugMode = not FrostSeekDB.Settings.debugMode
-    print("|cff88ccffFrostSeek:|r Debug mode " .. (FrostSeekDB.Settings.debugMode and "enabled" or "disabled"))
+    print(L["msg_debug_mode"] .. (FrostSeekDB.Settings.debugMode and L["txt_debug_enabled"] or L["txt_debug_disabled"]))
 end
 
 local function sortKeywordsByLength(tbl)
@@ -3610,13 +3759,77 @@ function LFG:ApplyTheme()
         self.clearAllBtn.border:SetColorTexture(dangerC[1] * 0.5, dangerC[2] * 0.5, dangerC[3] * 0.5, 0.7)
         self.clearAllBtn.accent:SetColorTexture(dangerC[1], dangerC[2], dangerC[3], 0.4)
     end
-    if self.frostnetBtn then
+    if self.profileBtn then
         local accentC = _tc("accent")
-        self.frostnetBtn.color = accentC
-        self.frostnetBtn.text:SetTextColor(min(accentC[1] * 1.2, 1), min(accentC[2] * 1.2, 1), min(accentC[3] * 1.2, 1))
-        self.frostnetBtn.bg:SetColorTexture(accentC[1] * 0.25, accentC[2] * 0.25, accentC[3] * 0.25, 0.8)
-        self.frostnetBtn.border:SetColorTexture(accentC[1] * 0.5, accentC[2] * 0.5, accentC[3] * 0.5, 0.7)
-        self.frostnetBtn.accent:SetColorTexture(accentC[1], accentC[2], accentC[3], 0.4)
+        if self.profileBtn.color then
+            self.profileBtn.color = accentC
+            self.profileBtn.text:SetTextColor(min(accentC[1] * 1.2, 1), min(accentC[2] * 1.2, 1), min(accentC[3] * 1.2, 1))
+            self.profileBtn.bg:SetColorTexture(accentC[1] * 0.25, accentC[2] * 0.25, accentC[3] * 0.25, 0.8)
+            self.profileBtn.border:SetColorTexture(accentC[1] * 0.5, accentC[2] * 0.5, accentC[3] * 0.5, 0.7)
+            self.profileBtn.accent:SetColorTexture(accentC[1], accentC[2], accentC[3], 0.4)
+        end
+    end
+    if self.wispBtn then
+        local accentC = _tc("accent")
+        if self.wispBtn.color then
+            self.wispBtn.color = accentC
+            self.wispBtn.text:SetTextColor(min(accentC[1] * 1.2, 1), min(accentC[2] * 1.2, 1), min(accentC[3] * 1.2, 1))
+            self.wispBtn.bg:SetColorTexture(accentC[1] * 0.25, accentC[2] * 0.25, accentC[3] * 0.25, 0.8)
+            self.wispBtn.border:SetColorTexture(accentC[1] * 0.5, accentC[2] * 0.5, accentC[3] * 0.5, 0.7)
+            self.wispBtn.accent:SetColorTexture(accentC[1], accentC[2], accentC[3], 0.4)
+        end
+    end
+end
+
+
+local _rolePromptShownThisSession = false
+
+StaticPopupDialogs["FROSTSEEK_ROLE_PROMPT"] = {
+    text = L["popup_role_prompt_text"],
+    button1 = L["role_tank"],
+    button2 = L["role_healer"],
+    button3 = L["role_dps"],
+    timeout = 0,
+    whileDead = true,
+    hideOnEscape = false,
+    preferredIndex = 3,
+    OnAccept = function()
+        LFG.SetRole("Tank")
+        print(L["msg_role_set_tank"])
+    end,
+    OnCancel = function()
+        LFG.SetRole("Healer")
+        print(L["msg_role_set_healer"])
+    end,
+    OnAlt = function()
+        LFG.SetRole("DPS")
+        print(L["msg_role_set_dps"])
+    end,
+}
+
+function LFG.PromptForRoleIfMissing()
+    if _rolePromptShownThisSession then return end
+    if not FrostSeekDB or not FrostSeekDB.LFG then return end
+    local role = FrostSeekDB.LFG.myRole
+    if role and role ~= "" and role ~= "No Role" and role ~= L["none"] then
+        return
+    end
+    _rolePromptShownThisSession = true
+    C_Timer.After(2, function()
+        if StaticPopupDialogs and StaticPopupDialogs["FROSTSEEK_ROLE_PROMPT"] then
+            StaticPopup_Show("FROSTSEEK_ROLE_PROMPT")
+        end
+    end)
+end
+
+local _origInit = LFG.Initialize
+if _origInit then
+    LFG.Initialize = function(self, parentFrame)
+        local r1, r2 = _origInit(self, parentFrame)
+        C_Timer.After(5, function()
+            LFG.PromptForRoleIfMissing()
+        end)
+        return r1, r2
     end
 end
 

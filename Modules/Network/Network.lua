@@ -306,7 +306,7 @@ function Network:_FlushQueue()
     if not self.channelId then
         if #self._queue >= 5 and not self._queueWarned then
             self._queueWarned = true
-            print("|cffff5555FrostNet:|r Cannot reach channel |cffffffffFSK|r — " .. tostring(#self._queue) .. " messages queued. Run /fsdebug to check channel status.")
+            print(L["net_cannot_reach_prefix"] .. tostring(#self._queue) .. L["net_messages_queued_hint"])
         end
         return
     end
@@ -323,9 +323,17 @@ function Network:_FlushQueue()
         if (now - lastT) < rateLimit then
             self:_Enqueue(message)
         else
-            local ok = pcall(function()
-                SendChatMessage(message, "CHANNEL", nil, self.channelId)
-            end)
+            local ok = false
+            if HasAddonMessageAPI then
+                ok = pcall(function()
+                    C_ChatInfo.SendAddonMessage(AddonMessageChannel, message, "GUILD")
+                end)
+            end
+            if not ok and self.channelId then
+                ok = pcall(function()
+                    SendChatMessage(message, "CHANNEL", nil, self.channelId)
+                end)
+            end
             if ok then
                 if PROTOCOL and PROTOCOL.MarkProcessed then
                     PROTOCOL:MarkProcessed(message)
@@ -347,7 +355,7 @@ function Network:SendListing(listing)
     if not msg then return false end
     local ok = self:Send(msg)
     if ok then
-        print("|cff88ccffFrostNet:|r Group published to channel |cffffffffFSK|r (" .. tostring(listing.activity or "?") .. ") |cff888888[id=" .. tostring(self.channelId) .. " len=" .. tostring(#msg) .. "]|r")
+        print(L["net_published_prefix"] .. tostring(listing.activity or "?") .. L["net_debug_id_prefix"] .. tostring(self.channelId) .. L["net_debug_len_label"] .. tostring(#msg) .. L["net_debug_id_close"])
         self._lastSentListingId = listing.id
         self._lastSentEchoTime = GetTime()
         self._echoReceived = false
@@ -471,7 +479,9 @@ local rawHandler = function(_, event, ...)
     if not FrostSeek or not FrostSeek._v or not FrostSeek._v.c(_tk) then return end
 
     if event == "PLAYER_LOGIN" then
-        Network:JoinChannel()
+        C_Timer.After(10, function()
+            Network:JoinChannel()
+        end)
     elseif event == "CHAT_MSG_ADDON" then
         local prefix, message, channelType, sender = ...
         if prefix ~= AddonMessageChannel then return end
@@ -545,7 +555,7 @@ function Network:HandleMessage(raw, author)
         end
         if authorClean == pn then
             local sentId = self._lastSentListingId
-            if string.find(raw, sentId, 1, true) then
+            if sentId ~= nil and string.find(raw, tostring(sentId), 1, true) then
                 self._echoReceived = true
                 debugLog("Loopback echo received for listing " .. tostring(sentId) .. " (channel is healthy)")
             end

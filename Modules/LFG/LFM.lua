@@ -33,7 +33,7 @@ local _hex = _G.FrostSeekShared and _G.FrostSeekShared._hex or function(t) retur
 
 local currentCategory = "RAIDS"
 local selectedRoles = { Tank = false, Healer = false, DPS = false, Support = false, BC = false }
-local needCount = { Tank = 1, Healer = 1, DPS = 1, Support = 1 }
+local needCount = { Tank = 1, Healer = 1, DPS = 1, Support = 0 }
 local selectedDifficulty = "Normal"
 local searchText = ""
 local currentKeystone = nil
@@ -42,6 +42,8 @@ local autoSpamTicker = nil
 local autoSpamActive = false
 local customMessage = FrostSeekDB.LFM.customMessage or ""
 local userEditedMessage = false
+local lastSelectedTemplate = nil
+local lastSelectedActivity = nil
 local autoInviteEnabled = false
 local autoInviteMinIlvl = 0
 local autoInviteMinLevel = 60
@@ -51,157 +53,157 @@ local activeEditBox = nil
 
 local LFM_ACTIVITIES = {
     RAIDS = {
-        { name = "Molten Core", template = "LFM Molten Core {difficulty} {roles}", keywords = {"mc", "molten core"} },
-        { name = "Onyxia", template = "LFM Onyxia {difficulty} {roles}", keywords = {"onyxia", "ony"} },
-        { name = "Blackwing Lair", template = "LFM Blackwing Lair {difficulty} {roles}", keywords = {"bwl", "blackwing"} },
-        { name = "Zul'Gurub", template = "LFM Zul'Gurub {difficulty} {roles}", keywords = {"zg", "zulgurub"} },
-        { name = "Ruins of Ahn'Qiraj", template = "LFM Ruins of AQ {difficulty} {roles}", keywords = {"aq20", "ruins"} },
-        { name = "Temple of Ahn'Qiraj", template = "LFM Temple of AQ {difficulty} {roles}", keywords = {"aq40", "temple"} },
-        { name = "Naxxramas", template = "LFM Naxxramas {difficulty} {roles}", keywords = {"naxx", "naxxramas"} },
-        { name = "Karazhan", template = "LFM Karazhan {difficulty} {roles}", keywords = {"kara", "karazhan"} },
-        { name = "Gruul's Lair", template = "LFM Gruul {difficulty} {roles}", keywords = {"gruul"} },
-        { name = "Magtheridon", template = "LFM Magtheridon {difficulty} {roles}", keywords = {"mag", "magtheridon"} },
-        { name = "Serpentshrine Cavern", template = "LFM SSC {difficulty} {roles}", keywords = {"ssc", "serpentshrine"} },
-        { name = "Tempest Keep", template = "LFM TK {difficulty} {roles}", keywords = {"tk", "tempest"} },
-        { name = "Hyjal Summit", template = "LFM Hyjal {difficulty} {roles}", keywords = {"hyjal"} },
-        { name = "Black Temple", template = "LFM BT {difficulty} {roles}", keywords = {"bt", "black temple"} },
-        { name = "Zul'Aman", template = "LFM Zul'Aman {difficulty} {roles}", keywords = {"za", "zulaman"} },
-        { name = "Sunwell Plateau", template = "LFM Sunwell {difficulty} {roles}", keywords = {"swp", "sunwell"} },
-        { name = "Eye of Eternity", template = "LFM Eye of Eternity {difficulty} {roles}", keywords = {"eye", "eoe", "malygos"} },
-        { name = "Obsidian Sanctum", template = "LFM OS {difficulty} {roles}", keywords = {"os", "obsidian", "sarth"} },
-        { name = "Vault of Archavon", template = "LFM VoA {difficulty} {roles}", keywords = {"voa", "archavon"} },
-        { name = "Ulduar", template = "LFM Ulduar {difficulty} {roles}", keywords = {"ulduar", "uld"} },
-        { name = "Trial of the Crusader", template = "LFM ToC {difficulty} {roles}", keywords = {"toc", "crusader"} },
-        { name = "Icecrown Citadel", template = "LFM ICC {difficulty} {roles}", keywords = {"icc", "icecrown"} },
-        { name = "Ruby Sanctum", template = "LFM Ruby Sanctum {difficulty} {roles}", keywords = {"rs", "ruby", "halion"} },
-        { name = "Baradin Hold", template = "LFM Baradin Hold {difficulty} {roles}", keywords = {"bh", "baradin"} },
-        { name = "Bastion of Twilight", template = "LFM BoT {difficulty} {roles}", keywords = {"bot", "bastion", "twilight"} },
-        { name = "Throne of the Four Winds", template = "LFM T4W {difficulty} {roles}", keywords = {"t4w", "four winds", "al'akir"} },
-        { name = "Blackwing Descent", template = "LFM BWD {difficulty} {roles}", keywords = {"bwd", "blackwing descent", "nefarian"} },
-        { name = "Firelands", template = "LFM Firelands {difficulty} {roles}", keywords = {"fl", "firelands", "ragnaros"} },
-        { name = "Dragon Soul", template = "LFM Dragon Soul {difficulty} {roles}", keywords = {"ds", "dragon soul", "deathwing"} },
-        { name = "Terrace of Endless Spring", template = "LFM ToES {difficulty} {roles}", keywords = {"toes", "terrace", "endless spring"} },
-        { name = "Mogu'shan Vaults", template = "LFM MSV {difficulty} {roles}", keywords = {"msv", "mogushan", "vaults"} },
-        { name = "Heart of Fear", template = "LFM HoF {difficulty} {roles}", keywords = {"hof", "heart of fear", "shek'zeer"} },
-        { name = "Throne of Thunder", template = "LFM ToT {difficulty} {roles}", keywords = {"tot", "thunder", "lei shen"} },
-        { name = "Siege of Orgrimmar", template = "LFM SoO {difficulty} {roles}", keywords = {"soo", "siege", "orgrimmar", "garrosh"} },
-        { name = "The Radiant Spring", template = "LFM TRS {difficulty} {roles}", keywords = {"TRS", "radiant", "spring"} },
+        { name = "Molten Core", template = "LFM Molten Core {difficulty} {roles}", keywords = {"mc", "molten core"}, exp = 0 },
+        { name = "Onyxia", template = "LFM Onyxia {difficulty} {roles}", keywords = {"onyxia", "ony"}, exp = 0 },
+        { name = "Blackwing Lair", template = "LFM Blackwing Lair {difficulty} {roles}", keywords = {"bwl", "blackwing"}, exp = 0 },
+        { name = "Zul'Gurub", template = "LFM Zul'Gurub {difficulty} {roles}", keywords = {"zg", "zulgurub"}, exp = 0 },
+        { name = "Ruins of Ahn'Qiraj", template = "LFM Ruins of AQ {difficulty} {roles}", keywords = {"aq20", "ruins"}, exp = 0 },
+        { name = "Temple of Ahn'Qiraj", template = "LFM Temple of AQ {difficulty} {roles}", keywords = {"aq40", "temple"}, exp = 0 },
+        { name = "Naxxramas", template = "LFM Naxxramas {difficulty} {roles}", keywords = {"naxx", "naxxramas"}, exp = 0 },
+        { name = "Karazhan", template = "LFM Karazhan {difficulty} {roles}", keywords = {"kara", "karazhan"}, exp = 1 },
+        { name = "Gruul's Lair", template = "LFM Gruul {difficulty} {roles}", keywords = {"gruul"}, exp = 1 },
+        { name = "Magtheridon", template = "LFM Magtheridon {difficulty} {roles}", keywords = {"mag", "magtheridon"}, exp = 1 },
+        { name = "Serpentshrine Cavern", template = "LFM SSC {difficulty} {roles}", keywords = {"ssc", "serpentshrine"}, exp = 1 },
+        { name = "Tempest Keep", template = "LFM TK {difficulty} {roles}", keywords = {"tk", "tempest"}, exp = 1 },
+        { name = "Hyjal Summit", template = "LFM Hyjal {difficulty} {roles}", keywords = {"hyjal"}, exp = 1 },
+        { name = "Black Temple", template = "LFM BT {difficulty} {roles}", keywords = {"bt", "black temple"}, exp = 1 },
+        { name = "Zul'Aman", template = "LFM Zul'Aman {difficulty} {roles}", keywords = {"za", "zulaman"}, exp = 1 },
+        { name = "Sunwell Plateau", template = "LFM Sunwell {difficulty} {roles}", keywords = {"swp", "sunwell"}, exp = 1 },
+        { name = "Eye of Eternity", template = "LFM Eye of Eternity {difficulty} {roles}", keywords = {"eye", "eoe", "malygos"}, exp = 2 },
+        { name = "Obsidian Sanctum", template = "LFM OS {difficulty} {roles}", keywords = {"os", "obsidian", "sarth"}, exp = 2 },
+        { name = "Vault of Archavon", template = "LFM VoA {difficulty} {roles}", keywords = {"voa", "archavon"}, exp = 2 },
+        { name = "Ulduar", template = "LFM Ulduar {difficulty} {roles}", keywords = {"ulduar", "uld"}, exp = 2 },
+        { name = "Trial of the Crusader", template = "LFM ToC {difficulty} {roles}", keywords = {"toc", "crusader"}, exp = 2 },
+        { name = "Icecrown Citadel", template = "LFM ICC {difficulty} {roles}", keywords = {"icc", "icecrown"}, exp = 2 },
+        { name = "Ruby Sanctum", template = "LFM Ruby Sanctum {difficulty} {roles}", keywords = {"rs", "ruby", "halion"}, exp = 2 },
+        { name = "Baradin Hold", template = "LFM Baradin Hold {difficulty} {roles}", keywords = {"bh", "baradin"}, exp = 3 },
+        { name = "Bastion of Twilight", template = "LFM BoT {difficulty} {roles}", keywords = {"bot", "bastion", "twilight"}, exp = 3 },
+        { name = "Throne of the Four Winds", template = "LFM T4W {difficulty} {roles}", keywords = {"t4w", "four winds", "al'akir"}, exp = 3 },
+        { name = "Blackwing Descent", template = "LFM BWD {difficulty} {roles}", keywords = {"bwd", "blackwing descent", "nefarian"}, exp = 3 },
+        { name = "Firelands", template = "LFM Firelands {difficulty} {roles}", keywords = {"fl", "firelands", "ragnaros"}, exp = 3 },
+        { name = "Dragon Soul", template = "LFM Dragon Soul {difficulty} {roles}", keywords = {"ds", "dragon soul", "deathwing"}, exp = 3 },
+        { name = "Terrace of Endless Spring", template = "LFM ToES {difficulty} {roles}", keywords = {"toes", "terrace", "endless spring"}, exp = 4 },
+        { name = "Mogu'shan Vaults", template = "LFM MSV {difficulty} {roles}", keywords = {"msv", "mogushan", "vaults"}, exp = 4 },
+        { name = "Heart of Fear", template = "LFM HoF {difficulty} {roles}", keywords = {"hof", "heart of fear", "shek'zeer"}, exp = 4 },
+        { name = "Throne of Thunder", template = "LFM ToT {difficulty} {roles}", keywords = {"tot", "thunder", "lei shen"}, exp = 4 },
+        { name = "Siege of Orgrimmar", template = "LFM SoO {difficulty} {roles}", keywords = {"soo", "siege", "orgrimmar", "garrosh"}, exp = 4 },
+        { name = "The Radiant Spring", template = "LFM TRS {difficulty} {roles}", keywords = {"TRS", "radiant", "spring"}, exp = 97 },
 
     },
     DUNGEONS = {
-        { name = "Deadmines", template = "LFM Deadmines {difficulty} {roles}", keywords = {"deadmines", "dm", "vc"} },
-        { name = "Wailing Caverns", template = "LFM Wailing Caverns {difficulty} {roles}", keywords = {"Wailing Caverns"} },
-        { name = "Ragefire Chasm", template = "LFM Ragefire Chasm {difficulty} {roles}", keywords = {"rfc", "ragefire"} },
-        { name = "Shadowfang Keep", template = "LFM SFK {difficulty} {roles}", keywords = {"sfk", "shadowfang"} },
-        { name = "Blackrock Depths", template = "LFM BRD {difficulty} {roles}", keywords = {"brd", "blackrock depths"} },
-        { name = "Blackfathom Deeps", template = "LFM BFD {difficulty} {roles}", keywords = {"bfd", "Blackfathom Deeps"} },
-        { name = "Scholomance", template = "LFM Scholo {difficulty} {roles}", keywords = {"scholo", "scholomance"} },
-        { name = "Lower Blackrock Spire", template = "LFM LBRS {difficulty} {roles}", keywords = {"lbrs", "lower"} },
-        { name = "Upper Blackrock Spire", template = "LFM UBRS {difficulty} {roles}", keywords = {"ubrs", "upper"} },
-        { name = "Dire Maul East", template = "LFM DME {difficulty} {roles}", keywords = {"dme", "east"} },
-        { name = "Dire Maul North", template = "LFM DMN {difficulty} {roles}", keywords = {"dmn", "north"} },
-        { name = "Dire Maul West", template = "LFM DMW {difficulty} {roles}", keywords = {"dmw", "west"} },
-        { name = "The Stockade", template = "LFM The Stockade {difficulty} {roles}", keywords = {"Stockade"} },
-        { name = "Gnomeregan", template = "LFM Gnomeregan {difficulty} {roles}", keywords = {"Gnomeregan"} },
-        { name = "Razorfen Kraul", template = "LFM Razorfen Kraul {difficulty} {roles}", keywords = {"Razorfen Kraul"} },
-        { name = "Scarlet Monastery", template = "LFM Scarlet Monastery {difficulty} {roles}", keywords = {"Scarlet Monastery"} },
-        { name = "Razorfen Downs", template = "LFM Razorfen Downs {roles}", keywords = {"Razorfen"} },
-        { name = "Uldaman", template = "LFM Uldaman {difficulty} {roles}", keywords = {"Uldaman"} },
-        { name = "Zul'Farrak", template = "LFM Zul'Farrak {difficulty} {roles}", keywords = {"Zul'Farrak"} },
-        { name = "Maraudon", template = "LFM Maraudon {difficulty} {roles}", keywords = {"Maraudon"} },
-        { name = "Stratholme", template = "LFM Strat {difficulty} {roles}", keywords = {"strat", "stratholme"} },
-        { name = "Hellfire Ramparts", template = "LFM Ramparts {difficulty} {roles}", keywords = {"ramps", "ramparts"} },
-        { name = "Blood Furnace", template = "LFM Blood Furnace {difficulty} {roles}", keywords = {"bf", "blood furnace"} },
-        { name = "The Shattered Halls", template = "LFM Shattered Halls {difficulty} {roles}", keywords = {"Shattered Halls"} },
-        { name = "Slave Pens", template = "LFM Slave Pens {difficulty} {roles}", keywords = {"sp", "slave pens"} },
-        { name = "Underbog", template = "LFM Underbog {difficulty} {roles}", keywords = {"ub", "underbog"} },
-        { name = "The Steamvault", template = "LFM Steamvault {difficulty} {roles}", keywords = {"st", "Steamvault"} },
-        { name = "Mana-Tombs", template = "LFM Mana-Tombs {difficulty} {roles}", keywords = {"mt", "mana-tombs"} },
-        { name = "Auchenai Crypts", template = "LFM Auchenai {difficulty} {roles}", keywords = {"ac", "auchenai"} },
-        { name = "Sethekk Halls", template = "LFM Sethekk {difficulty} {roles}", keywords = {"sh", "sethekk"} },
-        { name = "Shadow Labyrinth", template = "LFM Shadow Laby {difficulty} {roles}", keywords = {"sl", "slabs", "shadow lab"} },
-        { name = "Mechanar", template = "LFM Mechanar {difficulty} {roles}", keywords = {"mecha", "mechanar"} },
-        { name = "Botanica", template = "LFM Botanica {difficulty} {roles}", keywords = {"bota", "botanica"} },
-        { name = "Arcatraz", template = "LFM Arcatraz {difficulty} {roles}", keywords = {"arca", "arcatraz"} },
-        { name = "Magister's Terrace", template = "LFM Magister's {difficulty} {roles}", keywords = {"mgt", "magisters"} },
-        { name = "Utgarde Keep", template = "LFM UK {difficulty} {roles}", keywords = {"uk", "utgarde keep"} },
-        { name = "Utgarde Pinnacle", template = "LFM UP {difficulty} {roles}", keywords = {"up", "pinnacle"} },
-        { name = "The Nexus", template = "LFM Nexus {difficulty} {roles}", keywords = {"nexus", "nex"} },
-        { name = "The Oculus", template = "LFM Oculus {difficulty} {roles}", keywords = {"oculus", "ocu"} },
-        { name = "Azjol-Nerub", template = "LFM AN {difficulty} {roles}", keywords = {"an", "azjol"} },
-        { name = "Ahn'kahet", template = "LFM Old Kingdom {difficulty} {roles}", keywords = {"ak", "ahn'kahet"} },
-        { name = "Drak'Tharon Keep", template = "LFM DTK {difficulty} {roles}", keywords = {"dtk", "drak'tharon"} },
-        { name = "Violet Hold", template = "LFM Violet Hold {difficulty} {roles}", keywords = {"vh", "violet"} },
-        { name = "Gundrak", template = "LFM Gundrak {difficulty} {roles}", keywords = {"gun", "gundrak"} },
-        { name = "Halls of Stone", template = "LFM HoS {difficulty} {roles}", keywords = {"hos", "halls stone"} },
-        { name = "Halls of Lightning", template = "LFM HoL {difficulty} {roles}", keywords = {"hol", "halls lightning"} },
-        { name = "Culling of Stratholme", template = "LFM CoS {difficulty} {roles}", keywords = {"cos", "culling"} },
-        { name = "Trial of the Champion", template = "LFM ToC Dungeon {difficulty} {roles}", keywords = {"toc", "champion"} },
-        { name = "Forge of Souls", template = "LFM Forge of Souls {difficulty} {roles}", keywords = {"fos", "forge"} },
-        { name = "Pit of Saron", template = "LFM Pit of Saron {difficulty} {roles}", keywords = {"pos", "pit"} },
-        { name = "Halls of Reflection", template = "LFM HoR {difficulty} {roles}", keywords = {"hor", "reflection"} },
-        { name = "Blackrock Caverns", template = "LFM BRC {difficulty} {roles}", keywords = {"brc", "blackrock caverns"} },
-        { name = "Throne of the Tides", template = "LFM TotT {difficulty} {roles}", keywords = {"tott", "throne tides", "naz'jar"} },
-        { name = "The Vortex Pinnacle", template = "LFM VP {difficulty} {roles}", keywords = {"vp", "vortex", "pinnacle"} },
-        { name = "Stonecore", template = "LFM Stonecore {difficulty} {roles}", keywords = {"sc", "stonecore"} },
-        { name = "Lost City of the Tol'vir", template = "LFM LCT {difficulty} {roles}", keywords = {"lct", "tol'vir", "lost city"} },
-        { name = "Halls of Origination", template = "LFM HoO {difficulty} {roles}", keywords = {"hoo", "origination"} },
-        { name = "Grim Batol", template = "LFM GB {difficulty} {roles}", keywords = {"gb", "grim batol"} },
-        { name = "Zul'Gurub (Cata)", template = "LFM ZG {difficulty} {roles}", keywords = {"zg", "zulgurub"} },
-        { name = "Zul'Aman (Cata)", template = "LFM ZA {difficulty} {roles}", keywords = {"za", "zulaman"} },
-        { name = "End Time", template = "LFM End Time {difficulty} {roles}", keywords = {"et", "end time"} },
-        { name = "Well of Eternity", template = "LFM WoE {difficulty} {roles}", keywords = {"woe", "well eternity"} },
-        { name = "Hour of Twilight", template = "LFM HoT {difficulty} {roles}", keywords = {"hot", "hour twilight"} },
-        { name = "Temple of the Jade Serpent", template = "LFM TJS {difficulty} {roles}", keywords = {"tjs", "jade serpent", "temple"} },
-        { name = "Stormstout Brewery", template = "LFM SB {difficulty} {roles}", keywords = {"sb", "stormstout", "brewery"} },
-        { name = "Shado-Pan Monastery", template = "LFM SPM {difficulty} {roles}", keywords = {"spm", "shado-pan"} },
-        { name = "Mogu'shan Palace", template = "LFM MSP {difficulty} {roles}", keywords = {"msp", "mogushan palace"} },
-        { name = "Scarlet Halls", template = "LFM Scarlet Halls {difficulty} {roles}", keywords = {"scarlet halls"} },
-        { name = "Scarlet Monastery (MoP)", template = "LFM SM {difficulty} {roles}", keywords = {"sm", "scarlet monastery"} },
-        { name = "Siege of Niuzao Temple", template = "LFM Niuzao {difficulty} {roles}", keywords = {"niuzao", "siege"} },
-        { name = "Gate of the Setting Sun", template = "LFM GSS {difficulty} {roles}", keywords = {"gss", "setting sun"} },
-        { name = "Scholomance (MoP)", template = "LFM Scholo {difficulty} {roles}", keywords = {"scholo", "scholomance"} },
-        { name = "GlitterMurk Mines", template = "Glittermurk Mines {difficulty} {roles}", keywords = {"glittermurk"} },
-        { name = "Tor'Watha", template = "LFM Tor'Watha {difficulty} {roles}", keywords = {"Tor'Watha", "tw"} },
-        { name = "Bardid Hold", template = "LFM Bardid Hold {roles}", keywords = {"Bardid Hold", "BH"} },
-        { name = "Vault of the Inquisition", template = "LFM Vault {difficulty} {roles}", keywords = {"vault", "inquisition"} },
-        { name = "Road to De' Other Side", template = "LFM Other Side {difficulty} {roles}", keywords = {"Road to De' Other Side"} },
-        { name = "Shadowbone depths", template = "LFM SBD {difficulty} {roles}", keywords = {"sbd", "Shadowbone depths"} },
-        { name = "The Temple of Embers", template = "LFM TOE {difficulty} {roles}", keywords = {"toe", "the temple of embers"} },
+        { name = "Deadmines", template = "LFM Deadmines {difficulty} {roles}", keywords = {"deadmines", "dm", "vc"}, exp = 0 },
+        { name = "Wailing Caverns", template = "LFM Wailing Caverns {difficulty} {roles}", keywords = {"Wailing Caverns"}, exp = 0 },
+        { name = "Ragefire Chasm", template = "LFM Ragefire Chasm {difficulty} {roles}", keywords = {"rfc", "ragefire"}, exp = 0 },
+        { name = "Shadowfang Keep", template = "LFM SFK {difficulty} {roles}", keywords = {"sfk", "shadowfang"}, exp = 0 },
+        { name = "Blackrock Depths", template = "LFM BRD {difficulty} {roles}", keywords = {"brd", "blackrock depths"}, exp = 0 },
+        { name = "Blackfathom Deeps", template = "LFM BFD {difficulty} {roles}", keywords = {"bfd", "Blackfathom Deeps"}, exp = 0 },
+        { name = "Scholomance", template = "LFM Scholo {difficulty} {roles}", keywords = {"scholo", "scholomance"}, exp = 0 },
+        { name = "Lower Blackrock Spire", template = "LFM LBRS {difficulty} {roles}", keywords = {"lbrs", "lower"}, exp = 0 },
+        { name = "Upper Blackrock Spire", template = "LFM UBRS {difficulty} {roles}", keywords = {"ubrs", "upper"}, exp = 0 },
+        { name = "Dire Maul East", template = "LFM DME {difficulty} {roles}", keywords = {"dme", "east"}, exp = 0 },
+        { name = "Dire Maul North", template = "LFM DMN {difficulty} {roles}", keywords = {"dmn", "north"}, exp = 0 },
+        { name = "Dire Maul West", template = "LFM DMW {difficulty} {roles}", keywords = {"dmw", "west"}, exp = 0 },
+        { name = "The Stockade", template = "LFM The Stockade {difficulty} {roles}", keywords = {"Stockade"}, exp = 0 },
+        { name = "Gnomeregan", template = "LFM Gnomeregan {difficulty} {roles}", keywords = {"Gnomeregan"}, exp = 0 },
+        { name = "Razorfen Kraul", template = "LFM Razorfen Kraul {difficulty} {roles}", keywords = {"Razorfen Kraul"}, exp = 0 },
+        { name = "Scarlet Monastery", template = "LFM Scarlet Monastery {difficulty} {roles}", keywords = {"Scarlet Monastery"}, exp = 0 },
+        { name = "Razorfen Downs", template = "LFM Razorfen Downs {roles}", keywords = {"Razorfen"}, exp = 0 },
+        { name = "Uldaman", template = "LFM Uldaman {difficulty} {roles}", keywords = {"Uldaman"}, exp = 0 },
+        { name = "Zul'Farrak", template = "LFM Zul'Farrak {difficulty} {roles}", keywords = {"Zul'Farrak"}, exp = 0 },
+        { name = "Maraudon", template = "LFM Maraudon {difficulty} {roles}", keywords = {"Maraudon"}, exp = 0 },
+        { name = "Stratholme", template = "LFM Strat {difficulty} {roles}", keywords = {"strat", "stratholme"}, exp = 0 },
+        { name = "Hellfire Ramparts", template = "LFM Ramparts {difficulty} {roles}", keywords = {"ramps", "ramparts"}, exp = 1 },
+        { name = "Blood Furnace", template = "LFM Blood Furnace {difficulty} {roles}", keywords = {"bf", "blood furnace"}, exp = 1 },
+        { name = "The Shattered Halls", template = "LFM Shattered Halls {difficulty} {roles}", keywords = {"Shattered Halls"}, exp = 1 },
+        { name = "Slave Pens", template = "LFM Slave Pens {difficulty} {roles}", keywords = {"sp", "slave pens"}, exp = 1 },
+        { name = "Underbog", template = "LFM Underbog {difficulty} {roles}", keywords = {"ub", "underbog"}, exp = 1 },
+        { name = "The Steamvault", template = "LFM Steamvault {difficulty} {roles}", keywords = {"st", "Steamvault"}, exp = 1 },
+        { name = "Mana-Tombs", template = "LFM Mana-Tombs {difficulty} {roles}", keywords = {"mt", "mana-tombs"}, exp = 1 },
+        { name = "Auchenai Crypts", template = "LFM Auchenai {difficulty} {roles}", keywords = {"ac", "auchenai"}, exp = 1 },
+        { name = "Sethekk Halls", template = "LFM Sethekk {difficulty} {roles}", keywords = {"sh", "sethekk"}, exp = 1 },
+        { name = "Shadow Labyrinth", template = "LFM Shadow Laby {difficulty} {roles}", keywords = {"sl", "slabs", "shadow lab"}, exp = 1 },
+        { name = "Mechanar", template = "LFM Mechanar {difficulty} {roles}", keywords = {"mecha", "mechanar"}, exp = 1 },
+        { name = "Botanica", template = "LFM Botanica {difficulty} {roles}", keywords = {"bota", "botanica"}, exp = 1 },
+        { name = "Arcatraz", template = "LFM Arcatraz {difficulty} {roles}", keywords = {"arca", "arcatraz"}, exp = 1 },
+        { name = "Magister's Terrace", template = "LFM Magister's {difficulty} {roles}", keywords = {"mgt", "magisters"}, exp = 1 },
+        { name = "Utgarde Keep", template = "LFM UK {difficulty} {roles}", keywords = {"uk", "utgarde keep"}, exp = 2 },
+        { name = "Utgarde Pinnacle", template = "LFM UP {difficulty} {roles}", keywords = {"up", "pinnacle"}, exp = 2 },
+        { name = "The Nexus", template = "LFM Nexus {difficulty} {roles}", keywords = {"nexus", "nex"}, exp = 2 },
+        { name = "The Oculus", template = "LFM Oculus {difficulty} {roles}", keywords = {"oculus", "ocu"}, exp = 2 },
+        { name = "Azjol-Nerub", template = "LFM AN {difficulty} {roles}", keywords = {"an", "azjol"}, exp = 2 },
+        { name = "Ahn'kahet", template = "LFM Old Kingdom {difficulty} {roles}", keywords = {"ak", "ahn'kahet"}, exp = 2 },
+        { name = "Drak'Tharon Keep", template = "LFM DTK {difficulty} {roles}", keywords = {"dtk", "drak'tharon"}, exp = 2 },
+        { name = "Violet Hold", template = "LFM Violet Hold {difficulty} {roles}", keywords = {"vh", "violet"}, exp = 2 },
+        { name = "Gundrak", template = "LFM Gundrak {difficulty} {roles}", keywords = {"gun", "gundrak"}, exp = 2 },
+        { name = "Halls of Stone", template = "LFM HoS {difficulty} {roles}", keywords = {"hos", "halls stone"}, exp = 2 },
+        { name = "Halls of Lightning", template = "LFM HoL {difficulty} {roles}", keywords = {"hol", "halls lightning"}, exp = 2 },
+        { name = "Culling of Stratholme", template = "LFM CoS {difficulty} {roles}", keywords = {"cos", "culling"}, exp = 2 },
+        { name = "Trial of the Champion", template = "LFM ToC Dungeon {difficulty} {roles}", keywords = {"toc", "champion"}, exp = 2 },
+        { name = "Forge of Souls", template = "LFM Forge of Souls {difficulty} {roles}", keywords = {"fos", "forge"}, exp = 2 },
+        { name = "Pit of Saron", template = "LFM Pit of Saron {difficulty} {roles}", keywords = {"pos", "pit"}, exp = 2 },
+        { name = "Halls of Reflection", template = "LFM HoR {difficulty} {roles}", keywords = {"hor", "reflection"}, exp = 2 },
+        { name = "Blackrock Caverns", template = "LFM BRC {difficulty} {roles}", keywords = {"brc", "blackrock caverns"}, exp = 3 },
+        { name = "Throne of the Tides", template = "LFM TotT {difficulty} {roles}", keywords = {"tott", "throne tides", "naz'jar"}, exp = 3 },
+        { name = "The Vortex Pinnacle", template = "LFM VP {difficulty} {roles}", keywords = {"vp", "vortex", "pinnacle"}, exp = 3 },
+        { name = "Stonecore", template = "LFM Stonecore {difficulty} {roles}", keywords = {"sc", "stonecore"}, exp = 3 },
+        { name = "Lost City of the Tol'vir", template = "LFM LCT {difficulty} {roles}", keywords = {"lct", "tol'vir", "lost city"}, exp = 3 },
+        { name = "Halls of Origination", template = "LFM HoO {difficulty} {roles}", keywords = {"hoo", "origination"}, exp = 3 },
+        { name = "Grim Batol", template = "LFM GB {difficulty} {roles}", keywords = {"gb", "grim batol"}, exp = 3 },
+        { name = "Zul'Gurub (Cata)", template = "LFM ZG {difficulty} {roles}", keywords = {"zg", "zulgurub"}, exp = 3 },
+        { name = "Zul'Aman (Cata)", template = "LFM ZA {difficulty} {roles}", keywords = {"za", "zulaman"}, exp = 3 },
+        { name = "End Time", template = "LFM End Time {difficulty} {roles}", keywords = {"et", "end time"}, exp = 3 },
+        { name = "Well of Eternity", template = "LFM WoE {difficulty} {roles}", keywords = {"woe", "well eternity"}, exp = 3 },
+        { name = "Hour of Twilight", template = "LFM HoT {difficulty} {roles}", keywords = {"hot", "hour twilight"}, exp = 3 },
+        { name = "Temple of the Jade Serpent", template = "LFM TJS {difficulty} {roles}", keywords = {"tjs", "jade serpent", "temple"}, exp = 4 },
+        { name = "Stormstout Brewery", template = "LFM SB {difficulty} {roles}", keywords = {"sb", "stormstout", "brewery"}, exp = 4 },
+        { name = "Shado-Pan Monastery", template = "LFM SPM {difficulty} {roles}", keywords = {"spm", "shado-pan"}, exp = 4 },
+        { name = "Mogu'shan Palace", template = "LFM MSP {difficulty} {roles}", keywords = {"msp", "mogushan palace"}, exp = 4 },
+        { name = "Scarlet Halls", template = "LFM Scarlet Halls {difficulty} {roles}", keywords = {"scarlet halls"}, exp = 4 },
+        { name = "Scarlet Monastery (MoP)", template = "LFM SM {difficulty} {roles}", keywords = {"sm", "scarlet monastery"}, exp = 4 },
+        { name = "Siege of Niuzao Temple", template = "LFM Niuzao {difficulty} {roles}", keywords = {"niuzao", "siege"}, exp = 4 },
+        { name = "Gate of the Setting Sun", template = "LFM GSS {difficulty} {roles}", keywords = {"gss", "setting sun"}, exp = 4 },
+        { name = "Scholomance (MoP)", template = "LFM Scholo {difficulty} {roles}", keywords = {"scholo", "scholomance"}, exp = 4 },
+        { name = "Glittermurk Mines", template = "Glittermurk Mines {difficulty} {roles}", keywords = {"glittermurk"}, exp = 98 },
+        { name = "Tor'Watha", template = "LFM Tor'Watha {difficulty} {roles}", keywords = {"Tor'Watha", "tw"}, exp = 97 },
+        { name = "Bardid Hold", template = "LFM Bardid Hold {roles}", keywords = {"Bardid Hold", "BH"}, exp = 97 },
+        { name = "Vault of the Inquisition", template = "LFM Vault {difficulty} {roles}", keywords = {"vault", "inquisition"}, exp = 97 },
+        { name = "Road to De' Other Side", template = "LFM Other Side {difficulty} {roles}", keywords = {"Road to De' Other Side"}, exp = 97 },
+        { name = "Shadowbone depths", template = "LFM SBD {difficulty} {roles}", keywords = {"sbd", "Shadowbone depths"}, exp = 97 },
+        { name = "The Temple of Embers", template = "LFM TOE {difficulty} {roles}", keywords = {"toe", "the temple of embers"}, exp = 97 },
         { name = "RDF", template = "LFM RDF {difficulty} {roles}", keywords = {"rdf", "random dungeon finder"} },
     },
     MANASTORM = {
-        { name = "ALVA", template = "LFM ALVA Boss {roles}", keywords = {"alva", "boss"} },
-        { name = "Manastorm Gold Farm", template = "LFM Manastorm Gold {roles}", keywords = {"manastorm", "gold", "farm"} },
-        { name = "Manastorm Leveling", template = "LFM Manastorm Level {roles}", keywords = {"manastorm", "level", "xp"} },
-        { name = "Manastorm Bonzo Farm", template = "LFM Bonzo {roles}", keywords = {"bonzo", "farm"} },
+        { name = "ALVA", template = "LFM ALVA Boss {roles}", keywords = {"alva", "boss"}, exp = 97 },
+        { name = "Manastorm Gold Farm", template = "LFM Manastorm Gold {roles}", keywords = {"manastorm", "gold", "farm"}, exp = 97 },
+        { name = "Manastorm Leveling", template = "LFM Manastorm Level {roles}", keywords = {"manastorm", "level", "xp"}, exp = 97 },
+        { name = "Manastorm Bonzo Farm", template = "LFM Bonzo {roles}", keywords = {"bonzo", "farm"}, exp = 97 },
     },
     WORLD_BOSS = {
-        { name = "Azuregos", template = "LFM Azuregos {difficulty} {roles}", keywords = {"azuregos", "azure"} },
-        { name = "Lord Kazzak", template = "LFM Lord Kazzak {difficulty} {roles}", keywords = {"kazzak"} },
-        { name = "Setis", template = "LFM Setis {difficulty} {roles}", keywords = {"setis", "settis"} },
-        { name = "Emeriss", template = "LFM Emeriss {difficulty} {roles}", keywords = {"emeriss"} },
-        { name = "Lethon", template = "LFM Lethon {difficulty} {roles}", keywords = {"lethon"} },
-        { name = "Taerar", template = "LFM Taerar {difficulty} {roles}", keywords = {"taerar"} },
-        { name = "Ysondre", template = "LFM Ysondre {difficulty} {roles}", keywords = {"ysondre"} },
-        { name = "Doomwalker", template = "LFM Doomwalker {difficulty} {roles}", keywords = {"doomwalker"} },
-        { name = "Doom Lord Kazzak", template = "LFM Doom Lord Kazzak {difficulty} {roles}", keywords = {"doom"} },
-        { name = "Soggoth", template = "LFM Soggoth {difficulty} {roles}", keywords = {"soggoth"} },
-        { name = "Snowgrave", template = "LFM Snowgrave {difficulty} {roles}", keywords = {"snowgrave"} },
-        { name = "Atal'Zul", template = "LFM Atal'Zul {difficulty} {roles}", keywords = {"atal'Zul"} },
-        { name = "Kaldros Depthbreaker", template = "LFM Kaldros Depthbreaker {difficulty} {roles}", keywords = {"Kaldros Depthbreaker"} },
-        { name = "Gonzor", template = "LFM Gonzor {difficulty} {roles}", keywords = {"Gonzor"} },
-        { name = "King Gnok", template = "LFM King Gnok {difficulty} {roles}", keywords = {"king, gnok"} },
-        { name = "King Mosh", template = "LFM King Mosh {difficulty} {roles}", keywords = {"king, mosh"} },
-        { name = "Silithid Lurker", template = "LFM Silithid Lurker {difficulty} {roles}", keywords = {"silithid, lurker"} },
-        { name = "Volchan", template = "LFM Volchan {difficulty} {roles}", keywords = {"Volchan"} },
-        { name = "Corrupted Ancient", template = "LFM CA {difficulty} {roles}", keywords = {"CA,Corrupted Ancient"} },
-        { name = "WorldBossTour", template = "LFM World Boss Tour {difficulty} {roles}", keywords = {"worldtour"} },
-        { name = "Sha of Anger", template = "LFM Sha of Anger {difficulty} {roles}", keywords = {"sha", "anger"} },
-        { name = "Galleon", template = "LFM Galleon {difficulty} {roles}", keywords = {"galleon", "salyis"} },
-        { name = "Nalak", template = "LFM Nalak {difficulty} {roles}", keywords = {"nalak"} },
-        { name = "Oondasta", template = "LFM Oondasta {difficulty} {roles}", keywords = {"oondasta"} },
-        { name = "Celestials", template = "LFM Celestials {difficulty} {roles}", keywords = {"celestials", "celestial"} },
+        { name = "Azuregos", template = "LFM Azuregos {difficulty} {roles}", keywords = {"azuregos", "azure"}, exp = 0 },
+        { name = "Lord Kazzak", template = "LFM Lord Kazzak {difficulty} {roles}", keywords = {"kazzak"}, exp = 0 },
+        { name = "Setis", template = "LFM Setis {difficulty} {roles}", keywords = {"setis", "settis"}, exp = 0 },
+        { name = "Emeriss", template = "LFM Emeriss {difficulty} {roles}", keywords = {"emeriss"}, exp = 0 },
+        { name = "Lethon", template = "LFM Lethon {difficulty} {roles}", keywords = {"lethon"}, exp = 0 },
+        { name = "Taerar", template = "LFM Taerar {difficulty} {roles}", keywords = {"taerar"}, exp = 0 },
+        { name = "Ysondre", template = "LFM Ysondre {difficulty} {roles}", keywords = {"ysondre"}, exp = 0 },
+        { name = "Doomwalker", template = "LFM Doomwalker {difficulty} {roles}", keywords = {"doomwalker"}, exp = 1 },
+        { name = "Doom Lord Kazzak", template = "LFM Doom Lord Kazzak {difficulty} {roles}", keywords = {"doom"}, exp = 1 },
+        { name = "Soggoth", template = "LFM Soggoth {difficulty} {roles}", keywords = {"soggoth"}, exp = 97 },
+        { name = "Snowgrave", template = "LFM Snowgrave {difficulty} {roles}", keywords = {"snowgrave"}, exp = 97 },
+        { name = "Atal'Zul", template = "LFM Atal'Zul {difficulty} {roles}", keywords = {"atal'Zul"}, exp = 97 },
+        { name = "Kaldros Depthbreaker", template = "LFM Kaldros Depthbreaker {difficulty} {roles}", keywords = {"Kaldros Depthbreaker"}, exp = 97 },
+        { name = "Gonzor", template = "LFM Gonzor {difficulty} {roles}", keywords = {"Gonzor"}, exp = 98 },
+        { name = "King Gnok", template = "LFM King Gnok {difficulty} {roles}", keywords = {"king, gnok"}, exp = 98 },
+        { name = "King Mosh", template = "LFM King Mosh {difficulty} {roles}", keywords = {"king, mosh"}, exp = 98 },
+        { name = "Silithid Lurker", template = "LFM Silithid Lurker {difficulty} {roles}", keywords = {"silithid, lurker"}, exp = 98 },
+        { name = "Volchan", template = "LFM Volchan {difficulty} {roles}", keywords = {"Volchan"}, exp = 98 },
+        { name = "Corrupted Ancient", template = "LFM CA {difficulty} {roles}", keywords = {"CA,Corrupted Ancient"}, exp = 98 },
+        { name = "WorldBossTour", template = "LFM World Boss Tour {difficulty} {roles}", keywords = {"worldtour"}, exp = 0 },
+        { name = "Sha of Anger", template = "LFM Sha of Anger {difficulty} {roles}", keywords = {"sha", "anger"}, exp = 4 },
+        { name = "Galleon", template = "LFM Galleon {difficulty} {roles}", keywords = {"galleon", "salyis"}, exp = 4 },
+        { name = "Nalak", template = "LFM Nalak {difficulty} {roles}", keywords = {"nalak"}, exp = 4 },
+        { name = "Oondasta", template = "LFM Oondasta {difficulty} {roles}", keywords = {"oondasta"}, exp = 4 },
+        { name = "Celestials", template = "LFM Celestials {difficulty} {roles}", keywords = {"celestials", "celestial"}, exp = 4 },
     },
     PVP = {
         { name = "Arena 2v2", template = "LFM for Arena 2v2 {roles}", keywords = {"2v2", "2s", "twos"} },
@@ -288,6 +290,8 @@ local function UpdateKeystoneList()
                 keystoneInfo = keystoneInfo,
             })
             currentKeystone = keystoneInfo
+        else
+            currentKeystone = nil
         end
     else
         currentKeystone = nil
@@ -365,19 +369,59 @@ local function ProcessTemplate(template, activity)
 end
 
 local function FilterActivities(activities)
-    if not searchText or searchText == "" then return activities end
     local filtered = {}
-    local searchLower = string.lower(searchText)
+    local Shared = _G.FrostSeekShared
+    local profile = Shared and Shared.GetServerProfile and Shared.GetServerProfile() or "wotlk"
+    local expLevel = Shared and Shared.GetServerProfileExpansionLevel and Shared.GetServerProfileExpansionLevel() or 2
+
+    local playerLevel = UnitLevel("player") or 80
+    local levelExpLevel = playerLevel
+    if profile == "ascension" or profile == "epoch" then
+        if playerLevel <= 60 then levelExpLevel = 0
+        elseif playerLevel <= 70 then levelExpLevel = 1
+        else levelExpLevel = 2 end
+    else
+        if playerLevel <= 60 then levelExpLevel = 0
+        elseif playerLevel <= 70 then levelExpLevel = 1
+        elseif playerLevel <= 80 then levelExpLevel = 2
+        elseif playerLevel <= 85 then levelExpLevel = 3
+        else levelExpLevel = 4 end
+    end
+
+    local effectiveExpLevel = math.min(expLevel, levelExpLevel)
+
     for _, activity in ipairs(activities) do
-        local nameLower = string.lower(activity.name)
-        if string.find(nameLower, searchLower) then
+        local activityExp = activity.exp
+        if activityExp == nil then
             table.insert(filtered, activity)
-        else
-            for _, keyword in ipairs(activity.keywords) do
-                if string.find(string.lower(keyword), searchLower) then
+        elseif activityExp == 97 then
+            if profile == "ascension" then
+                table.insert(filtered, activity)
+            end
+        elseif activityExp == 98 then
+            if profile == "epoch" then
+                table.insert(filtered, activity)
+            end
+        elseif activityExp == 99 then
+            if profile == "ascension" or profile == "epoch" then
+                table.insert(filtered, activity)
+            end
+        elseif activityExp <= effectiveExpLevel then
+            if searchText and searchText ~= "" then
+                local nameLower = string.lower(activity.name)
+                local searchLower = string.lower(searchText)
+                if string.find(nameLower, searchLower, 1, true) then
                     table.insert(filtered, activity)
-                    break
+                else
+                    for _, keyword in ipairs(activity.keywords) do
+                        if string.find(string.lower(keyword), searchLower, 1, true) then
+                            table.insert(filtered, activity)
+                            break
+                        end
+                    end
                 end
+            else
+                table.insert(filtered, activity)
             end
         end
     end
@@ -466,7 +510,7 @@ local function SendLFMMessage(message, channel)
     if not message or message == "" then return false end
 
     if currentCategory == "KEYSTONE" and not FindKeystoneInBags() then
-        print("|cffff0000FrostSeek LFM:|r No Keystone found!")
+        print(L["msg_no_keystone_found"])
         return false
     end
 
@@ -489,19 +533,19 @@ local function SendLFMMessage(message, channel)
 
             if realId and chName and tostring(chName) ~= "" then
                 if IsLFMAddonChannel(tostring(chName)) then
-                    print("|cffff0000FrostSeek LFM:|r Skipped addon channel '" .. tostring(chName) .. "' (slot " .. channelNum .. ")")
+                    print(L["msg_skipped_addon_channel"] .. " '" .. tostring(chName) .. L["msg_slot_inline"] .. channelNum .. ")")
                     success = false
                 else
                     local ok2, err = pcall(function()
                         SendChatMessage(message, "CHANNEL", nil, realId)
                     end)
                     if not ok2 then
-                        print("|cffff0000FrostSeek LFM:|r Failed to send on channel " .. tostring(chName) .. ": " .. tostring(err))
+                        print(L["msg_failed_send_channel"] .. tostring(chName) .. ": " .. tostring(err))
                         success = false
                     end
                 end
             else
-                print("|cffff0000FrostSeek LFM:|r Channel slot " .. channelNum .. " not found! Open chat channels to populate the list.")
+                print(L["msg_channel_slot"] .. channelNum .. L["msg_channel_not_found_hint"])
                 success = false
             end
         end
@@ -510,7 +554,7 @@ local function SendLFMMessage(message, channel)
             SendChatMessage(message, channel)
         end)
         if not ok then
-            print("|cffff0000FrostSeek LFM:|r Failed to send on " .. tostring(channel) .. ": " .. tostring(err))
+            print(L["msg_failed_send_on"] .. tostring(channel) .. ": " .. tostring(err))
             success = false
         end
     end
@@ -545,7 +589,7 @@ local function DoAutoSpamTick()
     if not autoSpamActive then return end
     local message = customMessage or ""
     if message == "" then
-        print("|cffff0000FrostSeek Auto-Spam:|r No message set!")
+        print(L["msg_no_message_set"])
         LFM:StopAutoSpam()
         return
     end
@@ -561,7 +605,7 @@ local function DoAutoSpamTick()
             members = party + 1
         end
         if members >= threshold then
-            print("|cff88ccffFrostSeek Auto-Spam:|r |cffffcc00Group reached " .. members .. "/" .. threshold .. " members - auto-stopping spam.|r")
+            print(L["msg_group_reached"] .. members .. "/" .. threshold .. L["msg_members_autostop_suffix"])
             LFM:StopAutoSpam()
             return
         end
@@ -569,16 +613,16 @@ local function DoAutoSpamTick()
 
     local sent = SendToAllSpamChannels(message)
     if sent > 0 then
-        print("|cff88ccffFrostSeek Auto-Spam:|r Sent to " .. sent .. " channel(s)")
+        print(L["msg_sent_to"] .. sent .. L["msg_channel_count_suffix"])
     else
-        print("|cffff0000FrostSeek Auto-Spam:|r No channels selected!")
+        print(L["msg_no_channels_selected"])
     end
 end
-
+--mimi
 function LFM:StartAutoSpam()
     local message = customMessage or ""
     if message == "" then
-        print("|cffff0000FrostSeek LFM:|r Cannot start spam - no message!")
+        print(L["msg_cannot_start_no_msg"])
         return
     end
 
@@ -587,7 +631,7 @@ function LFM:StartAutoSpam()
         if spamChannels[i] then hasChannel = true; break end
     end
     if not hasChannel then
-        print("|cffff0000FrostSeek LFM:|r Cannot start spam - no channels selected!")
+        print(L["msg_cannot_start_no_ch"])
         return
     end
 
@@ -597,8 +641,8 @@ function LFM:StartAutoSpam()
 
     if Shared and Shared.ConfirmDialog then
         Shared.ConfirmDialog(
-            "Start Auto-Spam",
-            "This will spam \"" .. string.sub(message, 1, 60) .. (string.len(message) > 60 and "..." or "") .. "\" every " .. interval .. "s on " .. table.concat((function()
+            L["txt_start_auto_spam"],
+            L["msg_confirm_spam_prefix"] .. string.sub(message, 1, 60) .. (string.len(message) > 60 and "..." or "") .. L["msg_confirm_spam_every"] .. interval .. L["msg_confirm_spam_on"] .. table.concat((function()
                 local chs = {}
                 for i = 1, 10 do
                     if spamChannels[i] then
@@ -609,8 +653,12 @@ function LFM:StartAutoSpam()
                     end
                 end
                 return chs
-            end)(), ", ") .. ". Continue?",
+            end)(), ", ") .. L["msg_confirm_spam_continue"],
             function()
+                if autoSpamTicker then
+                    autoSpamTicker:Cancel()
+                    autoSpamTicker = nil
+                end
                 autoSpamActive = true
                 DoAutoSpamTick()
                 autoSpamTicker = C_Timer.NewTicker(interval, DoAutoSpamTick)
@@ -621,12 +669,16 @@ function LFM:StartAutoSpam()
                 LFM.spamBtn.bg:SetColorTexture(dangerC[1] * 0.25, dangerC[2] * 0.25, dangerC[3] * 0.25, 0.8)
                 LFM.spamBtn.border:SetColorTexture(dangerC[1] * 0.5, dangerC[2] * 0.5, dangerC[3] * 0.5, 0.7)
                 LFM.spamBtn.accent:SetColorTexture(dangerC[1], dangerC[2], dangerC[3], 0.4)
-                LFM.spamStatusText:SetText(string.format("|cFF00FF00Spamming every %ds|r", interval))
+                LFM.spamStatusText:SetText(string.format(L["msg_spamming_every"], interval))
                 LFM.spamStatusText:Show()
-                print("|cff88ccffFrostSeek LFM:|r Auto-spam started (every " .. interval .. "s)")
+                print(L["msg_auto_spam_started"] .. interval .. "s)")
             end
         )
     else
+        if autoSpamTicker then
+            autoSpamTicker:Cancel()
+            autoSpamTicker = nil
+        end
         autoSpamActive = true
         DoAutoSpamTick()
         autoSpamTicker = C_Timer.NewTicker(interval, DoAutoSpamTick)
@@ -637,9 +689,9 @@ function LFM:StartAutoSpam()
         LFM.spamBtn.bg:SetColorTexture(dangerC[1] * 0.25, dangerC[2] * 0.25, dangerC[3] * 0.25, 0.8)
         LFM.spamBtn.border:SetColorTexture(dangerC[1] * 0.5, dangerC[2] * 0.5, dangerC[3] * 0.5, 0.7)
         LFM.spamBtn.accent:SetColorTexture(dangerC[1], dangerC[2], dangerC[3], 0.4)
-        LFM.spamStatusText:SetText(string.format("|cFF00FF00Spamming every %ds|r", interval))
+        LFM.spamStatusText:SetText(string.format(L["msg_spamming_every"], interval))
         LFM.spamStatusText:Show()
-        print("|cff88ccffFrostSeek LFM:|r Auto-spam started (every " .. interval .. "s)")
+        print(L["msg_auto_spam_started"] .. interval .. "s)")
     end
 end
 
@@ -663,7 +715,7 @@ function LFM:StopAutoSpam()
         LFM.spamStatusText:Hide()
     end
 
-    print("|cff88ccffFrostSeek LFM:|r Auto-spam stopped")
+    print(L["msg_auto_spam_stopped"])
 end
 
 local whisperHandler = CreateFrame("Frame")
@@ -671,11 +723,13 @@ whisperHandler:RegisterEvent("CHAT_MSG_WHISPER")
 whisperHandler:SetScript("OnEvent", function(self, event, msg, sender, ...)
     if not autoInviteEnabled then return end
 
-    local senderName = Ambiguate(sender, "none")
+    local senderName = (Ambiguate and Ambiguate(sender, "none")) or sender
+    if not senderName then return end
 
     if UnitName("player") == senderName then return end
-    if GetNumGroupMembers() >= 5 then
-        if not IsInRaid() then return end
+    local groupCount = (GetNumGroupMembers and GetNumGroupMembers() or 0)
+    if groupCount >= 5 then
+        if not (IsInRaid and IsInRaid()) then return end
     end
 
     local now = time()
@@ -750,36 +804,36 @@ whisperHandler:SetScript("OnEvent", function(self, event, msg, sender, ...)
 
         local roleInfo = ""
         if detectedRole then
-            roleInfo = " Role: " .. detectedRole .. " |"
+            roleInfo = L["txt_role_inline"] .. detectedRole .. " |"
         end
-        print("|cff88ccffFrostSeek Auto-Invite:|r Invited " .. senderName .. " (iLvl: " .. ilvl .. " | Lvl: " .. playerLevel .. roleInfo .. ")")
+        print(L["msg_auto_invite_invited"] .. senderName .. L["txt_ilvl_inline"] .. ilvl .. L["txt_lvl_inline"] .. playerLevel .. roleInfo .. ")")
 
         C_Timer.After(1, function()
-            local replyMsg = "Auto-invited! Welcome to the group."
+            local replyMsg = L["msg_auto_invite_welcome"]
             if detectedRole then
                 replyMsg = replyMsg .. " (" .. detectedRole .. ")"
             end
             pcall(function() SendChatMessage(replyMsg, "WHISPER", nil, senderName) end)
         end)
     elseif ilvl and ilvl >= autoInviteMinIlvl and playerLevel < autoInviteMinLevel then
-        print("|cffffaa00FrostSeek Auto-Invite:|r Rejected " .. senderName .. " - Level too low (need: " .. autoInviteMinLevel .. ", got: " .. playerLevel .. ")")
+        print(L["msg_auto_invite_rejected"] .. senderName .. L["msg_reject_level_low"] .. autoInviteMinLevel .. L["msg_reject_got_suffix"] .. playerLevel .. ")")
         C_Timer.After(1, function()
-            pcall(function() SendChatMessage("Sorry, minimum level required is " .. autoInviteMinLevel .. ". You are level " .. playerLevel .. ".", "WHISPER", nil, senderName) end)
+            pcall(function() SendChatMessage(L["msg_invite_reject_min_level"] .. autoInviteMinLevel .. L["msg_invite_reject_you_are_level"] .. playerLevel .. ".", "WHISPER", nil, senderName) end)
         end)
     elseif ilvl and ilvl >= autoInviteMinIlvl and not roleMatch then
-        print("|cffffaa00FrostSeek Auto-Invite:|r Rejected " .. senderName .. " - Role mismatch (need: " .. neededRolesStr .. ", got: " .. (detectedRole or "none") .. ")")
+        print(L["msg_auto_invite_rejected"] .. senderName .. L["msg_reject_role_mismatch"] .. neededRolesStr .. L["msg_reject_got_suffix"] .. (detectedRole or L["none"]) .. ")")
 
         C_Timer.After(1, function()
             if not detectedRole then
-                pcall(function() SendChatMessage("Sorry, we need " .. neededRolesStr .. " only. Please include your role in your whisper.", "WHISPER", nil, senderName) end)
+                pcall(function() SendChatMessage(L["msg_invite_reject_we_need"] .. neededRolesStr .. L["msg_invite_reject_include_role"], "WHISPER", nil, senderName) end)
             else
-                pcall(function() SendChatMessage("Sorry, we need " .. neededRolesStr .. " only. You stated: " .. detectedRole .. ".", "WHISPER", nil, senderName) end)
+                pcall(function() SendChatMessage(L["msg_invite_reject_we_need"] .. neededRolesStr .. L["msg_invite_reject_you_stated"] .. detectedRole .. ".", "WHISPER", nil, senderName) end)
             end
         end)
     end
 end)
 
-C_Timer.NewTicker(300, function()
+local recentInvitesTicker = C_Timer.NewTicker(300, function()
     local now = time()
     for name, timestamp in pairs(recentInvites) do
         if (now - timestamp) > 300 then
@@ -789,7 +843,7 @@ C_Timer.NewTicker(300, function()
 end)
 
 local _orig_SetItemRef = SetItemRef
-function SetItemRef(link, text, button)
+function SetItemRef(link, text, button, chatFrame)
     if link and type(link) == "string" then
         local linkType = string.match(link, "^([^:]+)")
         if linkType == "frostseeklfm" then
@@ -822,11 +876,23 @@ function SetItemRef(link, text, button)
             end
         end
     end
-    _orig_SetItemRef(link, text, button)
+    if _orig_SetItemRef then
+        _orig_SetItemRef(link, text, button, chatFrame)
+    end
 end
 
 function UpdateMessagePreview(template, activity)
     if not LFM.messageEditBox then return end
+
+    if template == nil and activity == nil then
+        if lastSelectedTemplate then
+            template = lastSelectedTemplate
+            activity = lastSelectedActivity
+        end
+    else
+        lastSelectedTemplate = template
+        lastSelectedActivity = activity
+    end
 
     if template then
         local processed = ProcessTemplate(template, activity)
@@ -837,6 +903,7 @@ function UpdateMessagePreview(template, activity)
             customMessage = processed
             FrostSeekDB.LFM.customMessage = customMessage
             LFM.messageEditBox:SetText(processed)
+            LFM.messageEditBox:SetTextColor(unpack(_tc("textPrimary")))
         end
     else
         if not LFM.messageEditBox:HasFocus() then
@@ -972,14 +1039,24 @@ function UpdateActivityList()
 end
 
 function UpdateTabsAppearance()
-    local categoryTabs = {
+    local allCategoryTabs = {
         { key = "RAIDS", name = L["cat_raid"] },
         { key = "DUNGEONS", name = L["cat_dungeon"] },
-        { key = "MANASTORM", name = L["cat_manastorm"] },
+        { key = "MANASTORM", name = L["cat_manastorm"], profileOnly = "ascension" },
         { key = "WORLD_BOSS", name = L["cat_world_boss"] },
         { key = "PVP", name = L["cat_pvp"] },
         { key = "KEYSTONE", name = L["cat_keystone"] }
     }
+
+    local Shared = _G.FrostSeekShared
+    local currentProfile = Shared and Shared.GetServerProfile and Shared.GetServerProfile() or "wotlk"
+
+    local categoryTabs = {}
+    for _, tabInfo in ipairs(allCategoryTabs) do
+        if not tabInfo.profileOnly or tabInfo.profileOnly == currentProfile then
+            table.insert(categoryTabs, tabInfo)
+        end
+    end
 
     for i, tabInfo in ipairs(categoryTabs) do
         local tab = _G["LFM_Tab_" .. tabInfo.key]
@@ -1346,9 +1423,9 @@ function LFM:Initialize(parentFrame)
     rolesLabel:SetTextColor(unpack(_tc("textMuted")))
 
     self.roleCheckboxes = {}
-    local roleTypes = {"Tank", "Healer", "DPS", "Support", "BC"}
+    local roleTypes = {"Tank", "Healer", "DPS", "Support"}
     local ROLE_COLORS = Shared and Shared.ROLE_COLORS or { Tank = {0.3, 0.5, 0.85}, Healer = {0.2, 0.8, 0.3}, DPS = {0.85, 0.3, 0.2}, Support = {0.7, 0.4, 1.0}, BC = {1, 0.8, 0.1} }
-    local roleLabels = {Tank = "Tank", Healer = "Healer", DPS = "DPS", Support = "Support", BC = "BC"}
+    local roleLabels = {Tank = "Tank", Healer = "Healer", DPS = "DPS", Support = "Support", BC = "Keystone"}
     local xOffset = 20
     for i, role in ipairs(roleTypes) do
         local checkbox = CreateFrame("CheckButton", "FrostSeekLFM_Role_" .. role, self.rolesFrame, "UICheckButtonTemplate")
@@ -1367,31 +1444,55 @@ function LFM:Initialize(parentFrame)
         end)
         self.roleCheckboxes[role] = checkbox
 
-        if role ~= "BC" then
-            local countBox = CreateModernEditBox(self.rolesFrame, 26, 18)
-            if text then
-                countBox:SetPoint("LEFT", text, "RIGHT", 4, 0)
-            else
-                countBox:SetPoint("LEFT", checkbox, "RIGHT", 40, 0)
-            end
-            countBox:SetText(tostring(needCount[role] or 1))
-            countBox:SetMaxLetters(2)
-            countBox:SetNumeric(true)
-            countBox:SetScript("OnTextChanged", function(self)
-                local val = tonumber(self:GetText()) or 1
-                if val < 1 then val = 1 end
-                needCount[role] = val
-                UpdateMessagePreview()
-            end)
-            self.roleCheckboxes[role .. "Count"] = countBox
-            xOffset = xOffset + 100
+        local countBtn = CreateFrame("Button", nil, self.rolesFrame)
+        countBtn:SetSize(28, 20)
+        if text then
+            countBtn:SetPoint("LEFT", text, "RIGHT", 4, 0)
         else
-            xOffset = xOffset + 55
+            countBtn:SetPoint("LEFT", checkbox, "RIGHT", 40, 0)
         end
+        countBtn.bg = countBtn:CreateTexture(nil, "BACKGROUND")
+        countBtn.bg:SetAllPoints()
+        countBtn.bg:SetColorTexture(0.1, 0.1, 0.15, 0.95)
+        countBtn.border = countBtn:CreateTexture(nil, "BORDER")
+        countBtn.border:SetAllPoints()
+        countBtn.border:SetColorTexture(0.3, 0.4, 0.5, 1.0)
+        countBtn.text = countBtn:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+        countBtn.text:SetPoint("CENTER")
+        local function UpdateCountText()
+            countBtn.text:SetText("|cff44ff44" .. tostring(needCount[role] or 0) .. "|r")
+        end
+        UpdateCountText()
+
+        countBtn:RegisterForClicks("LeftButtonUp", "RightButtonUp")
+        countBtn:SetScript("OnClick", function(self, button)
+            local cur = needCount[role] or 0
+            local next
+            if button == "RightButton" then
+                next = math.max(0, cur - 1)
+            else
+                next = math.min(10, cur + 1)
+            end
+            needCount[role] = next
+            UpdateCountText()
+            UpdateMessagePreview()
+        end)
+        countBtn:SetScript("OnEnter", function(self)
+            GameTooltip:SetOwner(self, "ANCHOR_TOP")
+            GameTooltip:SetText(L["tip_required_role"] .. role, 1, 1, 1)
+            GameTooltip:AddLine(L["tip_left_click_increase"], 0.8, 0.9, 1, true)
+            GameTooltip:AddLine(L["tip_right_click_decrease"], 0.8, 0.9, 1, true)
+            GameTooltip:AddLine(L["tip_range_0_10"], 0.6, 0.6, 0.6, true)
+            GameTooltip:Show()
+        end)
+        countBtn:SetScript("OnLeave", function() GameTooltip:Hide() end)
+
+        self.roleCheckboxes[role .. "Count"] = countBtn
+        xOffset = xOffset + 100
     end
 
     local difficultyLabel = self.rolesFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-    difficultyLabel:SetPoint("LEFT", self.roleCheckboxes["BC"], "RIGHT", 30, 0)
+    difficultyLabel:SetPoint("LEFT", self.roleCheckboxes["Support"], "RIGHT", 70, 0)
     difficultyLabel:SetText(L["lfm_difficulty"] .. ":")
     difficultyLabel:SetTextColor(unpack(_tc("textMuted")))
 
@@ -1428,18 +1529,68 @@ function LFM:Initialize(parentFrame)
         UpdateActivityList()
     end)
 
+    local bcBtn = CreateFrame("CheckButton", "FrostSeekLFM_Role_BC", self.searchFrame, "UICheckButtonTemplate")
+    bcBtn:SetSize(18, 18)
+    bcBtn:SetPoint("RIGHT", self.searchFrame, "RIGHT", -160, 0)
+    local bcText = _G[bcBtn:GetName() .. "Text"]
+    if bcText then
+        bcText:SetText(L["txt_bonus_coin"])
+        bcText:SetFontObject("GameFontNormalSmall")
+        bcText:SetTextColor(1, 0.8, 0.1)
+    end
+    bcBtn:SetScript("OnClick", function(self)
+        selectedRoles.BC = self:GetChecked()
+        UpdateMessagePreview()
+    end)
+    bcBtn:SetScript("OnEnter", function(self)
+        GameTooltip:SetOwner(self, "ANCHOR_TOPLEFT")
+        GameTooltip:SetText(L["txt_bonus_coin_colored"], 1, 1, 1)
+        GameTooltip:AddLine(L["tip_bonus_coin_enable"], 0.8, 0.9, 1, true)
+        GameTooltip:AddLine(" ", 1, 1, 1)
+        GameTooltip:AddLine(L["tip_what_is_bonus_coin"], 0.8, 0.9, 1, true)
+        GameTooltip:AddLine(L["tip_bonus_coin_explain"], 0.7, 0.7, 0.7, true)
+        GameTooltip:AddLine(L["tip_bonus_coin_announce"], 0.7, 0.7, 0.7, true)
+        GameTooltip:Show()
+    end)
+    bcBtn:SetScript("OnLeave", function() GameTooltip:Hide() end)
+    self.roleCheckboxes["BC"] = bcBtn
+    self.bcBtn = bcBtn
+
+    local function UpdateBCVisibility()
+        if currentCategory == "KEYSTONE" then
+            bcBtn:Show()
+            if bcText then bcText:Show() end
+        else
+            bcBtn:Hide()
+            if bcText then bcText:Hide() end
+            selectedRoles.BC = false
+            bcBtn:SetChecked(false)
+        end
+    end
+    self.UpdateBCVisibility = UpdateBCVisibility
+
     self.categoriesFrame = CreateFrame("Frame", nil, self.mainContainer)
     self.categoriesFrame:SetSize(IW, 26)
     self.categoriesFrame:SetPoint("TOP", self.searchFrame, "BOTTOM", 0, -4)
 
-    local categoryTabs = {
+    local allCategoryTabsInit = {
         { key = "RAIDS", name = L["cat_raid"] },
         { key = "DUNGEONS", name = L["cat_dungeon"] },
-        { key = "MANASTORM", name = L["cat_manastorm"] },
+        { key = "MANASTORM", name = L["cat_manastorm"], profileOnly = "ascension" },
         { key = "WORLD_BOSS", name = L["cat_world_boss"] },
         { key = "PVP", name = L["cat_pvp"] },
         { key = "KEYSTONE", name = L["cat_keystone"] }
     }
+
+    local SharedInit = _G.FrostSeekShared
+    local initProfile = SharedInit and SharedInit.GetServerProfile and SharedInit.GetServerProfile() or "wotlk"
+
+    local categoryTabs = {}
+    for _, tabInfo in ipairs(allCategoryTabsInit) do
+        if not tabInfo.profileOnly or tabInfo.profileOnly == initProfile then
+            table.insert(categoryTabs, tabInfo)
+        end
+    end
 
     for i, tabInfo in ipairs(categoryTabs) do
         local tab = CreateFrame("Button", nil, self.categoriesFrame)
@@ -1467,6 +1618,7 @@ function LFM:Initialize(parentFrame)
                 StopKeystoneAutoUpdate()
                 if self.refreshKeystoneBtn then self.refreshKeystoneBtn:Hide() end
             end
+            if self.UpdateBCVisibility then self.UpdateBCVisibility() end
             UpdateDifficultyDropdown()
             UpdateActivityList()
             UpdateTabsAppearance()
@@ -1620,7 +1772,7 @@ function LFM:Initialize(parentFrame)
         if chSlotName then
             btn:SetScript("OnEnter", function(selfBtn)
                 GameTooltip:SetOwner(selfBtn, "ANCHOR_TOP")
-                GameTooltip:AddLine("Channel " .. i .. ": " .. chSlotName, 1, 1, 1)
+                GameTooltip:AddLine(L["tip_channel_n"] .. i .. ": " .. chSlotName, 1, 1, 1)
                 GameTooltip:Show()
             end)
             btn:SetScript("OnLeave", function(selfBtn)
@@ -1655,7 +1807,7 @@ function LFM:Initialize(parentFrame)
                 if chSlotName then
                     btn:SetScript("OnEnter", function(selfBtn)
                         GameTooltip:SetOwner(selfBtn, "ANCHOR_TOP")
-                        GameTooltip:AddLine("Channel " .. i .. ": " .. chSlotName, 1, 1, 1)
+                        GameTooltip:AddLine(L["tip_channel_n"] .. i .. ": " .. chSlotName, 1, 1, 1)
                         GameTooltip:Show()
                     end)
                     btn:SetScript("OnLeave", function(selfBtn)
@@ -1670,7 +1822,7 @@ function LFM:Initialize(parentFrame)
                 else
                     btn:SetScript("OnEnter", function(selfBtn)
                         GameTooltip:SetOwner(selfBtn, "ANCHOR_TOP")
-                        GameTooltip:AddLine("Channel " .. i .. ": (empty)", 0.6, 0.6, 0.6)
+                        GameTooltip:AddLine(L["tip_channel_n"] .. i .. L["tip_channel_empty"], 0.6, 0.6, 0.6)
                         GameTooltip:Show()
                     end)
                     btn:SetScript("OnLeave", function(selfBtn)
@@ -1696,9 +1848,9 @@ function LFM:Initialize(parentFrame)
             autoInviteEnabled = active
             FrostSeekDB.LFM.autoInviteEnabled = active
             if active then
-                print("|cff88ccffFrostSeek LFM:|r Auto-Invite enabled (min iLvl: " .. autoInviteMinIlvl .. ", min Lvl: " .. autoInviteMinLevel .. ")")
+                print(L["msg_auto_invite_enabled_ilvl"] .. autoInviteMinIlvl .. L["msg_min_lvl_inline"] .. autoInviteMinLevel .. ")")
             else
-                print("|cff88ccffFrostSeek LFM:|r Auto-Invite disabled")
+                print(L["msg_auto_invite_disabled"])
             end
         end
     )
@@ -1717,10 +1869,48 @@ function LFM:Initialize(parentFrame)
 
     self.minIlvlBox = CreateModernEditBox(self.autoInviteFrame, 50, 18)
     self.minIlvlBox:SetPoint("LEFT", minIlvlLabel, "RIGHT", 5, 0)
-    self.minIlvlBox:SetText(tostring(FrostSeekDB.LFM.autoInviteMinIlvl or 150))
     self.minIlvlBox:SetMaxLetters(4)
     self.minIlvlBox:SetNumeric(true)
-    autoInviteMinIlvl = FrostSeekDB.LFM.autoInviteMinIlvl or 150
+    self.minIlvlBox._fskLastClickTime = 0
+    pcall(function()
+        self.minIlvlBox:SetScript("OnMouseUp", function(self, button)
+            if button ~= "LeftButton" then return end
+            local now = GetTime()
+            if now - (self._fskLastClickTime or 0) < 0.5 then
+                self:HighlightText()
+                self._fskLastClickTime = 0
+            else
+                self._fskLastClickTime = now
+            end
+        end)
+    end)
+
+    local function PlayerIlvl()
+        local sum, count = 0, 0
+        for i = 1, 17 do
+            if i ~= 4 then
+                local link = GetInventoryItemLink("player", i)
+                if link then
+                    local _, _, _, ilvl = GetItemInfo(link)
+                    if ilvl then sum = sum + ilvl; count = count + 1 end
+                end
+            end
+        end
+        return count > 0 and math.floor((sum / count) + 0.5) or 0
+    end
+    local stored = FrostSeekDB.LFM.autoInviteMinIlvl
+    local displayVal
+    if stored == nil or stored == 0 then
+        local pi = PlayerIlvl()
+        displayVal = pi > 0 and math.max(0, pi - 5) or 150
+        autoInviteMinIlvl = 0
+    else
+        displayVal = stored
+        autoInviteMinIlvl = stored
+    end
+    local _suppressTextHandler = true
+    self.minIlvlBox:SetText(tostring(displayVal))
+    _suppressTextHandler = false
 
     local plusLabel = self.autoInviteFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     plusLabel:SetPoint("LEFT", self.minIlvlBox, "RIGHT", 3, 0)
@@ -1728,6 +1918,7 @@ function LFM:Initialize(parentFrame)
     plusLabel:SetTextColor(0.4, 1, 0.4)
 
     self.minIlvlBox:SetScript("OnTextChanged", function(self)
+        if _suppressTextHandler then return end
         local val = tonumber(self:GetText()) or 0
         autoInviteMinIlvl = val
         FrostSeekDB.LFM.autoInviteMinIlvl = val
@@ -1743,6 +1934,19 @@ function LFM:Initialize(parentFrame)
     self.minLevelBox:SetText(tostring(FrostSeekDB.LFM.autoInviteMinLevel or 60))
     self.minLevelBox:SetMaxLetters(3)
     self.minLevelBox:SetNumeric(true)
+    self.minLevelBox._fskLastClickTime = 0
+    pcall(function()
+        self.minLevelBox:SetScript("OnMouseUp", function(self, button)
+            if button ~= "LeftButton" then return end
+            local now = GetTime()
+            if now - (self._fskLastClickTime or 0) < 0.5 then
+                self:HighlightText()
+                self._fskLastClickTime = 0
+            else
+                self._fskLastClickTime = now
+            end
+        end)
+    end)
     autoInviteMinLevel = FrostSeekDB.LFM.autoInviteMinLevel or 60
 
     self.minLevelBox:SetScript("OnTextChanged", function(self)
@@ -1753,7 +1957,7 @@ function LFM:Initialize(parentFrame)
 
     local aiDesc = self.autoInviteFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     aiDesc:SetPoint("LEFT", self.minLevelBox, "RIGHT", 8, 0)
-    aiDesc:SetText("(invites on whisper if iLvl/lvl >= threshold)")
+    aiDesc:SetText(L["txt_invites_on_whisper"])
     aiDesc:SetTextColor(unpack(_tc("textDim")))
 
     local autoStopFrame = CreateFrame("Frame", nil, self.mainContainer)
@@ -1763,7 +1967,7 @@ function LFM:Initialize(parentFrame)
 
     local asLabel = autoStopFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     asLabel:SetPoint("LEFT", autoStopFrame, "LEFT", 10, 0)
-    asLabel:SetText(_hex("accent") .. (L["options_lfm_auto_stop"] or "Auto-Stop Spam Threshold") .. "|r")
+    asLabel:SetText(_hex("accent") .. (L["options_lfm_auto_stop"] or L["options_lfm_auto_stop"]) .. "|r")
     asLabel:SetTextColor(unpack(_tc("textPrimary")))
 
     local asStopValues = { 0, 5, 10, 15, 20, 25, 40 }
@@ -1783,32 +1987,46 @@ function LFM:Initialize(parentFrame)
     local function UpdateAutoStopBtnText()
         local v = FrostSeekDB.LFM.autoStopMemberCount or 0
         if v == 0 then
-            asStopBtn.text:SetText("|cff888888" .. (L["disabled"] or "Disabled") .. "|r")
+            asStopBtn.text:SetText("|cff888888" .. (L["disabled"] or L["disabled"]) .. "|r")
         else
             asStopBtn.text:SetText("|cff44ff44" .. tostring(v) .. "|r")
         end
     end
     UpdateAutoStopBtnText()
 
-    asStopBtn:SetScript("OnClick", function()
+    asStopBtn:RegisterForClicks("LeftButtonUp", "RightButtonUp")
+    asStopBtn:SetScript("OnClick", function(self, button)
         local cur = FrostSeekDB.LFM.autoStopMemberCount or 0
         local idx = 1
         for i, v in ipairs(asStopValues) do
             if v == cur then idx = i; break end
         end
-        local nextVal = asStopValues[(idx % #asStopValues) + 1]
+        local nextVal
+        if button == "RightButton" then
+            nextVal = asStopValues[idx == 1 and #asStopValues or idx - 1]
+        else
+            nextVal = asStopValues[(idx % #asStopValues) + 1]
+        end
         FrostSeekDB.LFM.autoStopMemberCount = nextVal
         UpdateAutoStopBtnText()
         if nextVal == 0 then
-            print("|cff88ccffFrostSeek LFM:|r Auto-stop spam disabled")
+            print(L["msg_auto_stop_disabled"])
         else
-            print("|cff88ccffFrostSeek LFM:|r Auto-stop spam at " .. nextVal .. " members")
+            print(L["msg_auto_stop_at"] .. nextVal .. L["msg_members_count"])
         end
     end)
+    asStopBtn:SetScript("OnEnter", function(self)
+        GameTooltip:SetOwner(self, "ANCHOR_TOP")
+        GameTooltip:SetText(L["options_lfm_auto_stop"], 1, 1, 1)
+        GameTooltip:AddLine(L["tip_left_click_increase"], 0.8, 0.9, 1, true)
+        GameTooltip:AddLine(L["tip_right_click_decrease"], 0.8, 0.9, 1, true)
+        GameTooltip:Show()
+    end)
+    asStopBtn:SetScript("OnLeave", function() GameTooltip:Hide() end)
 
     local asDesc = autoStopFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     asDesc:SetPoint("LEFT", asStopBtn, "RIGHT", 8, 0)
-    asDesc:SetText(_hex("textDim") .. (L["options_lfm_auto_stop_desc"] or "Auto-stop LFM spam when group reaches this many members") .. "|r")
+    asDesc:SetText(_hex("textDim") .. (L["options_lfm_auto_stop_desc"] or L["options_lfm_auto_stop_desc"]) .. "|r")
 
     self.controlsFrame = CreateFrame("Frame", nil, self.mainContainer)
     self.controlsFrame:SetSize(IW, 32)
@@ -1821,25 +2039,25 @@ function LFM:Initialize(parentFrame)
         if message and message ~= "" then
             local warning = ValidateGroupComposition()
             if warning then
-                print("|cffffaa00FrostSeek LFM:|r " .. warning)
+                print(L["msg_lfm_warning_prefix"] .. warning)
             end
             local sent = SendToAllSpamChannels(message)
             if sent > 0 then
-                print("|cff88ccffFrostSeek LFM:|r Sent to " .. sent .. " channel(s)")
+                print(L["msg_lfm_sent_to"] .. sent .. L["msg_channel_count_suffix"])
                 if Shared and Shared.PlaySound then
                     Shared.PlaySound("listing")
                 end
             else
-                print("|cffff0000FrostSeek LFM:|r No spam channels selected! Select Ch# toggles above.")
+                print(L["msg_no_spam_channels"])
             end
         else
-            print("|cffff0000FrostSeek LFM:|r No message to send!")
+            print(L["msg_no_message_to_send"])
         end
     end)
     self.sendAllBtn:SetScript("OnEnter", function(self)
         GameTooltip:SetOwner(self, "ANCHOR_TOP")
         GameTooltip:SetText(L["lfm_send_all_tooltip"], 1, 1, 1)
-        GameTooltip:AddLine("Sends the message to all selected Ch#.", 0.8, 0.8, 0.8)
+        GameTooltip:AddLine(L["tip_sends_to_all_ch"], 0.8, 0.8, 0.8)
         GameTooltip:Show()
     end)
     self.sendAllBtn:SetScript("OnLeave", function(self)
@@ -1849,6 +2067,7 @@ function LFM:Initialize(parentFrame)
     UpdateDifficultyDropdown()
     UpdateTabsAppearance()
     UpdateActivityList()
+    if self.UpdateBCVisibility then self.UpdateBCVisibility() end
 
     self.frame:Hide()
 end
@@ -1863,6 +2082,7 @@ function LFM:Show()
         StopKeystoneAutoUpdate()
         if self.refreshKeystoneBtn then self.refreshKeystoneBtn:Hide() end
     end
+    if self.UpdateBCVisibility then self.UpdateBCVisibility() end
     self.frame:Show()
 end
 

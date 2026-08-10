@@ -1,111 +1,316 @@
-⚡ FrostSeek v2.2.4
+# ⚡ FrostSeek v2.2.5
+**ONLY ENG/IT LANGUAGE IS FULL TRANSLATE ATM** (OTHER IS WIP)
+**Advanced LFG/LFM Manager with FrostNet** — for WoW Ascension & all WoW Classic / Retail clients.
 
-Advanced LFG/LFM Manager with FrostNet — for WoW Ascension & all WoW Classic / Retail clients.
+[![License](https://img.shields.io/badge/License-Proprietary-red.svg)](License)
+[![Version](https://img.shields.io/badge/Version-2.2.5-blue.svg)](https://www.curseforge.com/wow/addons/frostseek)
 
-✨ Features
+---
 
-🔍 LFG — Looking For Group
-Auto-detect recruitment messages with popup alerts, category filters (Dungeon, Raid, Keystone, PvP, World Boss, Manastorm, Event), keyword filters, cooldown system, and customizable whisper templates with role/class/ilvl/enchant/keystone support.
+## 📋 Table of Contents
 
-New in v2.2.x:
-- ⭐ **Raid target icons** — `{star}`, `{square}`, `{circle}`, `{diamond}`, `{triangle}`, `{moon}`, `{cross}`, `{skull}` (any case) render as actual icon textures in popups, recruiters list, and tooltips — exactly like the game chat.
-- 🏷️ **Canonical dungeon names** — popups and recruiters list always show the full name ("Zul'Gurub", "Molten Core", "Kaldros Depthbreaker") instead of the matched keyword ("ZG", "MC", "KALDROS"). Typos and abbreviations are normalized too.
-- 🎨 **Colored dungeon names** — recruiters list names are color-coded by category (green= Dungeon, orange= Raid, red= World Boss/PvP, purple= Manastorm, pink= Keystone) in a smaller, compact font.
-- 🎯 **Smarter spam filter** — legitimate LFM messages containing a single spam word (e.g. "staff" in "Int Staff") no longer get dropped when strong LFM/LFG indicators are present.
-- 🐻 **Mute Boss button** — on World Boss popups, instantly disables popups for that specific boss until you re-enable it in Options → Activity Filter. Perfect for weekly-lockout bosses.
-- ⚔️ **PvP sub-categories** — Arena 2v2/3v3/5v5, generic Arena, Warsong Gulch, Arathi Basin, Alterac Valley, Eye of the Storm, Wintergrasp, generic Battleground. Ranked arenas show a red [Ranked] tag.
-- 🔄 **RDF no longer flagged as Mythic** — "RDF" and "RDF hc" are correctly classified as Random Dungeon Finder with Normal/Heroic difficulty.
-- 🔧 **Activity Filter fix** — keyword collision bug fixed (selecting only "Zul'Gurub" Classic now matches "zg" messages even when "Zul'Gurub (Cata)" also exists).
-- 🔤 **Atal'zul typo handling** — "Atal azul" and "Atal'azul" now correctly recognized as the Atal'Zul world boss instead of falling through to Manastorm.
+- [Overview](#overview)
+- [Features](#features)
+- [Installation](#installation)
+- [Quick Start](#quick-start)
+- [Tabs](#tabs)
+- [New Features in v2.2.5](#new-features-in-v225)
+- [Slash Commands](#slash-commands)
+- [Support](#support)
 
-📢 LFM — Looking For Members
-Full LFM interface with auto-spam, customizable timers, activity dropdown, real-time message preview, multi-channel support, and auto-invite by minimum ilvl.
+---
 
-🌐 FrostNet
-Serverless P2P listing board. Browse, Create Group, Apply, Whisper leader, all from a single panel. Protocol v2 (`FSK2`) with backward compat, `C_ChatInfo.SendAddonMessage` on modern clients, heartbeat keepalives, per-sender rate limiter, voice bridge (Discord/TS).
+## 🎯 Overview
 
-📊 Dashboard
-Real-time player stats, average ilvl, role info, FrostNet online count, and module status overview.
+FrostSeek is a comprehensive LFG/LFM addon that helps you find groups and members in World of Warcraft. It works on Ascension, 3.3.5 private servers, and all WoW Classic/Retail clients.
 
-📍 Popup Anchor Position (NEW in v2.2.4)
-Decide exactly where LFG and FrostNet popups appear on screen — **no chat commands needed**.
-- Go to **Options → Popup Categories → Unlock Popup Anchor**
-- A visual editor opens with two draggable demo boxes:
-  - 🔵 Blue "LFG Popup Anchor" — positions LFG popups
-  - 🟢 Green "FrostNet Applicant Popup Anchor" — positions FrostNet applicant popups
-- Drag both boxes where you want, click the green **Save** button — both positions persist across sessions
-- Click **Reset** to return to defaults
-- Quick repositioning: hold **Shift** and drag any live popup to instantly move its anchor
-- Optional slash: `/fspopup` (also: `/fspopup reset`, `/fspopup status`)
+**Key highlights:**
+- 🌐 **FrostNet** — serverless P2P listing board (no dependency on server chat)
+- 🔍 **LFG** — auto-detect recruitment messages with popup alerts
+- 📢 **LFM** — full LFM interface with auto-spam and auto-invite
+- 🚫 **Chat Filter** — hide LFG/LFM spam from normal chat channels
+- 🎯 **Keystone Filter** — show only keystones at or above a minimum level
+- 🌍 **Multi-language** — English, Italian, German, Spanish, French, Portuguese
+- 🎨 **Themes** — customizable color schemes
 
-✅ Two separate LFG/LFM popup toggles (NEW in v2.2.2)
-The old "Popup Mode Filter" dropdown (All / LFG / LFM) is replaced with two clean checkboxes:
-- **Show LFG Popups** — popups for players looking for a group to join
-- **Show LFM Popups** — popups for players forming a group and looking for members
-- If you deselect both, one is automatically re-enabled. Your previous dropdown choice is migrated automatically.
+---
 
-🔗 Voice Bridge (since v2.2.0)
-Set your Discord/TeamSpeak invite link once in the **Profile tab** ("Voice URL" field). The link is auto-attached to every FrostNet listing you publish. Other players see a "Join Voice" button on the Browse panel that opens the URL via a StaticPopup. Persisted in `FrostSeekDB.VoiceLinks`. Slash fallback: `/fsvoice set|get|remove|list`.
+## ✨ Features
 
-🌐 Multi-language (since v2.2.0)
-Italian (`itIT`), Spanish (`esES`), German (`deDE`), French (`frFR`), Portuguese (`ptBR`) translations of all user-facing strings. Framework auto-falls back to English for any future keys. Selectable in Options → General → Language. `auto` follows the WoW client language.
+### 🔍 LFG — Looking For Group
 
-⚙️ Settings
-9 categories: General, LFG, Activity Filter, LFM, Popup Categories (with anchor editor), Custom Keywords, Custom Messages, Sound, Advanced. Plus Language and Log Level dropdowns. Minimap button, position saving, UI scale, debug mode, log level (DEBUG/INFO/WARN/ERROR).
+Auto-detect recruitment messages with popup alerts, category filters, keyword filters, cooldown system, and customizable whisper templates with role/class/ilvl/enchant/keystone support.
 
-🛠️ Developer / Power-user Tools
-- `/fsdumplog` — dump the last 200 log entries (network traces, errors, migration events)
-- `/fsreset confirm` — wipe all settings except your LFM templates
-- `/fspopup` — open the visual popup anchor editor (also: `/fspopup reset`, `/fspopup status`)
-- `FrostSeek.Logger` — 4-level logger with circular buffer
-- `FrostSeek.SafeHandler` — xpcall wrapper that prevents addon-wide crashes
-- Schema migrations: forward-only, snapshot backup on first upgrade
+**Categories:** Dungeon, Raid, Keystone, PvP, World Boss, Manastorm, Event
 
-🖱️ Minimap Button Shortcuts
-- Left Click → Open FrostSeek on the LFG tab
-- Ctrl + Click → Quick toggle to disable LFG + Popups (button turns red). Repeat to re-enable. FrostNet and LFM stay active.
-- Drag → Move the button around the minimap
-- Slash equivalents: `/fsdisable`, `/fsenable`, `/fstoggle`
+**Difficulty filters per category:**
+- Dungeon: Normal, Heroic, HC, Mythic
+- Raid: Normal, Heroic, HC, Mythic, Ascended, Trial
+- Manastorm: Leveling, Bonzo, ALVA
+- Keystone: level filter (0-30+)
 
-📥 Installation
+### 📢 LFM — Looking For Members
 
-1. Download the latest Release (v2.2.4+)
-2. Extract the `.zip` file
-3. Place the `FrostSeek` folder inside `Interface/AddOns/`
-4. Restart the game and enjoy
+Full LFM interface with:
+- Auto-spam with customizable timers
+- Activity dropdown
+- Real-time message preview
+- Multi-channel support
+- Auto-invite by minimum ilvl
+- Auto-stop at member count threshold
+- Bonus Coin support for keystones
 
-🖥️ Compatibility
+### 🌐 FrostNet
 
-- ✅ WoW Ascension (Project Ascension) — 3.3.5a, uses legacy custom channel
-- ✅ 3.3.5 Vanilla Servers — same as Ascension
-- ✅ Vanilla Classic, TBC Classic, WotLK Classic — uses `C_ChatInfo.SendAddonMessage` when available
-- ✅ Cata Classic, Cata PS, Mists Classic
-- ✅ Retail
+Serverless P2P listing board:
+- Browse, Create Group, Apply, Whisper leader
+- Protocol v2 (`FSK2`) with backward compat
+- `C_ChatInfo.SendAddonMessage` on modern clients
+- Heartbeat keepalives
+- Per-sender rate limiter
+- Voice bridge (Discord/TS)
 
-The addon automatically detects the client and adapts. No manual configuration needed.
+### 📊 Dashboard
 
-📜 License
+Real-time player stats:
+- Average ilvl
+- Role info
+- FrostNet online count
+- Module status overview
+- Session statistics
 
-All Rights Reserved — See license file for more info.
+### 🚫 Chat Filter (NEW)
 
-🔧 Troubleshooting
+Hide LFG/LFM messages from normal chat channels:
+- Filters: lfg, lfm, lfr, lf1m-lf5m, looking for group/member/raid, keystone
+- Smart "lf + role" detection (avoids false positives like "half", "self")
+- Custom keywords support
+- Addon channels (FSK, FSK-EVT) always excluded
+- Works on CHANNEL, YELL, SAY, GUILD
 
-If something doesn't work:
-1. Run `/fsdebug` — prints version, schema version, language, log level, module status, network state
-2. Run `/fsdumplog` — prints the last 200 log entries
-3. Run `/fsnet` — prints FrostNet connection status, queue length, channel ID
-4. Run `/fspopup status` — prints current LFG and FrostNet popup anchor positions
-5. Run `/fsreset confirm` as last resort — wipes settings (preserves LFM templates)
+### 🎯 Keystone Level Filter (NEW)
 
-🐛 Reporting bugs
+Show only keystones at or above a minimum level:
+- Set minimum level (0-30) in LFG → Keystone category
+- Applied to popups and recruiters list
+- Smart parser handles all keystone formats:
+  - `[Keystone: Name (level)]` (CoA format)
+  - `[Keystone: Name] (level)` (standard format)
+  - `Keystone: Name (N)` (unbracketed)
+  - Item links `|Hitem:...|h[Keystone: Name]|h`
+- Strip WoW color codes before parsing
 
-When reporting a bug, include:
-- `/fsdebug` output
-- `/fsdumplog` output (or the last ~20 lines)
-- What you were doing when the bug happened
-- WoW client version + server type (Ascension / Retail / etc.)
+### 🎨 Themes
 
-📚 Full guides
+Multiple color themes: Frost, Shadow, Void, and more. All popup buttons are themed to match the addon UI.
 
-- `Guide/Guide ENG.md` — complete English walkthrough (idiot-proof)
-- `Guide/Guida ITA.md` — guida italiana completa
+### 🌍 Multi-language
+
+Supported languages:
+- English (enUS)
+- Italian (itIT)
+- German (deDE)
+- Spanish (esES)
+- French (frFR)
+- Portuguese (ptBR)
+- Auto-detect (follows WoW client language)
+
+---
+
+## 📦 Installation
+
+1. Close WoW
+2. Extract the `FrostSeek` folder into `Interface\AddOns\`
+3. Final structure:
+   ```
+   Interface\AddOns\FrostSeek\
+   ├── FrostSeek.toc
+   ├── Core.lua
+   ├── loader.xml
+   ├── Guide\
+   │   ├── Guida ITA.md
+   │   └── Guide ENG.md
+   ├── Locales\
+   ├── Media\
+   └── Modules\
+   ```
+4. Open WoW — you'll see `FrostSeek v2.2.5 loaded!` in chat
+
+---
+
+## 🚀 Quick Start
+
+1. **First launch:** A 4-page setup wizard appears:
+   - Page 1: Choose language
+   - Page 2: Choose your role (Tank/Healer/DPS/Support)
+   - Page 3: Enable popups, sounds, and chat filter
+   - Page 4: Click Finish
+
+2. **Open the addon:**
+   - Click the minimap button, OR
+   - Type `/fs` in chat
+
+3. **Find a group (LFG):**
+   - Open the LFG tab
+   - Select your role
+   - Choose a category (Dungeon, Raid, Keystone, etc.)
+   - Wait for popups when someone looks for members
+
+4. **Find members (LFM):**
+   - Open the LFM tab
+   - Select the activity
+   - Choose roles needed
+   - Click "Start Spam"
+
+5. **Use FrostNet:**
+   - Open the FrostNet tab
+   - Browse open groups
+   - Apply with one click
+
+---
+
+## 📑 Tabs
+
+| Tab | Description |
+|-----|-------------|
+| **Dashboard** | Player stats, iLvl, FrostNet status, session counters |
+| **FrostNet** | P2P listing board — browse, create, apply |
+| **LFG** | Looking For Group — popup alerts when someone seeks members |
+| **LFM** | Looking For Members — spam your LFM message |
+| **Community** | Guild browser, recruitment, event board |
+| **Options** | All settings |
+
+---
+
+## 🆕 New Features in v2.2.5
+
+### Chat Filter
+- Hide LFG/LFM spam from Trade, General, Yell, Say, Guild
+- Smart keyword matching with role detection
+- Custom keywords support
+- Addon channels always excluded
+- Debug commands: `/fscf status`, `/fscf log`, `/fscf reregister`
+
+### Keystone Level Filter
+- Show only keystones at or above a minimum level
+- Works in LFG popups and recruiters list
+- Smart parser handles all keystone formats (CoA, standard, item links)
+- Test command: `/fskeytest <message>`
+
+### Setup Wizard
+- 4-page guided setup for new users
+- Language, role, popups, sounds, chat filter
+- Saves to FrostSeekDB
+
+### UI Improvements
+- Removed FrostNet button from LFG (channel managed in background)
+- Removed LFG toggle from top-right
+- Profile button moved to bottom-right
+- New Custom Wisp button (opens custom whisper settings)
+- Bonus Coin checkbox renamed from "Keystone"
+- Popup buttons themed to match addon UI
+- Whisper button preview tooltip (shows message before sending)
+
+### Localization
+- Full Italian localization (1000+ strings)
+- English base localization updated
+- All option names, descriptions, tooltips, buttons, messages translated
+- No more raw key names in UI
+
+### Bug Fixes
+- Fixed popup queue getting stuck after first item
+- Fixed CreateLFGPopup missing isMythic parameter
+- Fixed Dashboard nil dereference on netStats
+- Fixed LFM UpdateMessagePreview clearing message on role toggle
+- Fixed Network _FlushQueue not using AddonMessage API
+- Fixed Community PostEvent silent drop
+- Fixed Compat.lua typo CLASSIC_335 → wotlk335
+- Fixed Core.lua /fsdebug nil deref on Network
+- Fixed LFG.lua ClearAllSearches stale reference
+- Fixed channel blacklist select() indices
+- Fixed LFM string.find plain=true (malformed pattern crash)
+- Fixed LFM StartAutoSpam multiple ticker creation
+- Fixed SetItemRef not forwarding chatFrame argument
+- Fixed keystone stale currentKeystone value
+- Fixed nil checks in Presence, Profile, VoiceBridge, Community, Dashboard
+- Fixed OnEnter nil check in Core.lua
+- Fixed theme typo "ShadowS" → "Shadow"
+- Fixed ConsoleExec("reloadui") fallback (doesn't work, use ReloadUI)
+- Fixed Profile.lua SetColorTexture called with table instead of unpacked values
+- Fixed Options.lua SetPoint 2-arg invalid form
+- Fixed Theme.lua dead code
+- Fixed Network.lua tostring() for sentId
+- Fixed Community.lua gsub pattern escaping for language tags
+
+### Network
+- FSK and FSK-EVT channels now join 10 seconds after login (so they get higher channel numbers)
+
+---
+
+## ⌨️ Slash Commands
+
+| Command | Description |
+|---------|-------------|
+| `/fs` | Open main window |
+| `/fslfg` | Open LFG tab |
+| `/fslfm` | Open LFM tab |
+| `/fsnet` | FrostNet network status |
+| `/fsoptions` | Open settings |
+| `/fsetup` | Repeat setup wizard |
+| `/fsdebug` | Debug info |
+| `/fsdumplog` | Dump log |
+| `/fsclass` | Class management (Ascension) |
+| `/fsreset confirm` | Full reset |
+| `/fscf` or `/fschatfilter` | Chat filter management |
+| `/fscf status` | Show filter status |
+| `/fscf log [n]` | Show last N filtered messages |
+| `/fscf reregister` | Force re-register filter |
+| `/fskeytest <msg>` | Test keystone parser |
+| `/fschatsniff` | Chat event sniffer (debug) |
+
+---
+
+## 📖 Documentation
+
+- **Italian guide:** `Guide/Guida ITA.md`
+- **English guide:** `Guide/Guide ENG.md`
+
+---
+
+## 🔧 Technical Details
+
+- **Saved Variables:** `FrostSeekDB`
+- **Supported clients:** Vanilla Classic, TBC Classic, WotLK (3.3.5),WorLK Classic, Cata Classic, Mists Classic, Ascension Private Server
+- **Load order:** Compat → Theme → UIUtils → Shared → Core → Locales → Modules
+- **Network protocol:** FSK2 (backward compatible with FSK1)
+- **Channels:** FSK (main), FSK-EVT (events)
+- **Watermark:** FSK-WM-36DA8EFBD010-FSK-AYRO-2026-7F3C-9A21-BD54-8E1F
+
+---
+
+## 📄 License
+
+**FrostSeek Proprietary License — All Rights Reserved**
+
+Copyright © 2026 Ayro. All rights reserved.
+
+This source code is the proprietary intellectual property of Ayro. Unauthorized copying, modification, redistribution, or use of any part of this code, in whole or in part, via any medium, is strictly prohibited without the express written permission of the author.
+
+For licensing inquiries, contact the author via the official repository:
+- CurseForge Project ID: 1460315
+
+---
+
+## 👤 Author
+
+**Ayro** — FrostSeek creator and maintainer
+
+---
+
+## 🙏 Acknowledgments
+
+Thanks to all the testers and users who provided feedback on Ascension, and other private servers. Special thanks to Ernestodx for minimap icon
+
+---
+
+**FrostSeek v2.2.5** — Find groups faster. Find members smarter.

@@ -196,13 +196,13 @@ do
     elseif interfaceVersion >= 50000 and interfaceVersion < 60000 then
         detectedVersion = FrostSeekCompat.WOW_VERSIONS.MISTS
     elseif interfaceVersion >= 40400 and interfaceVersion < 50000 then
-        
+
         detectedVersion = FrostSeekCompat.WOW_VERSIONS.CATA
     elseif interfaceVersion >= 40000 and interfaceVersion < 40400 then
-        
+
         detectedVersion = FrostSeekCompat.WOW_VERSIONS.CATA_PS
     elseif interfaceVersion >= 30300 and interfaceVersion < 40000 then
-        
+
         if interfaceVersion >= 30400 then
             detectedVersion = FrostSeekCompat.WOW_VERSIONS.WOTLK_CLASSIC
         else
@@ -313,7 +313,7 @@ if not C_ChatInfo then
     C_ChatInfo = {}
 
     function C_ChatInfo.GetChannelInfoFromIdentifier(identifier)
-        
+
         if not identifier then return nil end
         local targetLower = string.lower(tostring(identifier))
         for i = 1, 20 do
@@ -329,7 +329,7 @@ if not C_ChatInfo then
     end
 
     function C_ChatInfo.GetChannelRuleset(channelID)
-        return 1 
+        return 1
 
     end
 
@@ -396,7 +396,7 @@ end
 function FrostSeekCompat.ChannelAPI.GetChannelID(channelName)
     if not channelName then return nil end
     local targetLower = string.lower(tostring(channelName))
-    
+
     if C_ChatInfo and C_ChatInfo.GetChannelInfoFromIdentifier then
         local ok, info = pcall(function()
             return C_ChatInfo.GetChannelInfoFromIdentifier(channelName)
@@ -426,7 +426,7 @@ function FrostSeekCompat.ChannelAPI.GetChannelID(channelName)
                 end)
                 if ok2 and name and string.lower(tostring(name)) == targetLower then
                     if channelNumber then return channelNumber end
-                    
+
                     for j = 1, 20 do
                         local chName = GetChannelName(j)
                         if chName and string.lower(tostring(chName)) == targetLower then
@@ -473,7 +473,7 @@ FrostSeekCompat.IsFriendCached = function(name)
             return GetFriendInfo(i)
         end)
         if ok2 and friendName then
-            
+
             if tostring(friendName) == name then
                 return true
             end
@@ -588,12 +588,12 @@ FrostSeekCompat.GetPlayerItemLevel = function(unit)
 
     local sum, count = 0, 0
     for i = 1, 17 do
-        if i ~= 4 then 
+        if i ~= 4 then
             local itemLink = FrostSeekCompat.GetInventoryItemLink(unit, i)
             if itemLink then
                 local info = FrostSeekCompat.GetItemInfo(itemLink)
                 if info then
-                    
+
                     local itemLevel = select(4, info)
                     if itemLevel and itemLevel > 0 then
                         sum = sum + itemLevel
@@ -677,7 +677,7 @@ FrostSeekCompat.GetMaxLevel = function()
         return 90
     elseif v == FrostSeekCompat.WOW_VERSIONS.CATA or v == FrostSeekCompat.WOW_VERSIONS.CATA_PS then
         return 85
-    elseif v == FrostSeekCompat.WOW_VERSIONS.WOTLK_CLASSIC or v == FrostSeekCompat.WOW_VERSIONS.CLASSIC_335 then
+    elseif v == FrostSeekCompat.WOW_VERSIONS.WOTLK_CLASSIC or v == FrostSeekCompat.WOW_VERSIONS.wotlk335 then
         return 80
     elseif v == FrostSeekCompat.WOW_VERSIONS.TBC then
         return 70
@@ -697,7 +697,7 @@ FrostSeekCompat.GetExpansionLabel = function()
         return "Cata 4.3.4"
     elseif v == FrostSeekCompat.WOW_VERSIONS.WOTLK_CLASSIC then
         return "WotLK Classic"
-    elseif v == FrostSeekCompat.WOW_VERSIONS.CLASSIC_335 then
+    elseif v == FrostSeekCompat.WOW_VERSIONS.wotlk335 then
         return "WotLK 3.3.5"
     elseif v == FrostSeekCompat.WOW_VERSIONS.TBC then
         return "TBC Classic"
@@ -710,17 +710,26 @@ end
 FrostSeekCompat.hasBackdropTemplate = FrostSeekCompat.hasBackdropTemplate or false
 
 local ASCENSION_REALMS = {
-    ["area 52"]       = "classless",
-    ["area52"]        = "classless",
-    ["a52"]           = "classless",
-    ["andorhal"]      = "classless",
-    ["naladu"]        = "classless",
-    ["thrall"]        = "classless",
-    ["elune"]         = "seasonal",
-    ["bronzebeard"]   = "bronzebeard",
+    ["area 52"]           = "classless",
+    ["area52"]            = "classless",
+    ["a52"]               = "classless",
+    ["bronzebeard"]       = "bronzebeard",
+    ["dawnrisedarkmoon"]  = "seasonal",
+    ["dawnrise"]          = "seasonal",
+    ["darkmoon"]          = "seasonal",
+    ["voljinrexxar"]      = "coa",
+    ["voljin"]            = "coa",
+    ["vol'jin"]           = "coa",
+    ["vol jin"]           = "coa",
+    ["rexxar"]            = "coa",
     ["conquest of azeroth"] = "coa",
-    ["conquest"]      = "coa",
-    ["coa"]           = "coa",
+    ["conquest"]          = "coa",
+    ["coa"]               = "coa",
+}
+
+local EPOCH_REALMS = {
+    ["kezan"]          = "epoch",
+    ["gurubashi"]      = "epoch",
 }
 
 local CATA_PS_REALMS = {
@@ -738,29 +747,45 @@ do
     local detectedType = FrostSeekCompat.GetExpansionLabel():lower()
     local isAsc = false
     local ascMode = nil
+    local isEpoch = false
     local isCataPS = FrostSeekCompat.IsCataPS()
     local cataPSRealm = nil
 
     if FrostSeekCompat.Is335() then
-        if ASCENSION_REALMS[realmLower] then
-            isAsc = true
-            ascMode = ASCENSION_REALMS[realmLower]
+        if EPOCH_REALMS[realmLower] then
+            isEpoch = true
         else
-            for key, mode in pairs(ASCENSION_REALMS) do
+            for key, _ in pairs(EPOCH_REALMS) do
                 if string.find(realmLower, key, 1, true) then
-                    isAsc = true
-                    ascMode = mode
+                    isEpoch = true
                     break
                 end
             end
         end
 
-        if not isAsc and _G.MysticEnchantUtil then
-            isAsc = true
-            ascMode = "classless"
+        if not isEpoch then
+            if ASCENSION_REALMS[realmLower] then
+                isAsc = true
+                ascMode = ASCENSION_REALMS[realmLower]
+            else
+                for key, mode in pairs(ASCENSION_REALMS) do
+                    if string.find(realmLower, key, 1, true) then
+                        isAsc = true
+                        ascMode = mode
+                        break
+                    end
+                end
+            end
+
+            if not isAsc and _G.MysticEnchantUtil then
+                isAsc = true
+                ascMode = "classless"
+            end
         end
 
-        if isAsc then
+        if isEpoch then
+            detectedType = "epoch"
+        elseif isAsc then
             detectedType = "ascension"
         end
     end
@@ -781,10 +806,15 @@ do
 
     FrostSeekCompat.serverType     = detectedType
     FrostSeekCompat.isAscension    = isAsc
+    FrostSeekCompat.isEpoch        = isEpoch
     FrostSeekCompat.realmName      = realmName
     FrostSeekCompat.ascensionMode  = ascMode
     FrostSeekCompat.isCataPrivate  = isCataPS
     FrostSeekCompat.cataPSRealm    = cataPSRealm
+end
+
+function FrostSeekCompat.IsEpoch()
+    return FrostSeekCompat.isEpoch == true
 end
 
 function FrostSeekCompat.GetRealmName()
@@ -817,7 +847,7 @@ function FrostSeekCompat.IsConquestOfAzeroth()
 end
 
 function FrostSeekCompat.GetServerTypeLabel()
-    
+
     if FrostSeekCompat.IsCataPS() then
         local realm = FrostSeekCompat.GetRealmName()
         local realmKey = FrostSeekCompat.cataPSRealm
@@ -893,19 +923,19 @@ compatFrame:SetScript("OnEvent", function(self, event, addonName)
         math.floor(serverColor[2] * 255),
         math.floor(serverColor[3] * 255))
 
-    local versionInfo = string.format("|cff00ff00Interface: %d|r | |cff00ff00Version: %s|r",
+    local versionInfo = string.format(_G.FrostSeek.L["compat_version_info"],
         FrostSeekCompat.GetInterfaceVersion(),
         FrostSeekCompat.GetExpansionLabel())
 
     print("|cff88ccffFrostSeek Compat:|r " ..
-        (FrostSeekCompat.hasBackdropTemplate and "|cff00ff00BackdropTemplate: YES|r" or "|cffff8800BackdropTemplate: NO (native fallback)|r") ..
+        (FrostSeekCompat.hasBackdropTemplate and _G.FrostSeek.L["compat_backdrop_yes"] or _G.FrostSeek.L["compat_backdrop_no"]) ..
         " | " ..
-        (C_Timer and "|cff00ff00C_Timer: OK|r" or "|cffff0000C_Timer: MISSING|r") ..
+        (C_Timer and _G.FrostSeek.L["compat_ctimer_ok"] or _G.FrostSeek.L["compat_ctimer_missing"]) ..
         " | " ..
         versionInfo ..
         " | " ..
-        serverHex .. "Server: " .. serverLabel .. "|r" ..
+        serverHex .. _G.FrostSeek.L["compat_server_label"] .. serverLabel .. "|r" ..
         " | " ..
-        "|cff00ff00Compat layer loaded|r"
+        _G.FrostSeek.L["compat_layer_loaded"]
     )
 end)

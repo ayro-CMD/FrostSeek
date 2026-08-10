@@ -74,7 +74,8 @@ local ACTIVITY_DB = {
         WOTLK = {"Utgarde Keep", "Utgarde Pinnacle", "The Nexus", "The Oculus", "Azjol-Nerub", "Ahn'kahet", "Drak'Tharon Keep", "Violet Hold", "Gundrak", "Halls of Stone", "Halls of Lightning", "Culling of Stratholme", "Trial of the Champion", "Forge of Souls", "Pit of Saron", "Halls of Reflection"},
         CATA = {"Blackrock Caverns", "The Throne of the Tides", "The Vortex Pinnacle", "Stonecore", "Lost City of the Tol'vir", "Halls of Origination", "Grim Batol", "Deadmines (Heroic)", "Shadowfang Keep (Heroic)", "Zul'Gurub", "Zul'Aman", "End Time", "Well of Eternity", "Hour of Twilight"},
         MOP = {"Temple of the Jade Serpent", "Stormstout Brewery", "Shado-Pan Monastery", "Mogu'shan Palace", "Scarlet Halls", "Scarlet Monastery", "Siege of Niuzao Temple", "Gate of the Setting Sun", "Scholomance", "Darkheart Thicket", "Violet Hold"},
-        CUSTOM = {"GlitterMurk Mines", "Blackrock Cavern", "Tor'Watha", "Bardid Hold", "Vault of the Inquisition", "Road to De' Other Side", "The Temple of Embers","Shadowbone Depths", "RDF"},
+        ASCENSION = {"Blackrock Cavern", "Tor'Watha", "Bardid Hold", "Vault of the Inquisition", "Road to De' Other Side", "The Temple of Embers", "Shadowbone Depths", "RDF"},
+        EPOCH = {"Glittermurk Mines"},
     },
     RAID = {
         CLASSIC = {"Molten Core", "Onyxia", "Blackwing Lair", "Zul'Gurub", "Ruins of Ahn'Qiraj", "Temple of Ahn'Qiraj", "Naxxramas"},
@@ -82,7 +83,8 @@ local ACTIVITY_DB = {
         WOTLK = {"Eye of Eternity", "Obsidian Sanctum", "Vault of Archavon", "Ulduar", "Trial of the Crusader", "Icecrown Citadel", "Ruby Sanctum"},
         CATA = {"Baradin Hold", "Bastion of Twilight", "Throne of the Four Winds", "Blackwing Descent", "Firelands", "Dragon Soul"},
         MOP = {"Terrace of Endless Spring", "Mogu'shan Vaults", "Heart of Fear", "Throne of Thunder", "Siege of Orgrimmar"},
-        CUSTOM = {"The Radiant Spring",},
+        ASCENSION = {"The Radiant Spring"},
+        EPOCH = {},
     },
     ["WORLD BOSS"] = {
         CLASSIC = {"Azuregos", "Lord Kazzak", "Emeriss", "Lethon", "Taerar", "Ysondre", "Setis"},
@@ -90,12 +92,13 @@ local ACTIVITY_DB = {
         WOTLK = {"Archavon", "Emalon", "Koralon", "Toran"},
         CATA = {"Akma'hat", "Garr", "Julak-Doom", "Mobus", "Poseidus", "Xariona"},
         MOP = {"Sha of Anger", "Galleon", "Nalak", "Oondasta", "Celestials"},
-        CUSTOM = {"WorldBossTour", "Soggoth", "Snowgrave", "Atal'Zul", "Kaldros Depthbreaker", "Gonzor", "King Gnok", "King Mosh", "Silithid Lurker", "Volchan", "Corrupted Ancient"},
+        ASCENSION = {"WorldBossTour", "Soggoth", "Snowgrave", "Atal'Zul", "Kaldros Depthbreaker"},
+        EPOCH = {"Gonzor", "King Gnok", "King Mosh", "Silithid Lurker", "Volchan", "Corrupted Ancient"},
     },
     PVP = {
         ALL = {"Arena 2v2", "Arena 3v3", "Arena 5v5", "Battlegrounds", "Wintergrasp", "World PvP", "High Risk PvP"},
     },
-    
+
     EVENT = {
     CLASSIC = {"Ahn'Qiraj Event", "Scourge Invasion", "Darkmoon Faire", "Elemental Invasion"},
     TBC = {"Hallows' End", "Brewfest", "Love is in the Air", "Zul'Aman Event"},
@@ -112,7 +115,8 @@ local ACTIVITY_DB = {
         WOTLK = {"Utgarde Keep", "Utgarde Pinnacle", "The Nexus", "The Oculus", "Azjol-Nerub", "Ahn'kahet", "Drak'Tharon Keep", "Violet Hold", "Gundrak", "Halls of Stone", "Halls of Lightning", "Culling of Stratholme", "Trial of the Champion", "Forge of Souls", "Pit of Saron", "Halls of Reflection"},
         CATA = {"Blackrock Caverns", "The Throne of the Tides", "The Vortex Pinnacle", "Stonecore", "Lost City of the Tol'vir", "Halls of Origination", "Grim Batol", "Deadmines", "Shadowfang Keep"},
         MOP = {"Temple of the Jade Serpent", "Stormstout Brewery", "Shado-Pan Monastery", "Mogu'shan Palace", "Scarlet Halls", "Scarlet Monastery", "Siege of Niuzao Temple", "Gate of the Setting Sun", "Scholomance"},
-        CUSTOM = {"GlitterMurk Mines", "Tor'Watha", "Bardid Hold", "Vault of the Inquisition", "Road to De' Other Side"},
+        ASCENSION = {"Tor'Watha", "Bardid Hold", "Vault of the Inquisition", "Road to De' Other Side"},
+        EPOCH = {"Glittermurk Mines"},
     },
     MANASTORM = {
         ALL = {"ALVA", "Manastorm Gold Farm", "Manastorm Leveling", "Manastorm Bonzo Farm"},
@@ -145,6 +149,29 @@ local TYPE_COLORS = {
 }
 
 local function GetRelevantExpansions()
+    local Shared = _G.FrostSeekShared
+    if Shared and Shared.GetRelevantExpansionsForProfile then
+        return Shared.GetRelevantExpansionsForProfile()
+    end
+    if Shared and Shared.GetServerProfile then
+        local profile = Shared.GetServerProfile()
+        if profile == "ascension" then
+            return {"Classic", "TBC", "WotLK", "Ascension"}
+        elseif profile == "epoch" then
+            return {"Classic", "TBC", "WotLK", "Epoch"}
+        elseif profile == "classic" then
+            return {"Classic"}
+        elseif profile == "tbc" then
+            return {"Classic", "TBC"}
+        elseif profile == "wotlk" then
+            return {"Classic", "TBC", "WotLK"}
+        elseif profile == "cata" then
+            return {"Classic", "TBC", "WotLK", "Cata"}
+        elseif profile == "mop" then
+            return {"Classic", "TBC", "WotLK", "Cata", "MoP"}
+        end
+    end
+
     local Compat = FrostSeekCompat
     if not Compat then return EXPANSIONS end
     if Compat.Is335() then
@@ -170,7 +197,7 @@ local function GetActivitiesForType(expansion, ltype)
     local typeKey = string.upper(ltype)
     local db = ACTIVITY_DB[typeKey]
     if not db then return {} end
-    
+
     if typeKey == "EVENT" then
         if not expansion or expansion == "All" or expansion == "ALL" then
             local all = {}
@@ -184,11 +211,11 @@ local function GetActivitiesForType(expansion, ltype)
         local expKey = string.upper(expansion)
         return db[expKey] or db.ALL or {}
     end
-    
+
     if typeKey == "PVP" or typeKey == "MANASTORM" or typeKey == "QUEST" then
         return db.ALL or {}
     end
-    
+
     if typeKey == "KEY" then
         if not expansion or expansion == "All" then
             local all = {}
@@ -202,7 +229,7 @@ local function GetActivitiesForType(expansion, ltype)
         local expKey = string.upper(expansion)
         return db[expKey] or {}
     end
-    
+
     if not expansion or expansion == "All" then
         local all = {}
         for _, expList in pairs(db) do
@@ -233,9 +260,9 @@ end
 local function ageText(ts)
     if not ts then return "?" end
     local s = now() - ts
-    if s < 60 then return tostring(s) .. "s ago"
-    elseif s < 3600 then return tostring(math.floor(s / 60)) .. "m ago"
-    else return tostring(math.floor(s / 3600)) .. "h ago" end
+    if s < 60 then return tostring(s) .. L["time_seconds_ago"]
+    elseif s < 3600 then return tostring(math.floor(s / 60)) .. L["time_minutes_ago"]
+    else return tostring(math.floor(s / 3600)) .. L["time_hours_ago"] end
 end
 
 local function roleText(role)
@@ -389,11 +416,11 @@ function Listings:ShowApplicantPopup(applicant)
     }
     local roleDisplay = applicant.role or "DPS"
     local roleColor = roleColorMap[roleDisplay] or "|cffffffff"
-    local activity = self.myListing and self.myListing.activity or "Unknown"
+    local activity = self.myListing and self.myListing.activity or L["unknown"]
     local listingType = self.myListing and self.myListing.type or "Dungeon"
 
     local UI = FrostSeekUIUtils
-    local ar, ag, ab = 0.35, 0.65, 0.95 
+    local ar, ag, ab = 0.35, 0.65, 0.95
 
     local W, H = APP_POPUP_W, 100
     local popup = CreateFrame("Frame", nil, UIParent)
@@ -420,7 +447,7 @@ function Listings:ShowApplicantPopup(applicant)
             if LFG and LFG.SaveApplicantPopupAnchorFromFrame then
                 LFG.SaveApplicantPopupAnchorFromFrame(self)
                 RepositionAppPopupsImpl()
-                print("|cff88ccffFrostSeek:|r FrostNet popup anchor saved. Hold |cffffcc00Shift|r and drag a popup to move it again.")
+                print(L["msg_frostnet_popup_anchor_saved"])
             end
         end
     end)
@@ -660,7 +687,7 @@ function Listings:CreateListing(activity, ltype, difficulty, roles, minIlvl, max
     local id = FrostSeek.Protocol.GenerateId()
     local listing = {
         id = id,
-        activity = activity or "Unknown",
+        activity = activity or L["unknown"],
         type = ltype or "Dungeon",
         difficulty = difficulty or "",
         leader = playerName(),
@@ -882,11 +909,11 @@ function Listings:Initialize(parentFrame)
 
     self.subTabs = {}
     local subTabDefs = {
-        { id = "browse", name = "Browse" },
-        { id = "create", name = "Create Group" },
-        { id = "mylisting", name = "My Group" },
-        { id = "applications", name = "Applications" },
-        { id = "profile", name = "Profile" },
+        { id = "browse", name = L["tab_browse"] },
+        { id = "create", name = L["tab_create_group"] },
+        { id = "mylisting", name = L["tab_my_group"] },
+        { id = "applications", name = L["tab_applications"] },
+        { id = "profile", name = L["tab_profile"] },
     }
 
     for i, st in ipairs(subTabDefs) do
@@ -1122,7 +1149,7 @@ function Listings:BuildBrowseFrame()
     self.detailText:SetHeight(80)
     self.detailText:SetJustifyH("LEFT")
     self.detailText:SetJustifyV("TOP")
-    self.detailText:SetText(_hex("textDim") .. "Select a group to see details|r")
+    self.detailText:SetText(_hex("textDim") .. L["listings_select_group_r"])
 
     self.applyBtn = UI and UI.CreateModernButton(self.detailPanel, 120, 26, L["listings_apply"]) or CreateFrame("Button", nil, self.detailPanel, "UIPanelButtonTemplate")
     if not UI then
@@ -1131,6 +1158,24 @@ function Listings:BuildBrowseFrame()
     end
     self.applyBtn:SetPoint("BOTTOMRIGHT", self.detailPanel, "BOTTOMRIGHT", -10, 8)
     self.applyBtn:SetScript("OnClick", function() Listings:Apply() end)
+    self.applyBtn:SetScript("OnEnter", function(self)
+        GameTooltip:SetOwner(self, "ANCHOR_TOP")
+        GameTooltip:SetText(L["listings_apply"], 0.8, 1, 0.8)
+        local LFG = _G.FrostSeek and _G.FrostSeek.Modules and _G.FrostSeek.Modules.lfg
+        local previewMsg
+        if LFG and LFG.CreateWhisperMessage then
+            previewMsg = LFG.CreateWhisperMessage() or ""
+        end
+        if previewMsg and previewMsg ~= "" then
+            if #previewMsg > 200 then previewMsg = string.sub(previewMsg, 1, 197) .. "..." end
+            local isCustom = FrostSeekDB and FrostSeekDB.LFG and FrostSeekDB.LFG.customMessages and FrostSeekDB.LFG.customMessages.enabled
+            local label = isCustom and (L["tip_preview_custom"] or "Preview (custom):") or (L["tip_preview_base"] or "Preview (base):")
+            GameTooltip:AddLine(label, 0.7, 0.85, 1, true)
+            GameTooltip:AddLine("|cff88ccff" .. previewMsg .. "|r", 1, 1, 1, true)
+        end
+        GameTooltip:Show()
+    end)
+    self.applyBtn:SetScript("OnLeave", function(self) GameTooltip:Hide() end)
 
     self.whisperBtn = UI and UI.CreateModernButton(self.detailPanel, 90, 26, L["popup_whisper"]) or CreateFrame("Button", nil, self.detailPanel, "UIPanelButtonTemplate")
     if not UI then
@@ -1209,7 +1254,7 @@ function Listings:RefreshBrowse()
     end
 
     if self.scrollIndicator then
-        self.scrollIndicator:SetText(tostring(totalFiltered) .. " groups")
+        self.scrollIndicator:SetText(tostring(totalFiltered) .. L["browse_groups_count_suffix"])
     end
 
     local scrollChild = self.browseScrollChild
@@ -1261,7 +1306,7 @@ function Listings:RefreshBrowse()
                 end
                 row.roles:SetText(roleStr ~= "" and roleStr or "--")
             else
-                row.roles:SetText(_hex("textDim") .. "Any|r")
+                row.roles:SetText(_hex("textDim") .. L["any_r"])
             end
             row.note:SetText(tostring(l.note or ""))
         else
@@ -1275,18 +1320,18 @@ function Listings:RefreshBrowse()
     if sl then
         local lines = {}
         table.insert(lines, (TYPE_COLORS[sl.type] or "|cffffffff") .. tostring(sl.activity) .. "|r  " .. tostring(sl.difficulty or ""))
-        table.insert(lines, _hex("textDim") .. "Leader:|r " .. tostring(sl.leader or "?") .. "   " .. _hex("textDim") .. "Members:|r " .. tostring(sl.members or 1) .. "/" .. tostring(sl.maxMembers or 5))
+        table.insert(lines, _hex("textDim") .. L["lbl_leader_r"] .. tostring(sl.leader or "?") .. "   " .. _hex("textDim") .. L["lbl_members_r"] .. tostring(sl.members or 1) .. "/" .. tostring(sl.maxMembers or 5))
         if sl.roles and sl.roles ~= "" then
             local detailRoles = ""
             for roleName in string.gmatch(sl.roles, "[^/]+") do
                 detailRoles = detailRoles .. roleText(roleName) .. "  "
             end
             if detailRoles ~= "" then
-                table.insert(lines, _hex("textDim") .. "LF:|r " .. detailRoles)
+                table.insert(lines, _hex("textDim") .. L["lbl_lf_r"] .. detailRoles)
             end
         end
         if sl.minItemLevel and sl.minItemLevel ~= "" then
-            table.insert(lines, _hex("textDim") .. "Min iLvl:|r " .. sl.minItemLevel .. "+")
+            table.insert(lines, _hex("textDim") .. L["lbl_min_ilvl_r"] .. sl.minItemLevel .. "+")
         end
         if sl.voice and sl.voice ~= "None" then
             local VB = FrostSeek and FrostSeek.VoiceBridge
@@ -1300,15 +1345,15 @@ function Listings:RefreshBrowse()
                     end
                 end
             end
-            table.insert(lines, _hex("textDim") .. "Voice:|r " .. voiceDisplay)
+            table.insert(lines, _hex("textDim") .. L["lbl_voice_r"] .. voiceDisplay)
         end
         if sl.loot and sl.loot ~= "Group Loot" then
-            table.insert(lines, _hex("textDim") .. "Loot:|r " .. tostring(sl.loot))
+            table.insert(lines, _hex("textDim") .. L["lbl_loot_r"] .. tostring(sl.loot))
         end
         if sl.note and sl.note ~= "" then
-            table.insert(lines, _hex("textDim") .. "Note:|r " .. tostring(sl.note))
+            table.insert(lines, _hex("textDim") .. L["lbl_note_r"] .. tostring(sl.note))
         end
-        table.insert(lines, _hex("textDim") .. "Published:|r " .. ageText(sl.created))
+        table.insert(lines, _hex("textDim") .. L["lbl_published_r"] .. ageText(sl.created))
         self.detailText:SetText(table.concat(lines, "\n"))
 
         if self.joinVoiceBtn then
@@ -1322,7 +1367,7 @@ function Listings:RefreshBrowse()
             self.joinVoiceBtn:SetShown(hasVoiceLink)
         end
     else
-        self.detailText:SetText(_hex("textDim") .. "Select a group to see details|r")
+        self.detailText:SetText(_hex("textDim") .. L["listings_select_group_r"])
         if self.joinVoiceBtn then self.joinVoiceBtn:Hide() end
     end
 end
@@ -1351,7 +1396,7 @@ function Listings:BuildApplicationsFrame()
     header.bg:SetAllPoints()
     header.bg:SetColorTexture(unpack(_tc("bgBlock")))
 
-    local hLabels = {{"Activity", 4}, {"Type", 200}, {"Leader", 280}, {"Key", 360}, {"Status", 460}, {"Applied", 550}, {"Decided", 630}}
+    local hLabels = {{L["col_activity"], 4}, {L["col_type"], 200}, {L["col_leader"], 280}, {L["col_key"], 360}, {L["col_status"], 460}, {L["col_applied"], 550}, {L["col_decided"], 630}}
     for _, lbl in ipairs(hLabels) do
         local t = header:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
         t:SetPoint("LEFT", header, "LEFT", lbl[2], 0)
@@ -1441,7 +1486,7 @@ function Listings:BuildApplicationsFrame()
 
     local hint = f:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     hint:SetPoint("BOTTOMLEFT", self.clearAppsBtn, "BOTTOMRIGHT", 12, 4)
-    hint:SetText(_hex("textDim") .. "Right-click pending app to withdraw|r")
+    hint:SetText(_hex("textDim") .. L["hint_withdraw_app"])
 
     f:Hide()
 end
@@ -1462,7 +1507,7 @@ function Listings:RefreshApplications()
         if app.status == "pending" then pending = pending + 1 end
     end
     if self.appCount then
-        self.appCount:SetText(string.format("Total: %d  |  Pending: %d", #apps, pending))
+        self.appCount:SetText(string.format(L["listings_total_pending"], #apps, pending))
     end
 
     for i, row in ipairs(self.appRows) do
@@ -1484,15 +1529,15 @@ function Listings:RefreshApplications()
 
             local statusText = app.status or "pending"
             if statusText == "pending" then
-                row.status:SetText("|cffffcc00Pending|r")
+                row.status:SetText(L["app_pending_col"])
             elseif statusText == "accepted" then
-                row.status:SetText("|cff44ff44Accepted|r")
+                row.status:SetText(L["app_accepted_col"])
             elseif statusText == "declined" then
-                row.status:SetText("|cffff5555Declined|r")
+                row.status:SetText(L["app_declined_col"])
             elseif statusText == "withdrawn" then
-                row.status:SetText("|cff888888Withdrawn|r")
+                row.status:SetText(L["app_withdrawn_col"])
             elseif statusText == "expired" then
-                row.status:SetText("|cffff8800Expired|r")
+                row.status:SetText(L["app_expired_col"])
             else
                 row.status:SetText(tostring(statusText))
             end
@@ -1514,7 +1559,7 @@ function Listings:RefreshApplications()
         end
     end
 end
-
+--shynga
 function Listings:WithdrawApplication(id)
     if not id or not self.myApplications[id] then return end
     self.myApplications[id].status = "withdrawn"
@@ -1560,8 +1605,9 @@ function Listings:BuildCreateFrame()
     end
     self.createExpansion:SetPoint("TOPLEFT", f, "TOPLEFT", leftPad + labelW, curY)
     if self.createExpansion.SetOptions then
-        self.createExpansion:SetOptions(EXPANSIONS)
-        self.createExpansion:SetText("Classic")
+        local exps = GetRelevantExpansions()
+        self.createExpansion:SetOptions(exps)
+        self.createExpansion:SetText(exps[1] or "Classic")
     end
     curY = curY - rowH
 
@@ -1708,7 +1754,7 @@ function Listings:BuildCreateFrame()
 
     local vHint = f:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     vHint:SetPoint("TOPLEFT", f, "TOPLEFT", leftPad + labelW + 160, curY + 4)
-    vHint:SetText(_hex("textDim") .. "(set your Discord link in the Profile tab)|r")
+    vHint:SetText(_hex("textDim") .. L["hint_discord_profile"])
     vHint:SetWidth(400)
     vHint:SetJustifyH("LEFT")
     self.createVoiceHint = vHint
@@ -1726,7 +1772,7 @@ function Listings:BuildCreateFrame()
     self.createLoot:SetPoint("TOPLEFT", f, "TOPLEFT", leftPad + labelW, curY)
     if self.createLoot.SetOptions then
         self.createLoot:SetOptions(LOOT_OPTIONS)
-        self.createLoot:SetText("Group Loot")
+        self.createLoot:SetText(L["create_loot_group"])
     end
     curY = curY - rowH
 
@@ -1766,15 +1812,17 @@ function Listings:BuildCreateFrame()
                 Listings.createExpansion:SetAlpha(1.0)
                 Listings.createExpansion.button:Enable()
                 if Listings.createExpansion.SetOptions then
-                    Listings.createExpansion:SetOptions(EVENT_EXPANSIONS)
-                    Listings.createExpansion:SetText("Classic")
+                    local exps = GetRelevantExpansions()
+                    Listings.createExpansion:SetOptions(exps)
+                    Listings.createExpansion:SetText(exps[1] or "Classic")
                 end
             else
                 Listings.createExpansion:SetAlpha(1.0)
                 Listings.createExpansion.button:Enable()
                 if Listings.createExpansion.SetOptions then
-                    Listings.createExpansion:SetOptions(EXPANSIONS)
-                    Listings.createExpansion:SetText("Classic")
+                    local exps = GetRelevantExpansions()
+                    Listings.createExpansion:SetOptions(exps)
+                    Listings.createExpansion:SetText(exps[1] or "Classic")
                 end
             end
         end
@@ -1891,7 +1939,7 @@ function Listings:BuildMyListingFrame()
     self.myListingInfo:SetJustifyV("TOP")
     self.applicantsLabel = f:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
     self.applicantsLabel:SetPoint("TOPLEFT", f, "TOPLEFT", 10, -120)
-    self.applicantsLabel:SetText("|cff88ccffApplicants|r")
+    self.applicantsLabel:SetText(L["txt_applicants_colored"])
     self.applicantRows = {}
     for i = 1, 8 do
         local r = CreateFrame("Button", nil, f)
@@ -1967,7 +2015,7 @@ function Listings:RefreshMyListing()
     if not self.myListingFrame then return end
 
     if not self.myListing then
-        self.myListingInfo:SetText(_hex("textDim") .. "No active group.\nGo to 'Create Group' to publish a listing on FrostNet!|r")
+        self.myListingInfo:SetText(_hex("textDim") .. L["listings_no_active_group_full"])
         if self.applicantsLabel then self.applicantsLabel:Hide() end
         for _, r in ipairs(self.applicantRows or {}) do r:Hide() end
         if self.cancelBtn then self.cancelBtn:Hide() end
@@ -1980,24 +2028,24 @@ function Listings:RefreshMyListing()
     local l = self.myListing
     local lines = {}
     table.insert(lines, (TYPE_COLORS[l.type] or "|cffffffff") .. tostring(l.activity) .. "|r  " .. tostring(l.difficulty or ""))
-    table.insert(lines, _hex("textDim") .. "Leader:|r " .. tostring(l.leader) .. "   " .. _hex("textDim") .. "Members:|r " .. tostring(memberCount()) .. "/" .. tostring(l.maxMembers or 5))
+    table.insert(lines, _hex("textDim") .. L["lbl_leader_r"] .. tostring(l.leader) .. "   " .. _hex("textDim") .. L["lbl_members_r"] .. tostring(memberCount()) .. "/" .. tostring(l.maxMembers or 5))
     if l.roles and l.roles ~= "" then
         local myRoles = ""
         for roleName in string.gmatch(l.roles, "[^/]+") do
             myRoles = myRoles .. roleText(roleName) .. "  "
         end
         if myRoles ~= "" then
-            table.insert(lines, _hex("textDim") .. "LF:|r " .. myRoles)
+            table.insert(lines, _hex("textDim") .. L["lbl_lf_r"] .. myRoles)
         end
     end
     if l.minItemLevel and l.minItemLevel ~= "" then
-        table.insert(lines, _hex("textDim") .. "Min iLvl:|r " .. l.minItemLevel .. "+")
+        table.insert(lines, _hex("textDim") .. L["lbl_min_ilvl_r"] .. l.minItemLevel .. "+")
     end
     if l.voice and l.voice ~= "None" then
-        table.insert(lines, _hex("textDim") .. "Voice:|r " .. l.voice)
+        table.insert(lines, _hex("textDim") .. L["lbl_voice_r"] .. l.voice)
     end
     if l.note and l.note ~= "" then
-        table.insert(lines, _hex("textDim") .. "Note:|r " .. l.note)
+        table.insert(lines, _hex("textDim") .. L["lbl_note_r"] .. l.note)
     end
     self.myListingInfo:SetText(table.concat(lines, "\n"))
 
@@ -2056,7 +2104,7 @@ function Listings:RefreshApplicants()
     end
 
     if self.applicantsLabel then
-        self.applicantsLabel:SetText("|cff88ccffApplicants|r (" .. tostring(#apps) .. ")")
+        self.applicantsLabel:SetText(L["txt_applicants_count_colored"] .. tostring(#apps) .. ")")
     end
 end
 

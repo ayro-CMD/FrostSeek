@@ -109,10 +109,10 @@ function Presence:HandlePresence(user)
     local wasOnline = self.onlineUsers[user.name] ~= nil
     self.onlineUsers[user.name] = user
 
-    if not wasOnline and FrostSeekDB.Favorites and FrostSeekDB.Favorites[user.name] then
+    if not wasOnline and FrostSeekDB and FrostSeekDB.Favorites and FrostSeekDB.Favorites[user.name] then
         local role = user.role or ""
         local level = user.level or ""
-        local msg = string.format("|cffb366ff[Favorite]|r |cff88ccff%s|r (%s %s) just came online", tostring(user.name), tostring(level), tostring(role))
+        local msg = string.format(L["presence_favorite_online_msg"], tostring(user.name), tostring(level), tostring(role))
         print(msg)
         if Shared and Shared.PlaySound then
             Shared.PlaySound("popup")
@@ -137,18 +137,19 @@ end
 
 function Presence.IsFavorite(name)
     if not name then return false end
-    return FrostSeekDB.Favorites and FrostSeekDB.Favorites[name] == true
+    return FrostSeekDB and FrostSeekDB.Favorites and FrostSeekDB.Favorites[name] == true
 end
 
 function Presence.ToggleFavorite(name)
     if not name or name == "" then return end
+    if not FrostSeekDB then FrostSeekDB = {} end
     if not FrostSeekDB.Favorites then FrostSeekDB.Favorites = {} end
     if FrostSeekDB.Favorites[name] then
         FrostSeekDB.Favorites[name] = nil
-        print("|cff88ccffFrostSeek:|r Removed |cffb366ff" .. name .. "|r from favorites")
+        print(L["msg_removed_favorite"] .. name .. L["msg_from_favorites_suffix"])
     else
         FrostSeekDB.Favorites[name] = true
-        print("|cff88ccffFrostSeek:|r Added |cffb366ff" .. name .. "|r to favorites")
+        print(L["msg_added_favorite"] .. name .. L["msg_to_favorites_suffix"])
     end
     if Presence.panelVisible and Presence.panel and Presence.panel:IsShown() then
         Presence:RefreshPanel()
@@ -286,12 +287,12 @@ end
 function Presence:PrintOnlineUsers()
     self:PruneUsers()
     local rows = self:GetOnlineUsers()
-    print("|cff88ccffFrostNet Online:|r " .. tostring(#rows) .. " users online")
+    print("|cff88ccffFrostNet Online:|r " .. tostring(#rows) .. L["presence_users_online_suffix"])
     for _, u in ipairs(rows) do
         local guild = u.guild and u.guild ~= "" and (" <" .. u.guild .. ">") or ""
         local role = u.role and u.role ~= "" and (" - " .. u.role) or ""
         local zone = u.zone and u.zone ~= "" and (" - " .. u.zone) or ""
-        local lvl = u.level and u.level ~= "" and (" lvl " .. u.level) or ""
+        local lvl = u.level and u.level ~= "" and (L["presence_lvl_label"] .. u.level) or ""
         print("  " .. tostring(u.name or "?") .. guild .. lvl .. role .. zone)
     end
 end
@@ -590,7 +591,7 @@ function Presence:BuildPanel(parent)
     headerAccent:SetHeight(1)
     headerAccent:SetColorTexture(accentC[1], accentC[2], accentC[3], 0.3)
 
-    local hLabels = {{"Status", 6}, {"Player", 36}, {"Lvl", 130}, {"Role", 165}, {"Zone", 215}, {"Guild", 320}, {"Seen", 435}}
+    local hLabels = {{L["presence_col_status"], 6}, {L["presence_col_player"], 36}, {L["presence_col_lvl"], 130}, {L["presence_col_role"], 165}, {L["presence_col_zone"], 215}, {L["presence_col_guild"], 320}, {L["presence_col_seen"], 435}}
     for _, lbl in ipairs(hLabels) do
         local t = header:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
         t:SetPoint("LEFT", header, "LEFT", lbl[2], 0)
@@ -603,7 +604,7 @@ function Presence:BuildPanel(parent)
 
     local searchLabel = toolbar:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     searchLabel:SetPoint("LEFT", toolbar, "LEFT", 0, 0)
-    searchLabel:SetText(_hex("textDim") .. (L["search"] or "Search") .. ":|r")
+    searchLabel:SetText(_hex("textDim") .. (L["search"] or L["search"]) .. ":|r")
     f.searchEdit = CreateFrame("EditBox", nil, toolbar)
     f.searchEdit:SetAutoFocus(false)
     f.searchEdit:SetFontObject("GameFontNormalSmall")
@@ -627,7 +628,7 @@ function Presence:BuildPanel(parent)
 
     local sortLabel = toolbar:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     sortLabel:SetPoint("LEFT", f.searchEdit, "RIGHT", 12, 0)
-    sortLabel:SetText(_hex("textDim") .. (L["presence_sort"] or "Sort") .. ":|r")
+    sortLabel:SetText(_hex("textDim") .. (L["presence_sort"] or L["presence_sort"]) .. ":|r")
     local sortBtn = CreateFrame("Button", nil, toolbar)
     sortBtn:SetSize(90, 20)
     sortBtn:SetPoint("LEFT", sortLabel, "RIGHT", 4, 0)
@@ -668,9 +669,9 @@ function Presence:BuildPanel(parent)
     Presence.guildOnly = Presence.guildOnly or false
     local function UpdateGuildToggleText()
         if Presence.guildOnly then
-            guildToggle.text:SetText("|cff44ff44" .. (L["presence_guild_only"] or "Guild Only: ON") .. "|r")
+            guildToggle.text:SetText("|cff44ff44" .. (L["presence_guild_only"] or L["presence_guild_only_on"]) .. "|r")
         else
-            guildToggle.text:SetText("|cff888888" .. (L["presence_guild_only"] or "Guild Only") .. ": OFF|r")
+            guildToggle.text:SetText("|cff888888" .. (L["presence_guild_only"] or L["presence_guild_only"]) .. ": OFF|r")
         end
     end
     UpdateGuildToggleText()
@@ -761,10 +762,10 @@ function Presence:BuildPanel(parent)
                 GameTooltip:SetText(L["presence_user_tooltip"] or "FrostNet User", 0.53, 0.8, 1)
                 GameTooltip:AddLine(tostring(self.userData.name or "?"), classColor[1], classColor[2], classColor[3])
                 if self.userData.guild and self.userData.guild ~= "" then
-                    GameTooltip:AddLine("Guild: " .. self.userData.guild, 0.9, 0.82, 0.55)
+                    GameTooltip:AddLine(L["tip_guild_label"] .. self.userData.guild, 0.9, 0.82, 0.55)
                 end
                 if self.userData.zone and self.userData.zone ~= "" then
-                    GameTooltip:AddLine("Zone: " .. self.userData.zone, 0.9, 0.9, 0.9)
+                    GameTooltip:AddLine(L["tip_zone_label"] .. self.userData.zone, 0.9, 0.9, 0.9)
                 end
                 if self.userData.level and self.userData.level ~= "" then
                     GameTooltip:AddLine(L["level"] .. ": " .. tostring(self.userData.level), 0.9, 0.9, 0.9)
@@ -778,23 +779,23 @@ function Presence:BuildPanel(parent)
                     GameTooltip:AddLine(L["lfg_role"] .. ": " .. self.userData.role, rc[1], rc[2], rc[3])
                 end
                 if self.userData.spec and self.userData.spec ~= "" then
-                    GameTooltip:AddLine("Spec: " .. self.userData.spec, 1, 1, 1)
+                    GameTooltip:AddLine(L["tip_spec_label"] .. self.userData.spec, 1, 1, 1)
                 end
                 if self.userData.classFile and self.userData.classFile ~= "" then
                     GameTooltip:AddLine(L["class"] .. ": " .. self.userData.classFile, classColor[1], classColor[2], classColor[3])
                 end
                 if self.userData.version and self.userData.version ~= "" then
                     if self.userData.outdated then
-                        GameTooltip:AddLine("Version: " .. self.userData.version .. " |cffff5555(outdated)|r", 1, 0.5, 0.2)
+                        GameTooltip:AddLine(L["tip_version_label"] .. self.userData.version .. L["presence_outdated_label"], 1, 0.5, 0.2)
                         GameTooltip:AddLine(" ", 0, 0, 0)
-                        GameTooltip:AddLine("|cffffcc00Ask them to update FrostNet!|r", 1, 0.8, 0.2)
+                        GameTooltip:AddLine(L["tip_update_frostnet"], 1, 0.8, 0.2)
                     else
-                        GameTooltip:AddLine("Version: " .. self.userData.version, 0.6, 0.6, 0.6)
+                        GameTooltip:AddLine(L["tip_version_label"] .. self.userData.version, 0.6, 0.6, 0.6)
                     end
                 end
                 GameTooltip:AddLine(" ")
-                GameTooltip:AddLine("Right-click to Whisper", 0.4, 1, 0.4)
-                GameTooltip:AddLine("Shift+Click to toggle Favorite", 0.7, 0.4, 1.0)
+                GameTooltip:AddLine(L["tip_right_click_whisper"], 0.4, 1, 0.4)
+                GameTooltip:AddLine(L["tip_shift_click_favorite"], 0.7, 0.4, 1.0)
                 GameTooltip:Show()
             end
         end)
@@ -844,7 +845,7 @@ function Presence:BuildPanel(parent)
     f.refreshBtn:SetScript("OnClick", function()
         Presence:SendPing()
         Presence:RefreshPanel()
-        print("|cff88ccffFrostNet:|r Ping sent!")
+        print(L["presence_ping_sent"])
     end)
 
     if FrostSeek and FrostSeek.UI and FrostSeek.UI.CreateModernButton then
@@ -862,6 +863,7 @@ function Presence:BuildPanel(parent)
     f.autoLabel = f:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     f.autoLabel:SetPoint("BOTTOM", f, "BOTTOM", 0, footerY + 4)
 
+    if not FrostSeekDB then FrostSeekDB = {} end
     if not FrostSeekDB.Settings then FrostSeekDB.Settings = {} end
     if FrostSeekDB.Settings.presenceRefreshInterval == nil then
         FrostSeekDB.Settings.presenceRefreshInterval = REFRESH_INTERVAL
@@ -877,15 +879,15 @@ function Presence:BuildPanel(parent)
         local v = FrostSeekDB.Settings.presenceRefreshInterval
         local txt
         if v == 0 then
-            txt = "|cffff5555Auto-refresh: OFF|r"
+            txt = L["presence_auto_refresh_off"]
         else
-            txt = _hex("textDim") .. "Auto-refresh: " .. tostring(v) .. "s|r"
+            txt = _hex("textDim") .. L["presence_auto_refresh_label"] .. tostring(v) .. "s|r"
         end
         f.autoLabel:SetText(txt)
     end
     UpdateAutoBtnLabel()
     autoBtn:SetScript("OnEnter", function(self)
-        f.autoLabel:SetText("|cff88ccffClick to cycle (10s / 30s / 60s / OFF)|r")
+        f.autoLabel:SetText(L["txt_click_to_cycle"])
     end)
     autoBtn:SetScript("OnLeave", function(self)
         UpdateAutoBtnLabel()
@@ -920,13 +922,13 @@ function Presence:RefreshPanel()
     local f = self.panel
 
     if f.onlineBadge then
-        f.onlineBadge:SetText(_hex("accent") .. tostring(stats.total) .. "|r " .. _hex("textDim") .. "online|r")
+        f.onlineBadge:SetText(_hex("accent") .. tostring(stats.total) .. "|r " .. _hex("textDim") .. L["presence_online_label"])
     end
 
     if f.statsLeft then
         local lines = {}
-        table.insert(lines, _hex("textDim") .. "Friends:|r " .. (stats.friends > 0 and "|cff44ff44" or "|cffffffff") .. tostring(stats.friends) .. "|r")
-        table.insert(lines, _hex("textDim") .. "With Role:|r " .. tostring(stats.tanks + stats.healers + stats.dps + stats.supports) .. "|" .. tostring(stats.total))
+        table.insert(lines, _hex("textDim") .. L["presence_friends_label"] .. (stats.friends > 0 and "|cff44ff44" or "|cffffffff") .. tostring(stats.friends) .. "|r")
+        table.insert(lines, _hex("textDim") .. L["presence_with_role_label"] .. tostring(stats.tanks + stats.healers + stats.dps + stats.supports) .. "|" .. tostring(stats.total))
         f.statsLeft:SetText(table.concat(lines, "\n"))
     end
 
@@ -970,7 +972,7 @@ function Presence:RefreshPanel()
             f.statusText:SetText(statusInfo.hex .. myStatus .. "|r")
         else
             f.statusDot:SetColorTexture(unpack(_tc("danger")))
-            f.statusText:SetText("|cffff5555Offline|r")
+            f.statusText:SetText(L["txt_offline_colored"])
         end
     end
 
@@ -996,7 +998,7 @@ function Presence:RefreshPanel()
                 nameColor = GetClassHex(u.classFile)
             end
             local favPrefix = ""
-            if FrostSeekDB.Favorites and FrostSeekDB.Favorites[u.name] then
+            if FrostSeekDB and FrostSeekDB.Favorites and FrostSeekDB.Favorites[u.name] then
                 favPrefix = "|cffb366ff*|r "
             end
             if u.outdated then
@@ -1047,7 +1049,7 @@ function Presence:RefreshPanel()
             if userStatus == "Online" then statusColor = {0.2, 0.9, 0.4} end
 
             if u.isSelf then
-                row.seen:SetText("|cff44ff44now|r")
+                row.seen:SetText(L["txt_now_colored"])
                 row.statusDot:SetColorTexture(statusColor[1], statusColor[2], statusColor[3], 1.0)
             elseif age < 60 then
                 row.seen:SetText("|cff44ff44" .. tostring(age) .. "s|r")
@@ -1080,20 +1082,20 @@ function Presence:ShowRowContextMenu(userData)
     menu:SetToplevel(true)
     menu:EnableMouse(true)
     local options = {
-        { label = L["popup_whisper"] or "Whisper", action = function()
+        { label = L["popup_whisper"] or L["popup_whisper"], action = function()
             if FrostSeekCompat and FrostSeekCompat.OpenChat then
                 FrostSeekCompat.OpenChat("/w " .. userData.name .. " ")
             elseif ChatFrame_OpenChat then
                 ChatFrame_OpenChat("/w " .. userData.name .. " ")
             end
         end },
-        { label = L["popup_invite"] or "Invite", action = function()
+        { label = L["popup_invite"] or L["popup_invite"], action = function()
             pcall(function() InviteUnit(userData.name) end)
         end },
-        { label = L["presence_add_friend"] or "Add Friend", action = function()
+        { label = L["presence_add_friend"] or L["presence_add_friend"], action = function()
             pcall(function() AddOrRemoveFriend(userData.name) end)
         end },
-        { label = L["presence_join_voice"] or "Join Voice", action = function()
+        { label = L["presence_join_voice"] or L["presence_join_voice"], action = function()
             local VB = FrostSeek and FrostSeek.VoiceBridge
             if VB then VB:JoinVoice(userData.name) end
         end },
@@ -1202,7 +1204,7 @@ end)
 
 Presence._refreshTicker = nil
 function Presence:ApplyRefreshInterval()
-    local v = FrostSeekDB.Settings.presenceRefreshInterval or REFRESH_INTERVAL
+    local v = (FrostSeekDB and FrostSeekDB.Settings and FrostSeekDB.Settings.presenceRefreshInterval) or REFRESH_INTERVAL
     if Presence._refreshTicker then
         Presence._refreshTicker:Cancel()
         Presence._refreshTicker = nil

@@ -55,7 +55,16 @@ function FrostSeek._v.g(name)
     return FrostSeek._v.w[name]
 end
 
-FrostSeek.VERSION = "2.2.4"
+FrostSeek.VERSION = "2.2.5"
+
+local L = setmetatable({}, {
+    __index = function(_, key)
+        if FrostSeek and FrostSeek.L then
+            return FrostSeek.L[key]
+        end
+        return key
+    end,
+})
 
 local function LPrint(key, ...)
     local L = FrostSeek and FrostSeek.L
@@ -73,7 +82,7 @@ local function LPrint(key, ...)
     print(body)
 end
 
-FrostSeek.SCHEMA_VERSION = 4
+FrostSeek.SCHEMA_VERSION = 6
 
 
 local LOG_LEVELS = { DEBUG = 1, INFO = 2, WARN = 3, ERROR = 4 }
@@ -156,7 +165,7 @@ if not FrostSeekDB.LFG then
         frameDuration = 5,
         dontDisplayDeclinedDuration = 300,
         dontDisplaySpammers = 30,
-        disablePopups = false,
+        disablePopups = true,
         disableLFG = false,
         filterWords = "echo,lfg,wts,buy,shop,gold,sell,account,boost,carry,pve,eu,na,need,wtt,wtb,bazar,hello,player",
         maxMessageLength = 90,
@@ -173,19 +182,23 @@ if not FrostSeekDB.LFG then
             MISC = false
         },
         popupModeFilter = "LFM",
-        popupShowLFG = true,
+        popupShowLFG = false,
         popupShowLFM = true,
         popupAnchor = nil,
         customFilterWords = "",
+        keystoneMinLevel = 0,
+        chatFilterEnabled = false,
+        chatFilterKeywords = "lfg,lfm,lf,lfg+,looking for group,looking for member,looking for raid,looking for,inv,invite,keystone,wts,wtb,boost,carry",
         showActiveRecruitersWindow = false,
         activeWindowPosition = nil,
         activeWindowCategory = "ALL",
         customMessages = {
             enabled = false,
-            template = "inv {role} {class} {ench} {ilvl} ilvl",
+            template = "inv {role} {class} {spec} {ilvl} ilvl",
             showClass = true,
             showIlvl = true,
             showEnchant = true,
+            showSpec = true,
             showRole = true,
             showAchievement = false,
             achievementLink = "",
@@ -213,7 +226,7 @@ if not FrostSeekDB.LFM then
         autoSpamInterval = 30,
         spamChannels = {},
         autoInviteEnabled = false,
-        autoInviteMinIlvl = 150,
+        autoInviteMinIlvl = 0,
         customMessage = "",
         autoStopMemberCount = 0,
     }
@@ -223,7 +236,9 @@ if FrostSeekDB.LFM then
     if FrostSeekDB.LFM.autoSpamInterval == nil then FrostSeekDB.LFM.autoSpamInterval = 30 end
     if FrostSeekDB.LFM.spamChannels == nil then FrostSeekDB.LFM.spamChannels = {} end
     if FrostSeekDB.LFM.autoInviteEnabled == nil then FrostSeekDB.LFM.autoInviteEnabled = false end
-    if FrostSeekDB.LFM.autoInviteMinIlvl == nil then FrostSeekDB.LFM.autoInviteMinIlvl = 150 end
+    if FrostSeekDB.LFM.autoInviteMinIlvl == nil or FrostSeekDB.LFM.autoInviteMinIlvl == 150 then
+        FrostSeekDB.LFM.autoInviteMinIlvl = 0
+    end
     if FrostSeekDB.LFM.customMessage == nil then FrostSeekDB.LFM.customMessage = "" end
     if FrostSeekDB.LFM.autoStopMemberCount == nil then FrostSeekDB.LFM.autoStopMemberCount = 0 end
 end
@@ -275,9 +290,12 @@ if not FrostSeekDB.Settings then
         showWelcome = true,
         debugMode = false,
         savePosition = true,
-        theme = "ShadowS",
+        theme = "Shadow",
         frostnetEnabled = true,
         applyWhisper = false,
+        serverProfile = "auto",
+        serverProfileManual = false,
+        setupCompleted = false,
     }
 end
 
@@ -299,7 +317,7 @@ MIGRATIONS[3] = function(db)
     if not db.VoiceLinks then db.VoiceLinks = {} end
     if not db.Calendar then
         db.Calendar = {
-            entries = {}, 
+            entries = {},
             reminders = {},
         }
     end
@@ -307,6 +325,19 @@ end
 
 MIGRATIONS[4] = function(db)
     db.Calendar = nil
+end
+
+MIGRATIONS[5] = function(db)
+    db.Settings = db.Settings or {}
+    if db.Settings.serverProfile == nil then db.Settings.serverProfile = "auto" end
+    if db.Settings.setupCompleted == nil then db.Settings.setupCompleted = false end
+    if db.Settings.serverProfileManual == nil then db.Settings.serverProfileManual = false end
+end
+
+MIGRATIONS[6] = function(db)
+    db.Settings = db.Settings or {}
+    db.Settings.serverProfileManual = false
+    db.Settings.serverProfile = "auto"
 end
 
 local function MigrateSchema()
@@ -349,6 +380,9 @@ local function EnsureSettingsIntegrity()
     if FrostSeekDB.Settings.applyWhisper == nil then FrostSeekDB.Settings.applyWhisper = false end
     if FrostSeekDB.Settings.language == nil then FrostSeekDB.Settings.language = "auto" end
     if FrostSeekDB.Settings.logLevel == nil then FrostSeekDB.Settings.logLevel = "WARN" end
+    if FrostSeekDB.Settings.serverProfile == nil then FrostSeekDB.Settings.serverProfile = "auto" end
+    if FrostSeekDB.Settings.setupCompleted == nil then FrostSeekDB.Settings.setupCompleted = false end
+    if FrostSeekDB.Settings.serverProfileManual == nil then FrostSeekDB.Settings.serverProfileManual = false end
 
     FrostSeek.Logger.Level = FrostSeekDB.Settings.logLevel or "WARN"
     if not FrostSeekDB.VoiceLinks then FrostSeekDB.VoiceLinks = {} end
@@ -369,13 +403,16 @@ local function EnsureSettingsIntegrity()
                 FrostSeekDB.LFG.popupShowLFG = false
                 FrostSeekDB.LFG.popupShowLFM = true
             else
-                FrostSeekDB.LFG.popupShowLFG = true
+                FrostSeekDB.LFG.popupShowLFG = false
                 FrostSeekDB.LFG.popupShowLFM = true
             end
             FrostSeekDB.LFG.popupModeFilter = nil
         end
-        FrostSeekDB.LFG.popupShowLFG = FrostSeekDB.LFG.popupShowLFG ~= false
-        FrostSeekDB.LFG.popupShowLFM = FrostSeekDB.LFG.popupShowLFM ~= false
+        if FrostSeekDB.LFG.keystoneMinLevel == nil then FrostSeekDB.LFG.keystoneMinLevel = 0 end
+        if FrostSeekDB.LFG.chatFilterEnabled == nil then FrostSeekDB.LFG.chatFilterEnabled = false end
+        if not FrostSeekDB.LFG.chatFilterKeywords or FrostSeekDB.LFG.chatFilterKeywords == "" then
+            FrostSeekDB.LFG.chatFilterKeywords = "lfg,lfm,lf,lfg+,looking for group,looking for member,looking for raid,looking for,inv,invite,keystone,wts,wtb,boost,carry"
+        end
     end
 
     if FrostSeekDB.LFG and not FrostSeekDB.LFG.customKeywords then
@@ -388,10 +425,14 @@ local function EnsureSettingsIntegrity()
     if FrostSeekDB.LFG and FrostSeekDB.LFG.customMessages then
         local cm = FrostSeekDB.LFG.customMessages
         if cm.enabled == nil then cm.enabled = false end
-        if cm.template == nil or cm.template == "" then cm.template = "inv {role} {class} {ench} {ilvl} ilvl" end
+        if cm.template and string.find(cm.template, "{ench}") then
+            cm.template = string.gsub(cm.template, "{ench}", "{spec}")
+        end
+        if cm.template == nil or cm.template == "" then cm.template = "inv {role} {class} {spec} {ilvl} ilvl" end
         if cm.showClass == nil then cm.showClass = true end
         if cm.showIlvl == nil then cm.showIlvl = true end
         if cm.showEnchant == nil then cm.showEnchant = true end
+        if cm.showSpec == nil then cm.showSpec = cm.showEnchant end
         if cm.showRole == nil then cm.showRole = true end
         if cm.showAchievement == nil then cm.showAchievement = false end
         if cm.achievementLink == nil then cm.achievementLink = "" end
@@ -506,7 +547,38 @@ title:SetTextColor(0.8, 0.9, 1)
 
 local versionText = MainFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
 versionText:SetPoint("TOP", title, "BOTTOM", 0, -2)
-versionText:SetText("v" .. FrostSeek.VERSION)
+
+local function GetServerTypeLabel()
+    local Shared = _G.FrostSeekShared
+    local profile = Shared and Shared.GetServerProfile and Shared.GetServerProfile() or "wotlk"
+    local Compat = _G.FrostSeekCompat
+    local realmName = Compat and Compat.GetRealmName and Compat.GetRealmName() or ""
+    local ascMode = Compat and Compat.GetAscensionMode and Compat.GetAscensionMode() or nil
+
+    if profile == "ascension" then
+        if ascMode == "coa" then return "COA" end
+        if ascMode == "classless" then return "Ascension" end
+        if ascMode == "seasonal" then return "Ascension" end
+        if ascMode == "bronzebeard" then return "Ascension" end
+        return "Ascension"
+    elseif profile == "epoch" then return "Epoch" end
+
+    local labels = { classic = "Classic", tbc = "TBC", wotlk = "WotLK", cata = "Cataclysm", mop = "MoP" }
+    return labels[profile] or profile
+end
+
+local function UpdateVersionText()
+    versionText:SetText("v" .. FrostSeek.VERSION .. "  |cff888888" .. GetServerTypeLabel() .. "|r")
+end
+UpdateVersionText()
+
+local versionUpdateFrame = CreateFrame("Frame")
+versionUpdateFrame:RegisterEvent("PLAYER_LOGIN")
+versionUpdateFrame:SetScript("OnEvent", function()
+    C_Timer.After(3, function()
+        UpdateVersionText()
+    end)
+end)
 
 MainFrame.TabFrame = CreateFrame("Frame", nil, MainFrame)
 local TabFrame = MainFrame.TabFrame
@@ -650,16 +722,21 @@ function FrostSeek:RegisterModule(name, moduleTable)
 end
 
 local tabDefinitions = {
-    { id = "dashboard", name = "Dashboard", desc = "System Overview & FrostNet" },
-    { id = "listings", name = "FrostNet", desc = "Browse, Create Groups & Profile" },
-    { id = "lfg", name = "LFG", desc = "Looking For Group" },
-    { id = "lfm", name = "LFM", desc = "Looking For Members" },
-    { id = "community", name = "Community", desc = "Guild browser, recruitment & events" },
-    { id = "options", name = "Options", desc = "System Settings" },
+    { id = "dashboard",  nameFn = function() return FrostSeek.L["tab_dashboard"] end,  descFn = function() return FrostSeek.L["tab_dashboard_desc"] end,  fallbackName = "Dashboard" },
+    { id = "listings",   nameFn = function() return "FrostNet" end,                     descFn = function() return FrostSeek.L["tab_frostnet_desc"] end,     fallbackName = "FrostNet" },
+    { id = "lfg",        nameFn = function() return "LFG" end,                          descFn = function() return FrostSeek.L["tab_lfg_desc"] end,          fallbackName = "LFG" },
+    { id = "lfm",        nameFn = function() return "LFM" end,                          descFn = function() return FrostSeek.L["tab_lfm_desc"] end,          fallbackName = "LFM" },
+    { id = "community",  nameFn = function() return FrostSeek.L["tab_community"] end,  descFn = function() return FrostSeek.L["tab_community_desc"] end,  fallbackName = "Community" },
+    { id = "options",    nameFn = function() return FrostSeek.L["tab_options"] end,    descFn = function() return FrostSeek.L["tab_options_desc"] end,    fallbackName = "Options" },
 }
 
 for i, tabDef in ipairs(tabDefinitions) do
-    local tab = FrostSeek:CreateModernTab(tabDef.id, tabDef.name)
+    local resolvedName = tabDef.fallbackName
+    if L and tabDef.nameFn then
+        local ok, result = pcall(tabDef.nameFn)
+        if ok and result then resolvedName = result end
+    end
+    local tab = FrostSeek:CreateModernTab(tabDef.id, resolvedName)
 
     if i == 1 then
         tab:SetPoint("LEFT", TabFrame, "LEFT", 0, 0)
@@ -685,8 +762,21 @@ for i, tabDef in ipairs(tabDefinitions) do
             self.border:SetColorTexture(unpack(bc))
         end
         GameTooltip:SetOwner(self, "ANCHOR_TOP")
-        GameTooltip:SetText(tabDef.name)
-        GameTooltip:AddLine(tabDef.desc, 0.8, 0.8, 0.8, true)
+        local displayName = tabDef.fallbackName
+        local displayDesc = ""
+        local L = FrostSeek.L
+        if L then
+            if tabDef.nameFn then
+                local ok, result = pcall(tabDef.nameFn)
+                if ok and result then displayName = result end
+            end
+            if tabDef.descFn then
+                local ok, result = pcall(tabDef.descFn)
+                if ok and result then displayDesc = result end
+            end
+        end
+        GameTooltip:SetText(displayName)
+        GameTooltip:AddLine(displayDesc, 0.8, 0.8, 0.8, true)
         GameTooltip:Show()
     end)
 
@@ -744,7 +834,8 @@ miniButton:SetScript("OnClick", function(self, button)
             LPrint("core_lfg_popups_enabled")
         end
         if GameTooltip:IsOwned(self) then
-            self:GetScript("OnEnter")(self)
+            local onEnter = self:GetScript("OnEnter")
+            if onEnter then onEnter(self) end
         end
         return
     end
@@ -768,22 +859,22 @@ miniButton:SetScript("OnEnter", function(self)
     end
     local isDisabled = FrostSeek.IsAddonDisabled()
     if isDisabled then
-        GameTooltip:SetText("|cff88ccffFrostSeek|r |cffff4444[LFG+Popups OFF]|r", 0.8, 0.9, 1)
-        GameTooltip:AddLine("|cffff4444LFG radar and popups are disabled.|r", 1, 0.3, 0.3, true)
-        GameTooltip:AddLine("|cff888888FrostNet and LFM are still active.|r", 0.7, 0.7, 0.7, true)
+        GameTooltip:SetText(L["core_minimap_disabled_title"], 0.8, 0.9, 1)
+        GameTooltip:AddLine(L["core_minimap_disabled_lfg"], 1, 0.3, 0.3, true)
+        GameTooltip:AddLine(L["core_minimap_disabled_frostnet"], 0.7, 0.7, 0.7, true)
         GameTooltip:AddLine(" ", 1, 1, 1)
-        GameTooltip:AddLine("|cff88ccffCtrl + Click|r to re-enable", 0.7, 0.85, 1, true)
+        GameTooltip:AddLine(L["core_minimap_disabled_reenable"], 0.7, 0.85, 1, true)
     elseif activeCat then
-        GameTooltip:SetText("FrostSeek - |cff88ccffNew " .. activeCat .. "|r", 0.8, 0.9, 1)
+        GameTooltip:SetText(L["core_minimap_new_cat_title"] .. activeCat .. "|r", 0.8, 0.9, 1)
     else
         GameTooltip:SetText("FrostSeek", 0.8, 0.9, 1)
     end
     if not isDisabled and onlineCount > 1 then
-        GameTooltip:AddLine("|cff88ccffFrostNet:|r " .. tostring(onlineCount) .. " online", 0.53, 0.8, 1)
+        GameTooltip:AddLine(string.format(L["core_minimap_online_count"], onlineCount), 0.53, 0.8, 1)
     end
-    GameTooltip:AddLine("Left Click: Open LFG", 1, 1, 1)
-    GameTooltip:AddLine("|cff88ccffCtrl + Click:|r " .. (isDisabled and "Enable LFG+Popups" or "Disable LFG+Popups"), 1, 0.6, 0.3)
-    GameTooltip:AddLine("Drag: Move button", 0.8, 0.8, 0.8)
+    GameTooltip:AddLine(L["core_minimap_left_click"], 1, 1, 1)
+    GameTooltip:AddLine(L["core_minimap_ctrl_click_label"] .. (isDisabled and L["core_minimap_enable_lfg_popups"] or L["core_minimap_disable_lfg_popups"]), 1, 0.6, 0.3)
+    GameTooltip:AddLine(L["core_minimap_drag_move"], 0.8, 0.8, 0.8)
     GameTooltip:Show()
 end)
 
@@ -984,7 +1075,7 @@ SLASH_FSPOPUP1 = "/fspopup"
 SlashCmdList["FSPOPUP"] = function(msg)
     local LFG = FrostSeek and FrostSeek.Modules and FrostSeek.Modules.lfg
     if not LFG or not LFG.SetPopupUnlockMode then
-        print("|cffff5555FrostSeek:|r LFG module not loaded yet.")
+        print(L["msg_lfg_module_not_loaded"])
         return
     end
     msg = (msg or ""):lower():gsub("%s+", "")
@@ -994,16 +1085,16 @@ SlashCmdList["FSPOPUP"] = function(msg)
         local a = FrostSeekDB and FrostSeekDB.LFG and FrostSeekDB.LFG.popupAnchor
         local b = FrostSeekDB and FrostSeekDB.Listings and FrostSeekDB.Listings.appPopupAnchor
         if a then
-            print(string.format("|cff88ccffFrostSeek:|r LFG popup anchor: %s/%s @ %.0f, %.0f (saved)",
+            print(string.format(L["core_popup_lfg_anchor_saved"],
                 tostring(a.point), tostring(a.relativePoint), a.x or 0, a.y or 0))
         else
-            print("|cff88ccffFrostSeek:|r LFG popup anchor: default (TOP/TOP @ 0, -40)")
+            print(L["core_popup_lfg_anchor_default"])
         end
         if b then
-            print(string.format("|cff44dd77FrostSeek:|r FrostNet popup anchor: %s/%s @ %.0f, %.0f (saved)",
+            print(string.format(L["core_popup_frostnet_anchor_saved"],
                 tostring(b.point), tostring(b.relativePoint), b.x or 0, b.y or 0))
         else
-            print("|cff44dd77FrostSeek:|r FrostNet popup anchor: default (TOPLEFT/TOPLEFT @ 10, -40)")
+            print(L["core_popup_frostnet_anchor_default"])
         end
     else
         LFG.SetPopupUnlockMode(true)
@@ -1034,35 +1125,35 @@ end
 
 SLASH_FSDEBUG1 = "/fsdebug"
 SlashCmdList["FSDEBUG"] = function()
-    print("|cff88ccff========== FROSTSEEK DEBUG ==========|r")
-    print("version = " .. tostring(FrostSeek.VERSION))
-    print("schemaVersion = " .. tostring(FrostSeekDB._schemaVersion) .. "/" .. tostring(FrostSeek.SCHEMA_VERSION))
-    print("language = " .. tostring(FrostSeekDB.Settings.language))
-    print("logLevel = " .. tostring(FrostSeekDB.Settings.logLevel))
-    print("autoOpen = " .. tostring(FrostSeekDB.Settings.autoOpen))
-    print("minimapButton = " .. tostring(FrostSeekDB.Settings.minimapButton))
-    print("debugMode = " .. tostring(FrostSeekDB.Settings.debugMode))
-    print("frostnetEnabled = " .. tostring(FrostSeekDB.Settings.frostnetEnabled))
-    print("savePosition = " .. tostring(FrostSeekDB.Settings.savePosition))
-    print("uiScale = " .. tostring(FrostSeekDB.Settings.uiScale))
-    print("MainFrame scale = " .. tostring(MainFrame:GetScale()))
-    print("MainFrame is shown = " .. tostring(MainFrame:IsShown()))
-    print("LFG.disableLFG    = " .. tostring(FrostSeekDB.LFG and FrostSeekDB.LFG.disableLFG))
-    print("LFG.disablePopups = " .. tostring(FrostSeekDB.LFG and FrostSeekDB.LFG.disablePopups))
-    print("Quick-disabled (LFG+Popups OFF) = " .. tostring(FrostSeek.IsAddonDisabled()))
+    print(L["core_debug_header"])
+    print(L["core_debug_version"] .. tostring(FrostSeek.VERSION))
+    print(L["core_debug_schema_version"] .. tostring(FrostSeekDB._schemaVersion) .. "/" .. tostring(FrostSeek.SCHEMA_VERSION))
+    print(L["core_debug_language"] .. tostring(FrostSeekDB.Settings.language))
+    print(L["core_debug_log_level"] .. tostring(FrostSeekDB.Settings.logLevel))
+    print(L["core_debug_auto_open"] .. tostring(FrostSeekDB.Settings.autoOpen))
+    print(L["core_debug_minimap_button"] .. tostring(FrostSeekDB.Settings.minimapButton))
+    print(L["core_debug_debug_mode"] .. tostring(FrostSeekDB.Settings.debugMode))
+    print(L["core_debug_frostnet_enabled"] .. tostring(FrostSeekDB.Settings.frostnetEnabled))
+    print(L["core_debug_save_position"] .. tostring(FrostSeekDB.Settings.savePosition))
+    print(L["core_debug_ui_scale"] .. tostring(FrostSeekDB.Settings.uiScale))
+    print(L["core_debug_mainframe_scale"] .. tostring(MainFrame:GetScale()))
+    print(L["core_debug_mainframe_shown"] .. tostring(MainFrame:IsShown()))
+    print(L["core_debug_lfg_disable_lfg"] .. tostring(FrostSeekDB.LFG and FrostSeekDB.LFG.disableLFG))
+    print(L["core_debug_lfg_disable_popups"] .. tostring(FrostSeekDB.LFG and FrostSeekDB.LFG.disablePopups))
+    print(L["core_debug_quick_disabled"] .. tostring(FrostSeek.IsAddonDisabled()))
 
-    print("|cff88ccffModules:|r")
+    print(L["core_debug_modules_header"])
     for name, module in pairs(FrostSeek.Modules) do
         print("  " .. name .. ": " .. tostring(module ~= nil))
     end
 
-    print("|cff88ccffFrostNet:|r")
+    print(L["core_debug_frostnet_header"])
     local Network = FrostSeek.Network
     if Network then
-        print("  Channel: " .. tostring(Network.channelName))
-        print("  Connected: " .. tostring(Network.isConnected))
-        print("  ChannelId: " .. tostring(Network.channelId))
-        print("  Queue length: " .. tostring(Network._queue and #Network._queue or 0))
+        print(L["core_debug_channel"] .. tostring(Network.channelName))
+        print(L["core_debug_connected"] .. tostring(Network.isConnected))
+        print(L["core_debug_channel_id"] .. tostring(Network.channelId))
+        print(L["core_debug_queue_length"] .. tostring(Network._queue and #Network._queue or 0))
         if Network._queue and #Network._queue > 0 then
             for i, m in ipairs(Network._queue) do
                 if i <= 5 then
@@ -1070,33 +1161,33 @@ SlashCmdList["FSDEBUG"] = function()
                 end
             end
             if #Network._queue > 5 then
-                print("    ... and " .. (#Network._queue - 5) .. " more")
+                print(string.format(L["core_debug_and_more"], #Network._queue - 5))
             end
         end
     end
     local Presence = FrostSeek.Presence
     if Presence then
-        print("  Online users: " .. tostring(Presence:GetOnlineCount()))
+        print(L["core_debug_online_users"] .. tostring(Presence:GetOnlineCount()))
     end
 
-    print("|cff88ccffv2.2.4 Modules:|r")
+    print(L["core_debug_v225_modules_header"])
     local VB = FrostSeek.VoiceBridge
     if VB then
         local count = 0
         if FrostSeekDB.VoiceLinks then
             for _ in pairs(FrostSeekDB.VoiceLinks) do count = count + 1 end
         end
-        print("  VoiceBridge: " .. count .. " stored voice links")
-        print("  VoiceBridge API: " .. tostring(Network.usesAddonMessageAPI and "C_ChatInfo.SendAddonMessage" or "Legacy custom channel (FSK)"))
+        print(string.format(L["core_debug_voicebridge_count"], count))
+        print(L["core_debug_voicebridge_api"] .. tostring(Network and Network.usesAddonMessageAPI and "C_ChatInfo.SendAddonMessage" or "Legacy custom channel (FSK)"))
     else
-        print("  VoiceBridge: not loaded")
+        print(L["core_debug_voicebridge_not_loaded"])
     end
 
     if FrostSeek.Logger then
-        print("  Logger: " .. #FrostSeek.Logger.Buffer .. "/" .. "200 entries buffered, level=" .. tostring(FrostSeek.Logger.Level))
+        print(string.format(L["core_debug_logger"], #FrostSeek.Logger.Buffer, tostring(FrostSeek.Logger.Level)))
     end
 
-    print("|cff88ccff====================================|r")
+    print(L["core_debug_separator"])
 end
 
 SLASH_FSRESET1 = "/fsreset"
@@ -1137,7 +1228,7 @@ SlashCmdList["FSDUMPLOG"] = function()
         LPrint("core_log_empty")
         return
     end
-    print("|cff88ccff========== FROSTSEEK LOG (last " .. #FrostSeek.Logger.Buffer .. " entries) ==========|r")
+    print(L["core_dumplog_header"] .. #FrostSeek.Logger.Buffer .. L["core_dumplog_entries_suffix"])
     for i, entry in ipairs(FrostSeek.Logger.Buffer) do
         print(string.format("|cff666666[%s]|r |cff%s%s|r: %s",
             entry.ts or "?",
@@ -1145,7 +1236,7 @@ SlashCmdList["FSDUMPLOG"] = function()
             entry.level or "INFO",
             entry.msg or ""))
     end
-    print("|cff88ccff==================================================|r")
+    print(L["core_dumplog_footer"])
 end
 
 SLASH_FSOPEN1 = "/fsopen"
@@ -1157,25 +1248,26 @@ end
 
 SLASH_FSNET1 = "/fsnet"
 SlashCmdList["FSNET"] = function()
-    print("|cff88ccff========== FROSTNET STATUS ==========|r")
+    print(L["core_net_status_header"])
     local Network = FrostSeek.Network
     if not Network then
-        print("|cffff5555Network module not loaded!|r")
+        print(L["core_net_module_not_loaded_err"])
         return
     end
-    print("Channel name      : " .. tostring(Network.channelName))
-    print("Connected         : " .. tostring(Network.isConnected))
-    print("ChannelId         : " .. tostring(Network.channelId))
-    print("Queue length      : " .. tostring(Network._queue and #Network._queue or 0))
-    print("WasConnected ever : " .. tostring(Network.wasConnected))
-    print("Join attempts     : " .. tostring(Network.joinAttempts) .. "/" .. tostring(Network.maxJoinAttempts))
+    print(L["core_net_channel_name"] .. tostring(Network.channelName))
+    print(L["core_net_connected"] .. tostring(Network.isConnected))
+    print(L["core_net_channel_id"] .. tostring(Network.channelId))
+    print(L["core_net_queue_length"] .. tostring(Network._queue and #Network._queue or 0))
+    print(L["core_net_was_connected"] .. tostring(Network.wasConnected))
+    print(L["core_net_join_attempts"] .. tostring(Network.joinAttempts) .. "/" .. tostring(Network.maxJoinAttempts))
 
-   
-    print("|cff88ccff--- Channels seen by WoW client ---|r")
+
+    print(L["core_net_channels_seen_header"])
     if GetNumDisplayChannels then
-        local count = GetNumDisplayChannels() or 0
+        local okCount, count = pcall(function() return GetNumDisplayChannels() end)
+        count = (okCount and count) or 0
         if count == 0 then
-            print("  (no channels — player may not be in any custom channel)")
+            print(L["core_net_no_channels_msg"])
         end
         for i = 1, count do
             local ok, name, _, _, channelNumber = pcall(function()
@@ -1187,29 +1279,29 @@ SlashCmdList["FSNET"] = function()
             end
         end
     else
-        print("  GetNumDisplayChannels not available on this client")
+        print(L["core_net_getnumchannels_unavail"])
     end
 
-    print("|cff88ccff--- My listing ---|r")
+    print(L["core_net_my_listing_header"])
     local Listings = FrostSeek.Listings
     if Listings then
         if Listings.myListing then
             local ml = Listings.myListing
-            print("  id       : " .. tostring(ml.id))
-            print("  activity : " .. tostring(ml.activity))
-            print("  type     : " .. tostring(ml.type))
-            print("  leader   : " .. tostring(ml.leader))
-            print("  members  : " .. tostring(ml.members) .. "/" .. tostring(ml.maxMembers))
+            print(L["core_net_listing_id"] .. tostring(ml.id))
+            print(L["core_net_listing_activity"] .. tostring(ml.activity))
+            print(L["core_net_listing_type"] .. tostring(ml.type))
+            print(L["core_net_listing_leader"] .. tostring(ml.leader))
+            print(L["core_net_listing_members"] .. tostring(ml.members) .. "/" .. tostring(ml.maxMembers))
         else
-            print("  (no active listing)")
+            print(L["core_net_no_active_listing"])
         end
-        print("  Total listings in cache: " .. tostring(Listings.listings and (function() local n=0; for _ in pairs(Listings.listings) do n=n+1 end; return n end)() or 0))
+        print(L["core_net_total_listings_cache"] .. tostring(Listings.listings and (function() local n=0; for _ in pairs(Listings.listings) do n=n+1 end; return n end)() or 0))
     end
 
-    print("|cff88ccff--- Online users ---|r")
+    print(L["core_net_online_users_header"])
     local Presence = FrostSeek.Presence
     if Presence and Presence.GetOnlineCount then
-        print("  Online count: " .. tostring(Presence:GetOnlineCount()))
+        print(L["core_net_online_count"] .. tostring(Presence:GetOnlineCount()))
         if Presence.onlineUsers then
             local n = 0
             for name, _ in pairs(Presence.onlineUsers) do
@@ -1219,12 +1311,12 @@ SlashCmdList["FSNET"] = function()
                 end
             end
             if n > 10 then
-                print("  ... and " .. (n - 10) .. " more")
+                print(string.format(L["core_net_and_more"], n - 10))
             end
         end
     end
 
-    print("|cff88ccff====================================|r")
+    print(L["core_debug_separator"])
     print("|cff888888Tip: ask your friends to run /fsnet too and compare ChannelId.|r")
     print("|cff888888If your ChannelId is nil while 'Connected: true', there's a sync bug.|r")
     print("|cff888888If your friends show 0 online users, the FSK channel is realm-locked or faction-locked.|r")
@@ -1260,58 +1352,57 @@ SlashCmdList["FSCLASS"] = function(msg)
         return
     end
 
-    print("|cff88ccff========== CLASS DETECTION DEBUG ==========|r")
+    print(L["core_class_debug_header"])
 
     local manual = FrostSeekDB and FrostSeekDB.Settings and FrostSeekDB.Settings.manualClass
-    print("1. Manual override : " .. (manual and manual ~= "" and "|cff44ff44" .. manual .. "|r" or "|cff666666(none)|r"))
+    print(L["core_class_manual_override"] .. (manual and manual ~= "" and "|cff44ff44" .. manual .. "|r" or "|cff666666(none)|r"))
 
     local className, classFile = UnitClass("player")
-    print("2. UnitClass        : " .. tostring(className) .. " / " .. tostring(classFile))
+    print(L["core_class_unit_class"] .. tostring(className) .. " / " .. tostring(classFile))
 
     local isCoA = Shared._IsCoARealm and Shared._IsCoARealm() or false
     local Compat = _G.FrostSeekCompat
     local realmName = Compat and Compat.GetRealmName and Compat.GetRealmName() or GetRealmName() or "?"
     local ascMode = Compat and Compat.GetAscensionMode and Compat.GetAscensionMode() or "?"
     local serverType = Compat and Compat.GetServerType and Compat.GetServerType() or "?"
-    print("3. Realm            : " .. tostring(realmName))
-    print("   Server type      : " .. tostring(serverType))
-    print("   Ascension mode   : " .. tostring(ascMode))
-    print("   IsCoA            : " .. tostring(isCoA))
+    print(L["core_class_realm"] .. tostring(realmName))
+    print(L["core_class_server_type"] .. tostring(serverType))
+    print(L["core_class_ascension_mode"] .. tostring(ascMode))
+    print(L["core_class_is_coa"] .. tostring(isCoA))
 
-    print("4. Talent tabs      :")
+    print(L["core_class_talent_tabs"])
     if GetTalentTabInfo then
         for i = 1, 5 do
             local ok, name = pcall(function() return GetTalentTabInfo(i) end)
             if ok and name and name ~= "" then
-                print("   Tab " .. i .. ": " .. tostring(name))
+                print(L["core_class_tab_prefix"] .. i .. ": " .. tostring(name))
             end
         end
     else
-        print("   |cffff5555GetTalentTabInfo not available|r")
+        print(L["core_class_gettalenttabinfo_unavail"])
     end
 
     local resolved = Shared.GetPlayerClassFile and Shared.GetPlayerClassFile() or classFile or "?"
-    print("5. Resolved class   : |cff44ff44" .. tostring(resolved) .. "|r")
+    print(L["core_class_resolved_class"] .. tostring(resolved) .. "|r")
 
     local iconPath = Shared.GetClassIcon and Shared.GetClassIcon(resolved) or "?"
-    print("6. Icon path        : " .. tostring(iconPath))
+    print(L["core_class_icon_path"] .. tostring(iconPath))
 
     local Presence = FrostSeek.Presence
     if Presence and Presence.onlineUsers then
         local pn = UnitName("player") or ""
         local me = Presence.onlineUsers[pn]
         if me then
-            print("7. Broadcast class  : " .. tostring(me.classFile))
+            print(L["core_class_broadcast_class"] .. tostring(me.classFile))
         else
-            print("7. Broadcast class  : " .. tostring(resolved) .. " |cff888888(not yet pinged)|r")
+            print(L["core_class_broadcast_class"] .. tostring(resolved) .. L["core_class_broadcast_not_pinged"])
         end
     end
 
-    print("|cff88ccff====================================|r")
-    print("|cff888888To override: /fsclass set Templar|r")
-    print("|cff888888To reset:    /fsclass reset|r")
+    print(L["core_debug_separator"])
+    print(L["core_class_override_hint_cmd"])
+    print(L["core_class_reset_hint_cmd"])
 end
---noah
 local _tk = FrostSeek._v.a("core", FrostSeek)
 
 local autoOpenHandled = false
@@ -1409,6 +1500,13 @@ local function LoadModules()
             themeAPI.Apply()
         end
 
+        local Shared = _G.FrostSeekShared
+        if Shared and Shared.GetServerProfile then
+            if FrostSeekDB.Settings.serverProfileManual ~= true then
+                FrostSeekDB.Settings.serverProfile = "auto"
+            end
+        end
+
         LPrint("core_modules_loaded", FrostSeek.VERSION)
     end)
 end
@@ -1423,10 +1521,214 @@ eventFrame:SetScript("OnEvent", function(self, event)
     end
 end)
 
+
+local ADDON_CHANNELS = { ["fsk"] = true, ["fsk-evt"] = true, ["blfg"] = true }
+
+local function IsAddonChannelName(chanName)
+    if not chanName then return false end
+    local lower = string.lower(tostring(chanName))
+    lower = string.match(lower, "^%s*%d*%.?%s*(.-)%s*$") or lower
+    if ADDON_CHANNELS[lower] then return true end
+    return false
+end
+
+local _cachedKeywords = nil
+local _cachedKeywordsRaw = nil
+
+local function GetFilterKeywords()
+    local keywordsRaw = FrostSeekDB and FrostSeekDB.LFG and FrostSeekDB.LFG.chatFilterKeywords or ""
+    if _cachedKeywordsRaw == keywordsRaw and _cachedKeywords then
+        return _cachedKeywords
+    end
+    _cachedKeywordsRaw = keywordsRaw
+    _cachedKeywords = { "lfg", "lfm", "looking for group", "looking for member", "looking for raid", "lfr" }
+    if keywordsRaw ~= "" then
+        for kw in string.gmatch(keywordsRaw, "[^,]+") do
+            local clean = string.match(kw, "^%s*(.-)%s*$")
+            if clean and clean ~= "" then
+                table.insert(_cachedKeywords, string.lower(clean))
+            end
+        end
+    end
+    return _cachedKeywords
+end
+
+local chatFilterLog = {}
+local CHAT_FILTER_LOG_LIMIT = 20
+
+local function AddChatFilterLog(sender, msg, reason)
+    local entry = string.format("|cffd3d3d3[%s]|r [%s]: %s", sender or "?", reason or "?", msg or "")
+    table.insert(chatFilterLog, 1, entry)
+    if #chatFilterLog > CHAT_FILTER_LOG_LIMIT then
+        table.remove(chatFilterLog)
+    end
+end
+
+local function FrostSeekChatFilter(self, event, msg, sender, langName, chanName, ...)
+    if not (FrostSeekDB and FrostSeekDB.LFG and FrostSeekDB.LFG.chatFilterEnabled) then
+        return false
+    end
+    if not msg or msg == "" then return false end
+
+    if event == "CHAT_MSG_CHANNEL" then
+        if IsAddonChannelName(chanName) then return false end
+        local channelBaseName = select(5, ...)
+        if channelBaseName and IsAddonChannelName(tostring(channelBaseName)) then
+            return false
+        end
+    end
+
+    local m = string.lower(msg)
+
+    if m:find("lfg", 1, true)
+    or m:find("lfm", 1, true)
+    or m:find("lfr", 1, true)
+    or m:find("looking for group", 1, true)
+    or m:find("looking for member", 1, true)
+    or m:find("looking for raid", 1, true)
+    or m:match("lf%d+m")
+    or m:match("lf%d+")
+    or m:find("keystone", 1, true) then
+        AddChatFilterLog(sender, msg, "LFG/LFM/Keystone")
+        return true
+    end
+
+    if m:find("lf", 1, true) then
+        if m:find("dps", 1, true)
+        or m:find("tank", 1, true)
+        or m:find("heal", 1, true)
+        or m:find("healer", 1, true)
+        or m:find("heals", 1, true)
+        or m:find("support", 1, true) then
+            AddChatFilterLog(sender, msg, "LF+role")
+            return true
+        end
+    end
+
+    local keywords = GetFilterKeywords()
+    for _, kw in ipairs(keywords) do
+        if m:find(kw, 1, true) then
+            AddChatFilterLog(sender, msg, "keyword:" .. kw)
+            return true
+        end
+    end
+
+    return false
+end
+
+local chatFilterRegistered = false
+local function RegisterChatFilter()
+    if chatFilterRegistered then return end
+
+    if ChatFrame_AddMessageEventFilter then
+        ChatFrame_AddMessageEventFilter("CHAT_MSG_CHANNEL", FrostSeekChatFilter)
+        ChatFrame_AddMessageEventFilter("CHAT_MSG_YELL", FrostSeekChatFilter)
+        ChatFrame_AddMessageEventFilter("CHAT_MSG_SAY", FrostSeekChatFilter)
+        ChatFrame_AddMessageEventFilter("CHAT_MSG_GUILD", FrostSeekChatFilter)
+    end
+
+    if not _G.FrostSeekOrigChatFrame_OnEvent then
+        _G.FrostSeekOrigChatFrame_OnEvent = ChatFrame_OnEvent
+        ChatFrame_OnEvent = function(self, event, ...)
+            if FrostSeekChatFilter(self, event, ...) then
+                return  -- messaggio filtrato, non mostrare
+            end
+            return _G.FrostSeekOrigChatFrame_OnEvent(self, event, ...)
+        end
+    end
+
+    chatFilterRegistered = true
+    print("|cff88ccffFrostSeek:|r Filtro chat registrato (CHANNEL, YELL, SAY, GUILD)")
+end
+
+C_Timer.After(2, RegisterChatFilter)
+C_Timer.After(5, RegisterChatFilter)
+C_Timer.After(10, RegisterChatFilter)
+
+SLASH_FSCHATFILTER1 = "/fschatfilter"
+SLASH_FSCHATFILTER2 = "/fscf"
+SlashCmdList["FSCHATFILTER"] = function(msg)
+    local cmd, arg = msg:match("^(%S*)%s*(.-)$")
+    cmd = string.lower(cmd or "")
+
+    if cmd == "log" then
+        local n = tonumber(arg) or 10
+        local count = math.min(n, #chatFilterLog)
+        if count == 0 then
+            print("|cff88ccffFrostSeek:|r Log filtro chat vuoto")
+            return
+        end
+        print("|cff88ccffFrostSeek:|r Ultimi " .. count .. " messaggi filtrati:")
+        for i = 1, count do
+            print(chatFilterLog[i])
+        end
+    elseif cmd == "status" then
+        print("|cff88ccff=== FrostSeek Chat Filter Status ===|r")
+        print("  API disponibile: " .. tostring(ChatFrame_AddMessageEventFilter ~= nil))
+        print("  Filter registrato: " .. tostring(chatFilterRegistered))
+        print("  chatFilterEnabled: " .. tostring(FrostSeekDB and FrostSeekDB.LFG and FrostSeekDB.LFG.chatFilterEnabled))
+        print("  chatFilterKeywords: " .. tostring(FrostSeekDB and FrostSeekDB.LFG and FrostSeekDB.LFG.chatFilterKeywords))
+        local kw = GetFilterKeywords()
+        print("  Keywords attive (" .. #kw .. "): " .. table.concat(kw, ", "))
+        print("  Messaggi filtrati in log: " .. #chatFilterLog)
+    elseif cmd == "reregister" then
+        chatFilterRegistered = false
+        RegisterChatFilter()
+        print("|cff44ff44FrostSeek:|r Filtro re-registrato")
+    else
+        print("|cff88ccffFrostSeek Chat Filter|r")
+        print("  /fscf status - mostra stato filtro")
+        print("  /fscf log [n] - mostra ultimi N messaggi filtrati")
+        print("  /fscf reregister - forza re-registrazione filtro")
+    end
+end
+
+local chatSnifferFrame = nil
+local chatSnifferActive = false
+SLASH_FSCHATSNIFF1 = "/fschatsniff"
+SlashCmdList["FSCHATSNIFF"] = function(msg)
+    if chatSnifferActive then
+        chatSnifferActive = false
+        print("|cffff5555FrostSeek:|r Chat sniffer DISATTIVATO")
+        return
+    end
+    chatSnifferActive = true
+    if not chatSnifferFrame then
+        chatSnifferFrame = CreateFrame("Frame")
+    end
+    local chatEvents = {
+        "CHAT_MSG_CHANNEL", "CHAT_MSG_SAY", "CHAT_MSG_YELL", "CHAT_MSG_GUILD",
+        "CHAT_MSG_PARTY", "CHAT_MSG_RAID", "CHAT_MSG_WHISPER", "CHAT_MSG_OFFICER",
+        "CHAT_MSG_SYSTEM", "CHAT_MSG_EMOTE", "CHAT_MSG_TEXT_EMOTE",
+        "CHAT_MSG_MONSTER_SAY", "CHAT_MSG_MONSTER_YELL",
+        "CHAT_MSG_CHANNEL_JOIN", "CHAT_MSG_CHANNEL_LEAVE",
+        "CHAT_MSG_CHANNEL_NOTICE", "CHAT_MSG_CHANNEL_NOTICE_USER",
+    }
+    for _, evt in ipairs(chatEvents) do
+        chatSnifferFrame:RegisterEvent(evt)
+    end
+    chatSnifferFrame:SetScript("OnEvent", function(self, event, ...)
+        if not chatSnifferActive then return end
+        local arg1 = ...
+        if arg1 and type(arg1) == "string" then
+            local lower = string.lower(arg1)
+            if string.find(lower, "lfg", 1, true) or string.find(lower, "lfm", 1, true) or
+               string.find(lower, "looking for", 1, true) then
+                local sender = select(2, ...)
+                local chanName = select(4, ...)
+                print("|cffffcc00[FSK-SNIFF]|r " .. event .. " | msg=" .. tostring(string.sub(arg1, 1, 50)) ..
+                      " | sender=" .. tostring(sender) .. " | chan=" .. tostring(chanName))
+            end
+        end
+    end)
+    print("|cff44ff44FrostSeek:|r Chat sniffer ATTIVATO - scrivi o ricevi un messaggio con 'lfg' o 'lfm' per vedere l'evento esatto")
+    print("  Esegui di nuovo |cff88ccff/fschatsniff|r per disattivare")
+end
+
 local saveFrame = CreateFrame("Frame")
 saveFrame:RegisterEvent("PLAYER_LOGOUT")
 if pcall(function() saveFrame:RegisterEvent("PLAYER_QUIT") end) then
-    
+
 end
 saveFrame:SetScript("OnEvent", function()
     SaveWindowPosition()

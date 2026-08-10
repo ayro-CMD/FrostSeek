@@ -80,7 +80,6 @@ function Dashboard:Initialize(parentFrame)
     local pad = 18
     local curY = -10
 
-    -- hero
     local heroH = 44
     local hero = CreateFrame("Frame", nil, F)
     hero:SetPoint("TOPLEFT", F, "TOPLEFT", 10, curY)
@@ -110,7 +109,7 @@ function Dashboard:Initialize(parentFrame)
 
     self.heroName = hero:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
     self.heroName:SetPoint("LEFT", self.heroClassIcon, "RIGHT", 8, 0)
-    self.heroName:SetText("|c" .. nameHex .. (playerName or "Unknown") .. "|r")
+    self.heroName:SetText("|c" .. nameHex .. (playerName or L["unknown"]) .. "|r")
 
     local faction = UnitFactionGroup("player") or ""
     local fCol = faction == "Horde" and "|cFFFF4444" or "|cFF4488FF"
@@ -162,7 +161,6 @@ function Dashboard:Initialize(parentFrame)
     local kpi1bg = kpi1:CreateTexture(nil, "BACKGROUND")
     kpi1bg:SetAllPoints()
     kpi1bg:SetColorTexture(unpack(C.bgBlock))
-
     self.kpiIlvlNum = kpi1:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
     self.kpiIlvlNum:SetPoint("CENTER", kpi1, "CENTER", 0, 6)
     self.kpiIlvlNum:SetText("0")
@@ -234,11 +232,11 @@ function Dashboard:Initialize(parentFrame)
     self.fnConnDot:SetColorTexture(unpack(C.success))
     self.fnConnText = fn:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     self.fnConnText:SetPoint("LEFT", self.fnConnDot, "RIGHT", 5, 0)
-    self.fnConnText:SetText("|cff44ff44Connected|r")
+    self.fnConnText:SetText(L["dash_connected"])
     self.fnConnText:SetTextColor(unpack(C.textNorm))
     self.fnGroupsLabel = fn:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     self.fnGroupsLabel:SetPoint("TOPLEFT", fn, "TOPLEFT", pad, -96)
-    self.fnGroupsLabel:SetText(_hex("textDim") .. "Groups:|r ")
+    self.fnGroupsLabel:SetText(_hex("textDim") .. L["dash_groups_label"])
     self.fnGroupsLabel:SetTextColor(unpack(C.textLabel))
     self.fnGroupsVal = fn:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     self.fnGroupsVal:SetPoint("LEFT", self.fnGroupsLabel, "RIGHT", 4, 0)
@@ -246,7 +244,7 @@ function Dashboard:Initialize(parentFrame)
     self.fnGroupsVal:SetTextColor(unpack(C.accent))
     self.fnFriendsLabel = fn:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     self.fnFriendsLabel:SetPoint("TOPLEFT", fn, "TOPLEFT", pad + 120, -96)
-    self.fnFriendsLabel:SetText(_hex("textDim") .. "Friends:|r ")
+    self.fnFriendsLabel:SetText(_hex("textDim") .. L["dash_friends_label"])
     self.fnFriendsLabel:SetTextColor(unpack(C.textLabel))
     self.fnFriendsVal = fn:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     self.fnFriendsVal:SetPoint("LEFT", self.fnFriendsLabel, "RIGHT", 4, 0)
@@ -296,7 +294,7 @@ function Dashboard:Initialize(parentFrame)
 
     local lpTitle = lp:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     lpTitle:SetPoint("TOPLEFT", lp, "TOPLEFT", pad, -10)
-    lpTitle:SetText(_hex("accent") .. "LFG ACTIVITY|r")
+    lpTitle:SetText(_hex("accent") .. L["dash_lfg_activity_r"])
 
     local lpLine = lp:CreateTexture(nil, "ARTWORK")
     lpLine:SetPoint("TOPLEFT", lp, "TOPLEFT", pad, -26)
@@ -315,7 +313,7 @@ function Dashboard:Initialize(parentFrame)
     self.lfgTotalLabel:SetTextColor(unpack(C.textLabel))
 
     self.categoryBars = {}
-    local cats = {"DUNGEON", "RAID", "WORLD_BOSS", "PVP", "MANASTORM", "KEYSTONE", "MISC"}
+    local cats = {"DUNGEON", "RAID", "WORLD_BOSS", "PVP", "MANASTORM", "KEYSTONE"}
     local barY = -100
     local barSp = 14
 
@@ -323,7 +321,7 @@ function Dashboard:Initialize(parentFrame)
         local col = GetCatColor(cat)
         local lbl = lp:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
         lbl:SetPoint("TOPLEFT", lp, "TOPLEFT", pad, barY)
-        local shortN = {DUNGEON="Dungeon",RAID="Raid",WORLD_BOSS="World Boss",PVP="PvP",MANASTORM="Manastorm",KEYSTONE="Keystone",MISC="Misc"}
+        local shortN = {DUNGEON="Dungeon",RAID="Raid",WORLD_BOSS="World Boss",PVP="PvP",MANASTORM="Manastorm",KEYSTONE="Keystone"}
         lbl:SetText(shortN[cat] or cat)
         lbl:SetTextColor(unpack(C.textNorm))
         lbl:SetWidth(85)
@@ -361,7 +359,7 @@ function Dashboard:Initialize(parentFrame)
 
     self.fnSessionLbl = sessFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     self.fnSessionLbl:SetPoint("LEFT", sessFrame, "LEFT", pad, 0)
-    self.fnSessionLbl:SetText(_hex("textDim") .. "Session|r")
+    self.fnSessionLbl:SetText(_hex("textDim") .. L["dash_session_r"])
 
     self.fnSessionVal = sessFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     self.fnSessionVal:SetPoint("LEFT", self.fnSessionLbl, "RIGHT", 8, 0)
@@ -370,7 +368,7 @@ function Dashboard:Initialize(parentFrame)
 
     self.fnTodayLbl = sessFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     self.fnTodayLbl:SetPoint("LEFT", self.fnSessionVal, "RIGHT", 40, 0)
-    self.fnTodayLbl:SetText(_hex("textDim") .. "Today|r")
+    self.fnTodayLbl:SetText(_hex("textDim") .. L["dash_today_r"])
 
     self.fnTodayVal = sessFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     self.fnTodayVal:SetPoint("LEFT", self.fnTodayLbl, "RIGHT", 8, 0)
@@ -381,10 +379,11 @@ function Dashboard:Initialize(parentFrame)
 
     self.footer = F:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     self.footer:SetPoint("BOTTOM", F, "BOTTOM", 0, 8)
-    self.footer:SetText(" MADE with |cffff6666Love|r by |cff88ccffAYRO|r ")
+    self.footer:SetText(L["dash_footer_love"])
 
     self.frame:Hide()
 
+    if not FrostSeekDB then return end
     if not FrostSeekDB.PlayTime then FrostSeekDB.PlayTime = {} end
     if not FrostSeekDB.PlayTime.todayStartTimestamp then FrostSeekDB.PlayTime.todayStartTimestamp = time() end
     if not FrostSeekDB.PlayTime.lastDay then FrostSeekDB.PlayTime.lastDay = tonumber(date("%j")) end
@@ -430,10 +429,20 @@ function Dashboard:UpdateAll()
     local netStats = { total = 0, friends = 0, tanks = 0, healers = 0, dps = 0 }
     if FrostSeek.Presence then
         if FrostSeek.Presence.GetOnlineCount then
-            netOnline = FrostSeek.Presence:GetOnlineCount()
+            netOnline = FrostSeek.Presence:GetOnlineCount() or 0
         end
         if FrostSeek.Presence.GetStats then
-            netStats = FrostSeek.Presence:GetStats()
+            local stats = FrostSeek.Presence:GetStats()
+            if type(stats) == "table" then
+                netStats = {
+                    total = stats.total or 0,
+                    friends = stats.friends or 0,
+                    tanks = stats.tanks or 0,
+                    healers = stats.healers or 0,
+                    dps = stats.dps or 0,
+                    supports = stats.supports or 0,
+                }
+            end
         end
     end
 
@@ -441,21 +450,20 @@ function Dashboard:UpdateAll()
     if cachedIlvl > 0 then
         table.insert(tags, _hex("success") .. cachedIlvl .. "|r " .. _hex("textDim") .. "ilvl|r")
     end
-    local role = FrostSeekDB and FrostSeekDB.LFG and FrostSeekDB.LFG.myRole or "No Role"
+    local role = FrostSeekDB and FrostSeekDB.LFG and FrostSeekDB.LFG.myRole or L["lfg_no_role"]
     if role ~= "" and role ~= "No Role" then
         local roleColors = {Tank="4488FF",Healer="33CC55",DPS="FF5555",BC="FFAA00"}
         local rc = roleColors[role] or string.format("%02X%02X%02X", _tc("accent")[1] * 255, _tc("accent")[2] * 255, _tc("accent")[3] * 255)
         table.insert(tags, "|cFF" .. rc .. role .. "|r")
     else
-        table.insert(tags, "|cFF888888No Role|r")
+        table.insert(tags, L["dash_no_role_colored"])
     end
     if netOnline > 1 then
         table.insert(tags, "|cff88ccff" .. tostring(netOnline) .. "|r " .. _hex("textDim") .. "frostnet|r")
     end
     local lfgOn = FrostSeekDB and FrostSeekDB.LFG and not FrostSeekDB.LFG.disableLFG
-    table.insert(tags, lfgOn and _hex("success") .. "ON|r " .. _hex("textDim") .. "LFG|r" or _hex("danger") .. "OFF|r " .. _hex("textDim") .. "LFG|r")
     if self.heroTags then
-        self.heroTags:SetText(table.concat(tags, "  "))
+        self.heroTags:SetText("")
     end
 
     self.kpiIlvlNum:SetText(tostring(cachedIlvl))
@@ -489,7 +497,7 @@ function Dashboard:UpdateAll()
                 if Network.isBLFGConnected then
                     self.fnConnText:SetText("|cff44ff44FSK + BLFG|r")
                 else
-                    self.fnConnText:SetText("|cff44ff44FSK Connected|r")
+                    self.fnConnText:SetText(L["dash_fsk_connected"])
                 end
             else
                 local hasChannel = false
@@ -512,15 +520,15 @@ function Dashboard:UpdateAll()
                 if hasChannel then
                     Network:RefreshChannel()
                     self.fnConnDot:SetColorTexture(unpack(C.warning))
-                    self.fnConnText:SetText("|cffffff00FSK Connecting...|r")
+                    self.fnConnText:SetText(L["dash_fsk_connecting"])
                 else
                     self.fnConnDot:SetColorTexture(unpack(C.danger))
-                    self.fnConnText:SetText("|cffff5555FSK Offline|r")
+                    self.fnConnText:SetText(L["dash_fsk_offline"])
                 end
             end
         else
             self.fnConnDot:SetColorTexture(unpack(C.danger))
-            self.fnConnText:SetText("|cffff5555FSK Offline|r")
+            self.fnConnText:SetText(L["dash_fsk_offline"])
         end
     end
 
@@ -563,13 +571,13 @@ function Dashboard:UpdateAll()
         self.fnFriendsVal:SetTextColor(unpack(onlineFriends > 0 and C.success or C.textDim))
     end
 
-    local maxRole = math.max(netStats.tanks, netStats.healers, netStats.dps, netStats.supports or 0, 1)
+    local maxRole = math.max(netStats.tanks or 0, netStats.healers or 0, netStats.dps or 0, netStats.supports or 0, 1)
     local barW = 110
     for roleName, barData in pairs(self.fnRoleBars) do
         local count = 0
-        if roleName == "Tank" then count = netStats.tanks
-        elseif roleName == "Healer" then count = netStats.healers
-        elseif roleName == "DPS" then count = netStats.dps
+        if roleName == "Tank" then count = netStats.tanks or 0
+        elseif roleName == "Healer" then count = netStats.healers or 0
+        elseif roleName == "DPS" then count = netStats.dps or 0
         elseif roleName == "Support" then count = netStats.supports or 0
         end
         barData.count:SetText(tostring(count))
@@ -591,16 +599,18 @@ function Dashboard:UpdateAll()
 
     if self.fnTodayVal then
         local currentDay = tonumber(date("%j"))
-        if FrostSeekDB.PlayTime.lastDay ~= currentDay then
-            FrostSeekDB.PlayTime.todayStartTimestamp = time()
-            FrostSeekDB.PlayTime.lastDay = currentDay
+        if FrostSeekDB and FrostSeekDB.PlayTime then
+            if FrostSeekDB.PlayTime.lastDay ~= currentDay then
+                FrostSeekDB.PlayTime.todayStartTimestamp = time()
+                FrostSeekDB.PlayTime.lastDay = currentDay
+            end
+            local todaySec = time() - (FrostSeekDB.PlayTime.todayStartTimestamp or time())
+            self.fnTodayVal:SetText(string.format("%02d:%02d:%02d", math.floor(todaySec/3600), math.floor((todaySec%3600)/60), math.floor(todaySec%60)))
         end
-        local todaySec = time() - FrostSeekDB.PlayTime.todayStartTimestamp
-        self.fnTodayVal:SetText(string.format("%02d:%02d:%02d", math.floor(todaySec/3600), math.floor((todaySec%3600)/60), math.floor(todaySec%60)))
     end
 
     local categoryCounts = {}
-    for _, cat in ipairs({"DUNGEON", "RAID", "WORLD_BOSS", "PVP", "MANASTORM", "KEYSTONE", "MISC"}) do
+    for _, cat in ipairs({"DUNGEON", "RAID", "WORLD_BOSS", "PVP", "MANASTORM", "KEYSTONE"}) do
         categoryCounts[cat] = 0
     end
     local searches = {}
@@ -643,7 +653,7 @@ function Dashboard:ApplyTheme()
         local _, rawClassFile = UnitClass("player")
         local cc = RAID_CLASS_COLORS and RAID_CLASS_COLORS[rawClassFile]
         local nameHex = cc and string.format("FF%02X%02X%02X", cc.r * 255, cc.g * 255, cc.b * 255) or string.format("FF%02X%02X%02X", _tc("accent")[1] * 255, _tc("accent")[2] * 255, _tc("accent")[3] * 255)
-        self.heroName:SetText("|c" .. nameHex .. (UnitName("player") or "Unknown") .. "|r")
+        self.heroName:SetText("|c" .. nameHex .. (UnitName("player") or L["unknown"]) .. "|r")
         if self.heroClassIcon then
             local iconClassFile = rawClassFile
             if Shared and Shared.GetPlayerClassFile then
@@ -653,7 +663,7 @@ function Dashboard:ApplyTheme()
         end
     end
     if self.footer then
-        self.footer:SetText(" MADE with |cffff6666LOVE|r by |cff88ccffAYRO|r  ")
+        self.footer:SetText(L["dash_footer_love_caps"])
     end
     local FS = _G.FrostSeek
     if FS and FS.MainFrame then
