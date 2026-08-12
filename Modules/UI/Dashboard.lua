@@ -392,7 +392,7 @@ function Dashboard:Initialize(parentFrame)
     ilvlFrame:RegisterEvent("UNIT_INVENTORY_CHANGED")
     ilvlFrame:SetScript("OnEvent", function() Dashboard:CalculateItemLevel() end)
     Dashboard:CalculateItemLevel()
-
+-- luigi
     self.updateTimer = C_Timer.NewTicker(1, function() self:UpdateAll() end)
 
     if not FrostSeekDB.RecentActivities then FrostSeekDB.RecentActivities = {} end

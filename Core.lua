@@ -55,7 +55,7 @@ function FrostSeek._v.g(name)
     return FrostSeek._v.w[name]
 end
 
-FrostSeek.VERSION = "2.2.5"
+FrostSeek.VERSION = "2.2.6"
 
 local L = setmetatable({}, {
     __index = function(_, key)
@@ -188,6 +188,7 @@ if not FrostSeekDB.LFG then
         customFilterWords = "",
         keystoneMinLevel = 0,
         chatFilterEnabled = false,
+        chatFilterGuildPartyRaid = false,
         chatFilterKeywords = "lfg,lfm,lf,lfg+,looking for group,looking for member,looking for raid,looking for,inv,invite,keystone,wts,wtb,boost,carry",
         showActiveRecruitersWindow = false,
         activeWindowPosition = nil,
@@ -410,6 +411,7 @@ local function EnsureSettingsIntegrity()
         end
         if FrostSeekDB.LFG.keystoneMinLevel == nil then FrostSeekDB.LFG.keystoneMinLevel = 0 end
         if FrostSeekDB.LFG.chatFilterEnabled == nil then FrostSeekDB.LFG.chatFilterEnabled = false end
+        if FrostSeekDB.LFG.chatFilterGuildPartyRaid == nil then FrostSeekDB.LFG.chatFilterGuildPartyRaid = false end
         if not FrostSeekDB.LFG.chatFilterKeywords or FrostSeekDB.LFG.chatFilterKeywords == "" then
             FrostSeekDB.LFG.chatFilterKeywords = "lfg,lfm,lf,lfg+,looking for group,looking for member,looking for raid,looking for,inv,invite,keystone,wts,wtb,boost,carry"
         end
@@ -1565,10 +1567,31 @@ local function AddChatFilterLog(sender, msg, reason)
 end
 
 local function FrostSeekChatFilter(self, event, msg, sender, langName, chanName, ...)
-    if not (FrostSeekDB and FrostSeekDB.LFG and FrostSeekDB.LFG.chatFilterEnabled) then
-        return false
-    end
     if not msg or msg == "" then return false end
+
+    local db = FrostSeekDB and FrostSeekDB.LFG
+    if not db then return false end
+
+    local mainFilterOn = db.chatFilterEnabled == true
+    local gprFilterOn  = db.chatFilterGuildPartyRaid == true
+
+    local isGuildPartyRaidEvent =
+        event == "CHAT_MSG_GUILD"
+        or event == "CHAT_MSG_OFFICER"
+        or event == "CHAT_MSG_PARTY"
+        or event == "CHAT_MSG_PARTY_LEADER"
+        or event == "CHAT_MSG_RAID"
+        or event == "CHAT_MSG_RAID_LEADER"
+
+    if isGuildPartyRaidEvent then
+        if not gprFilterOn then
+            return false
+        end
+    else
+        if not mainFilterOn then
+            return false
+        end
+    end
 
     if event == "CHAT_MSG_CHANNEL" then
         if IsAddonChannelName(chanName) then return false end
@@ -1625,20 +1648,25 @@ local function RegisterChatFilter()
         ChatFrame_AddMessageEventFilter("CHAT_MSG_YELL", FrostSeekChatFilter)
         ChatFrame_AddMessageEventFilter("CHAT_MSG_SAY", FrostSeekChatFilter)
         ChatFrame_AddMessageEventFilter("CHAT_MSG_GUILD", FrostSeekChatFilter)
+        ChatFrame_AddMessageEventFilter("CHAT_MSG_OFFICER", FrostSeekChatFilter)
+        ChatFrame_AddMessageEventFilter("CHAT_MSG_PARTY", FrostSeekChatFilter)
+        ChatFrame_AddMessageEventFilter("CHAT_MSG_PARTY_LEADER", FrostSeekChatFilter)
+        ChatFrame_AddMessageEventFilter("CHAT_MSG_RAID", FrostSeekChatFilter)
+        ChatFrame_AddMessageEventFilter("CHAT_MSG_RAID_LEADER", FrostSeekChatFilter)
     end
 
     if not _G.FrostSeekOrigChatFrame_OnEvent then
         _G.FrostSeekOrigChatFrame_OnEvent = ChatFrame_OnEvent
         ChatFrame_OnEvent = function(self, event, ...)
             if FrostSeekChatFilter(self, event, ...) then
-                return  -- messaggio filtrato, non mostrare
+                return
             end
             return _G.FrostSeekOrigChatFrame_OnEvent(self, event, ...)
         end
     end
 
     chatFilterRegistered = true
-    print("|cff88ccffFrostSeek:|r Filtro chat registrato (CHANNEL, YELL, SAY, GUILD)")
+    print("|cff88ccffFrostSeek:|r Filtro chat registrato (CHANNEL, YELL, SAY, GUILD, OFFICER, PARTY, RAID)")
 end
 
 C_Timer.After(2, RegisterChatFilter)
@@ -1666,7 +1694,8 @@ SlashCmdList["FSCHATFILTER"] = function(msg)
         print("|cff88ccff=== FrostSeek Chat Filter Status ===|r")
         print("  API disponibile: " .. tostring(ChatFrame_AddMessageEventFilter ~= nil))
         print("  Filter registrato: " .. tostring(chatFilterRegistered))
-        print("  chatFilterEnabled: " .. tostring(FrostSeekDB and FrostSeekDB.LFG and FrostSeekDB.LFG.chatFilterEnabled))
+        print("  chatFilterEnabled (canali normali CHANNEL/YELL/SAY): " .. tostring(FrostSeekDB and FrostSeekDB.LFG and FrostSeekDB.LFG.chatFilterEnabled))
+        print("  chatFilterGuildPartyRaid (GILDA/OFFICER/PARTY/RAID): " .. tostring(FrostSeekDB and FrostSeekDB.LFG and FrostSeekDB.LFG.chatFilterGuildPartyRaid))
         print("  chatFilterKeywords: " .. tostring(FrostSeekDB and FrostSeekDB.LFG and FrostSeekDB.LFG.chatFilterKeywords))
         local kw = GetFilterKeywords()
         print("  Keywords attive (" .. #kw .. "): " .. table.concat(kw, ", "))

@@ -1,12 +1,21 @@
 --[[
 ==============================================================================
- FrostSeek - First-Install Setup Wizard (v2.2.5)
+ FrostSeek - Advanced LFG/LFM Manager
 ==============================================================================
- A 4-page setup wizard that fires on first install (when setupCompleted == false):
-   Page 1: Language picker
-   Page 2: Welcome message (localized) explaining how the addon works
-   Page 3: Role + popups + FrostNet profile + sounds + theme
-   Page 4: Thank-you message from Ayro + Finish button (reload UI)
+ Copyright (c) 2026 Ayro. All rights reserved.
+
+ License: FrostSeek Proprietary License - All Rights Reserved
+ Author:  Ayro
+
+ This source code is the proprietary intellectual property of Ayro.
+ Unauthorized copying, modification, redistribution, or use of any part of
+ this code, in whole or in part, via any medium, is strictly prohibited
+ without the express written permission of the author.
+
+ For licensing inquiries, contact the author via the official repository:
+   CurseForge Project ID: 1460315
+
+ Watermark: FSK-WM-36DA8EFBD010-FSK-AYRO-2026-7F3C-9A21-BD54-8E1F
 ==============================================================================
 ]]
 

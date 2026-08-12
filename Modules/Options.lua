@@ -534,7 +534,7 @@ end
 
 local function CreateCustomMessageTab(parent, scrollContent)
     local frame = CreateFrame("Frame", nil, scrollContent)
-    frame:SetSize(500, 700)
+    frame:SetSize(560, 700)
     frame:SetPoint("TOPLEFT", scrollContent, "TOPLEFT", 0, 0)
 
     local title = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
@@ -579,7 +579,7 @@ local function CreateCustomMessageTab(parent, scrollContent)
     varsHint:Hide()
     yOffset = yOffset - 25
 
-    templateBox = CreateCleanEditBox(frame, 460, 50, true)
+    templateBox = CreateCleanEditBox(frame, 520, 50, true)
     templateBox:SetPoint("TOPLEFT", 20, yOffset)
     templateBox:SetText(FrostSeekDB.LFG.customMessages and FrostSeekDB.LFG.customMessages.template or "inv {role} {class} {spec} {ilvl} ilvl")
     templateBox._fskLastClickTime = 0
@@ -662,7 +662,7 @@ local function CreateCustomMessageTab(parent, scrollContent)
 
     local previewFrame = CreateFrame("Frame", nil, frame)
     previewFrame:SetPoint("TOPLEFT", 20, yOffset)
-    previewFrame:SetSize(460, 60)
+    previewFrame:SetSize(520, 60)
     previewFrame:SetBackdrop({bgFile = "Interface\\ChatFrame\\ChatFrameBackground", tile = true, tileSize = 16})
     previewFrame:SetBackdropColor(unpack(_tc("bgInput")))
 
@@ -697,7 +697,7 @@ end
 
 local function CreateCustomKeywordsTab(parent, scrollContent)
     local frame = CreateFrame("Frame", nil, scrollContent)
-    frame:SetSize(530, 800)
+    frame:SetSize(580, 800)
     frame:SetPoint("TOPLEFT", scrollContent, "TOPLEFT", 0, 0)
 
     local title = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
@@ -788,7 +788,7 @@ local function CreateCustomKeywordsTab(parent, scrollContent)
         local catFrameHeight = 90
 
         local catFrame = CreateFrame("Frame", nil, frame)
-        catFrame:SetSize(510, catFrameHeight)
+        catFrame:SetSize(560, catFrameHeight)
         catFrame:SetPoint("TOPLEFT", frame, "TOPLEFT", 10, yOffset)
 
         local accentBar = catFrame:CreateTexture(nil, "BACKGROUND")
@@ -822,7 +822,7 @@ local function CreateCustomKeywordsTab(parent, scrollContent)
         defaultsLabel:SetWordWrap(true)
         defaultsLabel:SetHeight(16)
 
-        local editBox = CreateCleanEditBox(catFrame, 480, 26)
+        local editBox = CreateCleanEditBox(catFrame, 530, 26)
         editBox:SetPoint("TOPLEFT", 14, -62)
         editBox:SetPoint("RIGHT", catFrame, "RIGHT", -10, 0)
         editBox:SetText(FrostSeekDB.LFG.customKeywords[cat.id] or "")
@@ -968,8 +968,11 @@ local function GetSettingsCategories()
         { type = "slider", id = "maxConcurrentPopups", name = L["lfg_max_popups"], desc = L["options_max_popups_desc"], min = 1, max = 5, step = 1, default = 2, getter = function() return FrostSeekDB.LFG.maxConcurrentPopups end, setter = function(v) FrostSeekDB.LFG.maxConcurrentPopups = v end },
         { type = "header", id = "keystoneFilterHeader", name = "", desc = L["options_keystone_filter"] },
         { type = "slider", id = "keystoneMinLevel", name = L["options_keystone_min_level"], desc = L["options_keystone_min_level_desc"], min = 0, max = 30, step = 1, default = 0, getter = function() return FrostSeekDB.LFG.keystoneMinLevel or 0 end, setter = function(v) FrostSeekDB.LFG.keystoneMinLevel = tonumber(v) or 0; local lfg = _G.FrostSeek and _G.FrostSeek.Modules and _G.FrostSeek.Modules.lfg; if lfg and lfg.keystoneMinBox then lfg.keystoneMinBox:SetText(tostring(FrostSeekDB.LFG.keystoneMinLevel)) end; if lfg and lfg.UpdateRecruitersList then lfg.UpdateRecruitersList() end end },
-        { type = "header", id = "chatFilterHeader", name = "", desc = L["options_chat_filter"] },
+    }},
+    { id = "chatfilter", name = L["options_chat_filter"], icon = "Interface\\AddOns\\FrostSeek\\Media\\texture\\bottoni\\gi.tga", settings = {
+        { type = "header", id = "chatFilterHeader", name = "", desc = L["options_chat_filter_desc"] },
         { type = "checkbox", id = "chatFilterEnabled", name = L["options_chat_filter_enabled"], desc = L["options_chat_filter_enabled_desc"], default = false, getter = function() return FrostSeekDB.LFG.chatFilterEnabled end, setter = function(v) FrostSeekDB.LFG.chatFilterEnabled = v end },
+        { type = "checkbox", id = "chatFilterGuildPartyRaid", name = L["options_chat_filter_gpr"], desc = L["options_chat_filter_gpr_desc"], default = false, getter = function() return FrostSeekDB.LFG.chatFilterGuildPartyRaid end, setter = function(v) FrostSeekDB.LFG.chatFilterGuildPartyRaid = v end },
         { type = "editbox", id = "chatFilterKeywords", name = L["options_chat_filter_keywords"], desc = L["options_chat_filter_keywords_desc"], getter = function() return FrostSeekDB.LFG.chatFilterKeywords or "" end, setter = function(v) FrostSeekDB.LFG.chatFilterKeywords = tostring(v or "") end },
     }},
     { id = "activityfilter", name = L["options_activity_filter"], icon = "Interface\\AddOns\\FrostSeek\\Media\\texture\\bottoni\\filtri.tga", settings = {
@@ -1197,7 +1200,7 @@ local function GetSettingsCategories()
                 Shared.ConfirmDialog(L["clear_all_data"], L["msg_clear_all_data_warning"], function()
                     FrostSeekDB = {
                         Settings = { uiScale = 1.0, windowPosition = nil, minimapButton = true, debugMode = false, savePosition = true, autoOpen = false, soundEnabled = true, soundPopup = true, soundListing = true, soundApplicant = true },
-                        LFG = { myRole = "", silentNotifications = false, frameDuration = 5, disablePopups = true, disableLFG = false, maxMessageLength = 90, popupCooldown = 370, maxConcurrentPopups = 2, doNotAlertInGroup = true, doNotAlertInCombat = true, popupCategories = { ALL = true, DUNGEON = true, RAID = true, WORLD_BOSS = true, PVP = true, MANASTORM = true, KEYSTONE = true, MISC = false }, popupShowLFG = true, popupShowLFM = true, customFilterWords = "", showActiveRecruitersWindow = false, customMessages = { enabled = false, template = "inv {role} {class} {spec} {ilvl} ilvl", showClass = true, showIlvl = true, showEnchant = true, showSpec = true, showRole = true, showLevel = true, showKeystone = false, keystoneLink = "" } },
+                        LFG = { myRole = "", silentNotifications = false, frameDuration = 5, disablePopups = true, disableLFG = false, maxMessageLength = 90, popupCooldown = 370, maxConcurrentPopups = 2, doNotAlertInGroup = true, doNotAlertInCombat = true, popupCategories = { ALL = true, DUNGEON = true, RAID = true, WORLD_BOSS = true, PVP = true, MANASTORM = true, KEYSTONE = true, MISC = false }, popupShowLFG = true, popupShowLFM = true, customFilterWords = "", showActiveRecruitersWindow = false, chatFilterGuildPartyRaid = false, customMessages = { enabled = false, template = "inv {role} {class} {spec} {ilvl} ilvl", showClass = true, showIlvl = true, showEnchant = true, showSpec = true, showRole = true, showLevel = true, showKeystone = false, keystoneLink = "" } },
                         LFM = { lastMessages = {}, favoriteTemplates = {}, channelPresets = {}, autoUpdateInterval = 60, autoInviteMinIlvl = 0 },
                     }
                     ReloadUI()
@@ -1216,7 +1219,7 @@ local function CreateSettingControl(parent, setting, yOffset)
 
     if setting.type == "frostnetrole" then
         local roleFrame = CreateFrame("Frame", nil, parent)
-        roleFrame:SetSize(540, 60)
+        roleFrame:SetSize(580, 60)
         roleFrame:SetPoint("TOPLEFT", parent, "TOPLEFT", 10, yOffset - 10)
 
         local roleLabel = roleFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
@@ -1322,7 +1325,7 @@ local function CreateSettingControl(parent, setting, yOffset)
     end
 
     local controlFrame = CreateFrame("Frame", nil, parent)
-    controlFrame:SetSize(500, 50)
+    controlFrame:SetSize(560, 50)
     controlFrame:SetPoint("TOPLEFT", parent, "TOPLEFT", 10, yOffset)
 
     local nameLabel = controlFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
@@ -1442,7 +1445,7 @@ local function CreateSettingControl(parent, setting, yOffset)
 
         local slider = CreateFrame("Slider", nil, controlFrame)
         slider:SetPoint("RIGHT", controlFrame, "RIGHT", -80, 0)
-        slider:SetSize(150, 15)
+        slider:SetSize(220, 15)
         slider:SetMinMaxValues(setting.min or 0, setting.max or 100)
         slider:SetValueStep(setting.step or 1)
         slider:SetOrientation("HORIZONTAL")
@@ -1488,7 +1491,7 @@ local function CreateSettingControl(parent, setting, yOffset)
         end
 
         local btn = CreateFrame("Button", nil, controlFrame)
-        btn:SetSize(160, 24)
+        btn:SetSize(200, 24)
         btn:SetPoint("RIGHT", controlFrame, "RIGHT", -10, 0)
 
         btn.bg = btn:CreateTexture(nil, "BACKGROUND")
@@ -1550,7 +1553,7 @@ local function CreateSettingControl(parent, setting, yOffset)
 
     elseif setting.type == "category" then
         local categoriesFrame = CreateFrame("Frame", nil, parent)
-        categoriesFrame:SetSize(540, 200)
+        categoriesFrame:SetSize(580, 200)
         categoriesFrame:SetPoint("TOPLEFT", parent, "TOPLEFT", 10, yOffset - 20)
 
         local title = categoriesFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
@@ -1563,7 +1566,7 @@ local function CreateSettingControl(parent, setting, yOffset)
 
         for i, category in ipairs(setting.categories or {}) do
             local catFrame = CreateFrame("Frame", nil, categoriesFrame)
-            catFrame:SetSize(540, 30)
+            catFrame:SetSize(580, 30)
             catFrame:SetPoint("TOPLEFT", categoriesFrame, "TOPLEFT", 20, catYOffset)
 
             local checkbox = CreateSettingCheckbox(catFrame)
@@ -1648,7 +1651,7 @@ local function CreateSettingControl(parent, setting, yOffset)
         nameLabel:SetText("")
 
         local themeFrame = CreateFrame("Frame", nil, parent)
-        themeFrame:SetSize(540, 80)
+        themeFrame:SetSize(580, 80)
         themeFrame:SetPoint("TOPLEFT", parent, "TOPLEFT", 10, yOffset - 20)
 
         local themeTitle = themeFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
@@ -1661,7 +1664,7 @@ local function CreateSettingControl(parent, setting, yOffset)
             themeDropdown = UI.CreateModernDropdown(themeFrame, 200, 24)
         else
             themeDropdown = CreateFrame("Frame", nil, themeFrame)
-            themeDropdown:SetSize(200, 24)
+            themeDropdown:SetSize(280, 24)
         end
         themeDropdown:SetPoint("TOPLEFT", themeTitle, "BOTTOMLEFT", 0, -8)
 
@@ -1726,7 +1729,7 @@ local function CreateSettingControl(parent, setting, yOffset)
 
         local groups = LFG.ACTIVITY_FILTER_GROUPS
         local container = CreateFrame("Frame", nil, parent)
-        container:SetSize(540, 10)
+        container:SetSize(580, 10)
         container:SetPoint("TOPLEFT", parent, "TOPLEFT", 0, yOffset)
 
         local yOff = 0
@@ -1795,7 +1798,7 @@ local function CreateSettingControl(parent, setting, yOffset)
                 currentHeaderCheckboxes = {}
 
                 local hFrame = CreateFrame("Frame", nil, container)
-                hFrame:SetSize(530, 28)
+                hFrame:SetSize(570, 28)
                 hFrame:SetPoint("TOPLEFT", container, "TOPLEFT", 5, yOff)
 
                 local hAccent = hFrame:CreateTexture(nil, "BACKGROUND")
@@ -1851,7 +1854,7 @@ local function CreateSettingControl(parent, setting, yOffset)
                 if skipEntry then
                 else
                 local row = CreateFrame("Frame", nil, container)
-                row:SetSize(530, 24)
+                row:SetSize(570, 24)
                 row:SetPoint("TOPLEFT", container, "TOPLEFT", 15, yOff)
 
                 local cb = CreateFrame("Button", nil, row)
@@ -1961,7 +1964,7 @@ local function CreateSettingControl(parent, setting, yOffset)
         end
 
         local btnRow = CreateFrame("Frame", nil, container)
-        btnRow:SetSize(530, 28)
+        btnRow:SetSize(570, 28)
         btnRow:SetPoint("TOPLEFT", container, "TOPLEFT", 5, yOff - 5)
 
         local selectAllBtn = CreateModernButton(btnRow, L["select_all"], 90, 22)
@@ -2001,7 +2004,7 @@ local function CreateSettingControl(parent, setting, yOffset)
 
     elseif setting.type == "header" then
         local headerFrame = CreateFrame("Frame", nil, parent)
-        headerFrame:SetSize(540, 60)
+        headerFrame:SetSize(580, 80)
         headerFrame:SetPoint("TOPLEFT", parent, "TOPLEFT", 10, yOffset)
 
         local headerText = headerFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
@@ -2012,14 +2015,15 @@ local function CreateSettingControl(parent, setting, yOffset)
         if setting.desc and setting.desc ~= "" then
             local headerDesc = headerFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
             headerDesc:SetPoint("TOPLEFT", headerText, "BOTTOMLEFT", 0, -5)
-            headerDesc:SetPoint("RIGHT", headerFrame, "RIGHT", 0, 0)
+            headerDesc:SetPoint("TOPRIGHT", headerFrame, "TOPRIGHT", 0, -25)
             headerDesc:SetText(setting.desc)
             headerDesc:SetTextColor(unpack(_tc("textMuted")))
             headerDesc:SetJustifyH("LEFT")
+            headerDesc:SetJustifyV("TOP")
             headerDesc:SetWordWrap(true)
-            headerDesc:SetHeight(40)
+            headerDesc:SetHeight(60)
         end
-        return headerFrame, -60
+        return headerFrame, -85
     end
     return controlFrame, -40
 end
@@ -2045,7 +2049,7 @@ function CreateOptionsWindow()
 
     local backdropTemplate = FrostSeekCompat.GetBackdropTemplateStr()
     settingsWindow = CreateFrame("Frame", "FrostSeekOptionsWindow", UIParent, backdropTemplate ~= "" and backdropTemplate or nil)
-    settingsWindow:SetSize(800, 700)
+    settingsWindow:SetSize(900, 700)
     settingsWindow:SetPoint("CENTER")
     settingsWindow:SetFrameStrata("DIALOG")
     settingsWindow:EnableMouse(true)
@@ -2105,7 +2109,7 @@ function CreateOptionsWindow()
     end
 
     local contentFrame = CreateFrame("Frame", nil, settingsWindow)
-    contentFrame:SetSize(550, 550)
+    contentFrame:SetSize(650, 550)
     contentFrame:SetPoint("TOPLEFT", sidebar, "TOPRIGHT", 20, 0)
 
     local contentBg = contentFrame:CreateTexture(nil, "BACKGROUND")
@@ -2117,7 +2121,7 @@ function CreateOptionsWindow()
     scrollFrame:SetPoint("BOTTOMRIGHT", contentFrame, "BOTTOMRIGHT", -25, 10)
 
     local scrollContent = CreateFrame("Frame", nil, scrollFrame)
-    scrollContent:SetSize(500, 540)
+    scrollContent:SetSize(600, 540)
     scrollFrame:SetScrollChild(scrollContent)
 
     settingsWindow.scrollContent = scrollContent
@@ -2132,7 +2136,7 @@ function CreateOptionsWindow()
             frame = CreateCustomKeywordsTab(category, scrollContent)
         else
             frame = CreateFrame("Frame", nil, scrollContent)
-            frame:SetSize(500, 540)
+            frame:SetSize(600, 540)
             frame:SetPoint("TOPLEFT", scrollContent, "TOPLEFT", 0, 0)
 
             local frameTitle = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
