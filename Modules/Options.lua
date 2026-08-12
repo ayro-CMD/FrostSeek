@@ -2467,10 +2467,8 @@ local function ThemeStaticPopup(popupFrame)
     end)
 end
 
-local _orig_StaticPopup_Show = StaticPopup_Show
-if _orig_StaticPopup_Show then
-    StaticPopup_Show = function(which, ...)
-        local result = _orig_StaticPopup_Show(which, ...)
+if StaticPopup_Show then
+    hooksecurefunc("StaticPopup_Show", function(which, ...)
         if which and type(which) == "string" and string.find(which, "^FROSTSEEK_") then
             local maxDialogs = STATICPOPUP_NUMDIALOGS or 4
             for i = 1, maxDialogs do
@@ -2481,8 +2479,7 @@ if _orig_StaticPopup_Show then
                 end
             end
         end
-        return result
-    end
+    end)
 end
 
 if _G.FrostSeek and _G.FrostSeek.RegisterModule then
