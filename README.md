@@ -1,4 +1,4 @@
-# ⚡ FrostSeek v2.2.5
+# ⚡ FrostSeek v2.2.6
 **ONLY ENG/IT LANGUAGE IS FULL TRANSLATE ATM** (OTHER IS WIP)
 **Advanced LFG/LFM Manager with FrostNet** — for WoW Ascension & all WoW Classic / Retail clients.
 
