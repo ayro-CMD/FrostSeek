@@ -313,4 +313,5 @@ Thanks to all the testers and users who provided feedback on Ascension, and othe
 
 ---
 
-**FrostSeek v2.2.5** — Find groups faster. Find members smarter.
+**FrostSeek v2.2.6** — Find groups faster. Find members smarter.
+FrostSeek Pluginn https://github.com/jak2772/FrostSeekAddon-Aura-Tracker
