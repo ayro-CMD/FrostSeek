@@ -593,7 +593,7 @@ local SPAM_WORDS = {
     "enchant service", "jc service", "alch service", "lf enchanter", "lf bs", "lf lw",
     "lf jc", "lf alch", "lf eng", "lf tailor", "lf miner", "lf herbalist",
     "lf skinner", "lf crafter", "crafting lf", "enchanting lf", "smelting lf",
-    "cooking", "lf cook", " Cooking ",
+    "cooking", "lf cook", " Cooking ","enchant",
     "raid on wednesday", "raid on thursday", "raid on friday", "raid on saturday",
     "raid on sunday", "raid on monday", "raid on tuesday",
 }
