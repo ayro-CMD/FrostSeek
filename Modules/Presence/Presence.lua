@@ -38,6 +38,8 @@ Presence.onlineUsers = {}
 Presence.panel = nil
 Presence.panelVisible = false
 Presence.versionWarned = {}
+Presence.roleFilter = Presence.roleFilter or { Tank = false, Healer = false, DPS = false, Support = false }
+Presence.searchFilter = Presence.searchFilter or (FrostSeekDB and FrostSeekDB.Settings and FrostSeekDB.Settings.presenceSearch or "")
 Presence.newerVersionNotified = false
 
 function Presence:CompareVersions(vA, vB)
@@ -117,6 +119,7 @@ function Presence:HandlePresence(user)
         if Shared and Shared.PlaySound then
             Shared.PlaySound("popup")
         end
+        Presence:ShowFavoriteToast(user.name, role, level)
     end
     
     local myVersion = FrostSeek.VERSION or ""
@@ -206,16 +209,34 @@ function Presence:GetOnlineUsers()
 
     local myGuild = (GetGuildInfo and GetGuildInfo("player")) or ""
     local searchQ = (self.searchFilter or ""):lower()
+    local anyRoleFilter = false
+    for _, v in pairs(self.roleFilter or {}) do
+        if v then anyRoleFilter = true; break end
+    end
     local filtered = {}
     for _, u in ipairs(rows) do
         if u.isSelf then
-            table.insert(filtered, u)
+            local roleMatch = true
+            if anyRoleFilter then
+                local r = u.role
+                if r == "SUPPORT" then r = "Support" end
+                roleMatch = self.roleFilter and self.roleFilter[r] == true
+            end
+            if roleMatch then
+                table.insert(filtered, u)
+            end
         else
             local nameLower = tostring(u.name or ""):lower()
             if searchQ ~= "" and not string.find(nameLower, searchQ, 1, true) then
-                
+
             elseif self.guildOnly and myGuild ~= "" and (u.guild or "") ~= myGuild then
-            
+
+            elseif anyRoleFilter then
+                local r = u.role
+                if r == "SUPPORT" then r = "Support" end
+                if self.roleFilter and self.roleFilter[r] == true then
+                    table.insert(filtered, u)
+                end
             else
                 table.insert(filtered, u)
             end
@@ -297,7 +318,8 @@ function Presence:PrintOnlineUsers()
     end
 end
 
-local MAX_ROWS = 50
+local VISIBLE_ROWS = 11
+local ROW_HEIGHT = 26
 
 function Presence:BuildPanel(parent)
     if self.panel then return self.panel end
@@ -573,7 +595,7 @@ function Presence:BuildPanel(parent)
     f.supportCount:SetTextColor(unpack(_tc("textDim")))
 
     local colY = statsY - statsH - 6
-    local toolbarH = 28
+    local toolbarH = 52
     local toolbarY = colY
     colY = colY - toolbarH
 
@@ -600,15 +622,15 @@ function Presence:BuildPanel(parent)
 
     local toolbar = CreateFrame("Frame", nil, f)
     toolbar:SetPoint("TOPLEFT", f, "TOPLEFT", 10, toolbarY)
-    toolbar:SetSize(496, 24)
+    toolbar:SetSize(496, 52)
 
     local searchLabel = toolbar:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-    searchLabel:SetPoint("LEFT", toolbar, "LEFT", 0, 0)
+    searchLabel:SetPoint("TOPLEFT", toolbar, "TOPLEFT", 0, -8)
     searchLabel:SetText(_hex("textDim") .. (L["search"] or L["search"]) .. ":|r")
     f.searchEdit = CreateFrame("EditBox", nil, toolbar)
     f.searchEdit:SetAutoFocus(false)
     f.searchEdit:SetFontObject("GameFontNormalSmall")
-    f.searchEdit:SetSize(140, 20)
+    f.searchEdit:SetSize(200, 20)
     f.searchEdit:SetPoint("LEFT", searchLabel, "RIGHT", 6, 0)
     f.searchEdit:SetBackdrop({
         bgFile = "Interface\\ChatFrame\\ChatFrameBackground",
@@ -619,18 +641,73 @@ function Presence:BuildPanel(parent)
     f.searchEdit:SetBackdropColor(0.08, 0.08, 0.12, 0.95)
     f.searchEdit:SetBackdropBorderColor(0.3, 0.4, 0.5, 1.0)
     f.searchEdit:SetTextInsets(6, 6, 2, 2)
-    f.searchEdit:SetText("")
+    f.searchEdit:SetText(Presence.searchFilter or "")
     f.searchEdit:SetScript("OnEscapePressed", function(self) self:ClearFocus() end)
     f.searchEdit:SetScript("OnTextChanged", function(self)
         Presence.searchFilter = (self:GetText() or ""):lower()
+        if FrostSeekDB and FrostSeekDB.Settings then
+            FrostSeekDB.Settings.presenceSearch = Presence.searchFilter
+        end
         Presence:RefreshPanel()
     end)
 
+    local ROLE_CYCLE = {
+        { id = "all",     label = "All",      color = {0.7, 0.7, 0.7} },
+        { id = "Tank",    label = "Tank",     color = {0.29, 0.64, 1.0} },
+        { id = "Healer",  label = "Healer",   color = {0.27, 1.0, 0.40} },
+        { id = "DPS",     label = "DPS",      color = {1.0, 0.33, 0.33} },
+        { id = "Support", label = "Support", color = {0.70, 0.40, 1.00} },
+    }
+    Presence.roleCycleIndex = Presence.roleCycleIndex or 1
+    for k in pairs(Presence.roleFilter or {}) do
+        Presence.roleFilter[k] = false
+    end
+
+    local roleBtn = CreateFrame("Button", nil, toolbar)
+    roleBtn:SetSize(110, 20)
+    roleBtn:SetPoint("TOPLEFT", toolbar, "TOPLEFT", 0, -32)
+    roleBtn.bg = roleBtn:CreateTexture(nil, "BACKGROUND")
+    roleBtn.bg:SetAllPoints()
+    roleBtn.bg:SetColorTexture(0.1, 0.1, 0.15, 0.95)
+    roleBtn.border = roleBtn:CreateTexture(nil, "BORDER")
+    roleBtn.border:SetAllPoints()
+    roleBtn.border:SetColorTexture(0.3, 0.4, 0.5, 1.0)
+    roleBtn.text = roleBtn:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    roleBtn.text:SetPoint("CENTER")
+
+    local function UpdateRoleBtnVisual()
+        local r = ROLE_CYCLE[Presence.roleCycleIndex] or ROLE_CYCLE[1]
+        roleBtn.text:SetText("|cff888888Role:|r |cffffffff" .. r.label .. "|r")
+    end
+    UpdateRoleBtnVisual()
+    roleBtn:SetScript("OnClick", function()
+        Presence.roleCycleIndex = (Presence.roleCycleIndex % #ROLE_CYCLE) + 1
+        local r = ROLE_CYCLE[Presence.roleCycleIndex]
+        for _, opt in ipairs(ROLE_CYCLE) do
+            if Presence.roleFilter[opt.id] ~= nil then
+                Presence.roleFilter[opt.id] = (opt.id == r.id) and r.id ~= "all"
+            end
+        end
+        UpdateRoleBtnVisual()
+        Presence:RefreshPanel()
+    end)
+    f.roleBtn = roleBtn
+
+    local function applyRoleCycleState()
+        local r = ROLE_CYCLE[Presence.roleCycleIndex] or ROLE_CYCLE[1]
+        for _, opt in ipairs(ROLE_CYCLE) do
+            if Presence.roleFilter[opt.id] ~= nil then
+                Presence.roleFilter[opt.id] = (opt.id == r.id) and r.id ~= "all"
+            end
+        end
+    end
+    applyRoleCycleState()
+
     local sortLabel = toolbar:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-    sortLabel:SetPoint("LEFT", f.searchEdit, "RIGHT", 12, 0)
+    sortLabel:SetPoint("TOPLEFT", toolbar, "TOPLEFT", 120, -35)
     sortLabel:SetText(_hex("textDim") .. (L["presence_sort"] or L["presence_sort"]) .. ":|r")
     local sortBtn = CreateFrame("Button", nil, toolbar)
-    sortBtn:SetSize(90, 20)
+    sortBtn:SetSize(80, 20)
     sortBtn:SetPoint("LEFT", sortLabel, "RIGHT", 4, 0)
     sortBtn.bg = sortBtn:CreateTexture(nil, "BACKGROUND")
     sortBtn.bg:SetAllPoints()
@@ -683,29 +760,26 @@ function Presence:BuildPanel(parent)
 
     
     local footerY = 8
-    local listTop = colY - 24
-    local listBottom = footerY + 32
+    local listH = VISIBLE_ROWS * ROW_HEIGHT + 2
     local listFrame = CreateFrame("Frame", nil, f)
-    listFrame:SetPoint("TOPLEFT", f, "TOPLEFT", 10, listTop)
-    listFrame:SetPoint("BOTTOMRIGHT", f, "BOTTOMRIGHT", -6, listBottom)
+    listFrame:SetHeight(listH)
+    listFrame:SetPoint("TOPLEFT", f, "TOPLEFT", 10, colY - 24)
+    listFrame:SetWidth(496)
 
-    local scrollFrame = CreateFrame("ScrollFrame", "FrostSeekPresenceScroll", listFrame, "UIPanelScrollFrameTemplate")
-    scrollFrame:SetPoint("TOPLEFT", listFrame, "TOPLEFT", 0, 0)
-    scrollFrame:SetPoint("BOTTOMRIGHT", listFrame, "BOTTOMRIGHT", -18, 0)
-
-    local scrollChild = CreateFrame("Frame", nil, scrollFrame)
-    scrollChild:SetSize(478, 200)
-    scrollFrame:SetScrollChild(scrollChild)
+    local scrollFrame = CreateFrame("ScrollFrame", "FrostSeekPresenceScroll", listFrame, "FauxScrollFrameTemplate")
+    scrollFrame:SetPoint("TOPLEFT", listFrame, "TOPLEFT", 0, -2)
+    scrollFrame:SetPoint("BOTTOMRIGHT", listFrame, "BOTTOMRIGHT", -18, 2)
     self.presenceScrollFrame = scrollFrame
-    self.presenceScrollChild = scrollChild
+
+    local scrollBarWidth = 16
+    local rowWidth = 478 - scrollBarWidth
 
     self.rows = {}
-    local rowStartY = 0
-    for i = 1, MAX_ROWS do
-        local r = CreateFrame("Button", nil, scrollChild)
-        r:SetWidth(478)
-        r:SetHeight(24)
-        r:SetPoint("TOPLEFT", scrollChild, "TOPLEFT", 0, rowStartY - ((i - 1) * 26))
+    for i = 1, VISIBLE_ROWS do
+        local r = CreateFrame("Button", nil, listFrame)
+        r:SetWidth(rowWidth)
+        r:SetHeight(ROW_HEIGHT)
+        r:SetPoint("TOPLEFT", listFrame, "TOPLEFT", 0, -((i - 1) * ROW_HEIGHT))
 
         r.bg = r:CreateTexture(nil, "BACKGROUND")
         r.bg:SetAllPoints()
@@ -716,33 +790,39 @@ function Presence:BuildPanel(parent)
         r.statusDot:SetPoint("LEFT", r, "LEFT", 8, 0)
         r.statusDot:SetColorTexture(unpack(_tc("success")))
 
+        r.classIconBorder = r:CreateTexture(nil, "BACKGROUND")
+        r.classIconBorder:SetSize(22, 22)
+        r.classIconBorder:SetPoint("CENTER", r, "LEFT", 28, 0)
+        r.classIconBorder:SetColorTexture(0, 0, 0, 0)
+        r.classIconBorder:Hide()
+
         r.classIcon = r:CreateTexture(nil, "ARTWORK")
-        r.classIcon:SetSize(14, 14)
-        r.classIcon:SetPoint("LEFT", r, "LEFT", 18, 0)
+        r.classIcon:SetSize(20, 20)
+        r.classIcon:SetPoint("CENTER", r, "LEFT", 28, 0)
         r.classIcon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
         r.classIcon:Hide()
 
         r.name = r:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-        r.name:SetPoint("LEFT", r, "LEFT", 36, 0)
-        r.name:SetWidth(87)
+        r.name:SetPoint("LEFT", r, "LEFT", 44, 0)
+        r.name:SetWidth(95)
         r.name:SetJustifyH("LEFT")
 
         r.level = r:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-        r.level:SetPoint("LEFT", r, "LEFT", 130, 0)
+        r.level:SetPoint("LEFT", r, "LEFT", 145, 0)
         r.level:SetWidth(30)
 
         r.role = r:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-        r.role:SetPoint("LEFT", r, "LEFT", 165, 0)
+        r.role:SetPoint("LEFT", r, "LEFT", 180, 0)
         r.role:SetWidth(48)
 
         r.zone = r:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-        r.zone:SetPoint("LEFT", r, "LEFT", 215, 0)
-        r.zone:SetWidth(103)
+        r.zone:SetPoint("LEFT", r, "LEFT", 230, 0)
+        r.zone:SetWidth(95)
         r.zone:SetJustifyH("LEFT")
 
         r.guild = r:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-        r.guild:SetPoint("LEFT", r, "LEFT", 320, 0)
-        r.guild:SetWidth(110)
+        r.guild:SetPoint("LEFT", r, "LEFT", 330, 0)
+        r.guild:SetWidth(100)
         r.guild:SetJustifyH("LEFT")
 
         r.seen = r:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
@@ -794,7 +874,8 @@ function Presence:BuildPanel(parent)
                     end
                 end
                 GameTooltip:AddLine(" ")
-                GameTooltip:AddLine(L["tip_right_click_whisper"], 0.4, 1, 0.4)
+                GameTooltip:AddLine(L["tip_left_click_whisper"], 0.4, 1, 0.4)
+                GameTooltip:AddLine(L["tip_right_click_menu"], 0.4, 1, 0.4)
                 GameTooltip:AddLine(L["tip_shift_click_favorite"], 0.7, 0.4, 1.0)
                 GameTooltip:Show()
             end
@@ -805,12 +886,21 @@ function Presence:BuildPanel(parent)
         end)
         r:RegisterForClicks("LeftButtonUp", "RightButtonUp")
         r:SetScript("OnClick", function(self, button)
-            if button == "LeftButton" and IsShiftKeyDown() and self.userData and self.userData.name then
-                Presence.ToggleFavorite(self.userData.name)
-                return
-            end
-            if button == "RightButton" and self.userData and self.userData.name then
-                local pn = UnitName("player") or ""
+            if not self.userData or not self.userData.name then return end
+            local pn = UnitName("player") or ""
+            if button == "LeftButton" then
+                if IsShiftKeyDown() then
+                    Presence.ToggleFavorite(self.userData.name)
+                    return
+                end
+                if self.userData.name ~= pn then
+                    if FrostSeekCompat and FrostSeekCompat.OpenChat then
+                        FrostSeekCompat.OpenChat("/w " .. self.userData.name .. " ")
+                    elseif ChatFrame_OpenChat then
+                        ChatFrame_OpenChat("/w " .. self.userData.name .. " ")
+                    end
+                end
+            elseif button == "RightButton" then
                 if self.userData.name ~= pn then
                     Presence:ShowRowContextMenu(self.userData)
                 end
@@ -821,17 +911,10 @@ function Presence:BuildPanel(parent)
         r:Hide()
     end
 
-    
-    scrollFrame:EnableMouseWheel(true)
-    scrollFrame:SetScript("OnMouseWheel", function(self, delta)
-        local range = scrollChild:GetHeight() - scrollFrame:GetHeight()
-        if range <= 0 then return end
-        local cur = scrollFrame:GetVerticalScroll()
-        if delta > 0 then
-            scrollFrame:SetVerticalScroll(math.max(0, cur - 40))
-        else
-            scrollFrame:SetVerticalScroll(math.min(range, cur + 40))
-        end
+    scrollFrame:SetScript("OnVerticalScroll", function(self, offset)
+        FauxScrollFrame_OnVerticalScroll(self, offset, ROW_HEIGHT, function()
+            Presence:RefreshPanel()
+        end)
     end)
 
     if FrostSeek and FrostSeek.UI and FrostSeek.UI.CreateModernButton then
@@ -976,15 +1059,19 @@ function Presence:RefreshPanel()
         end
     end
 
-    
-    if self.presenceScrollChild then
-        local totalUsers = #rows
-        local neededH = math.max(200, totalUsers * 26 + 4)
-        self.presenceScrollChild:SetHeight(neededH)
+
+    local scrollOffset = 0
+    if self.presenceScrollFrame then
+        scrollOffset = FauxScrollFrame_GetOffset(self.presenceScrollFrame)
+    end
+    local totalUsers = #rows
+
+    if self.presenceScrollFrame then
+        FauxScrollFrame_Update(self.presenceScrollFrame, totalUsers, VISIBLE_ROWS, ROW_HEIGHT)
     end
 
     for i, row in ipairs(self.rows) do
-        local u = rows[i]
+        local u = rows[i + scrollOffset]
         if u then
             row:Show()
             row.userData = u
@@ -1012,8 +1099,18 @@ function Presence:RefreshPanel()
                 if cf and cf ~= "" then
                     row.classIcon:SetTexture(GetClassIcon(cf))
                     row.classIcon:Show()
+                    if row.classIconBorder then
+                        local cColor = GetClassColor(cf)
+                        if cColor then
+                            row.classIconBorder:SetColorTexture(cColor[1], cColor[2], cColor[3], 0.35)
+                            row.classIconBorder:Show()
+                        else
+                            row.classIconBorder:Hide()
+                        end
+                    end
                 else
                     row.classIcon:Hide()
+                    if row.classIconBorder then row.classIconBorder:Hide() end
                 end
             end
 
@@ -1039,13 +1136,13 @@ function Presence:RefreshPanel()
 
             local age = time() - (u.seen or time())
             local userStatus = u.status or L["status_free"]
-            
+
             local statusColor = {0.2, 0.9, 0.4}
             local statusOpts = f.STATUS_OPTIONS or {}
             for _, opt in ipairs(statusOpts) do
                 if opt.id == userStatus then statusColor = opt.color break end
             end
-            
+
             if userStatus == "Online" then statusColor = {0.2, 0.9, 0.4} end
 
             if u.isSelf then
@@ -1065,11 +1162,129 @@ function Presence:RefreshPanel()
             row:Hide()
             row.userData = nil
             if row.classIcon then row.classIcon:Hide() end
+            if row.classIconBorder then row.classIconBorder:Hide() end
         end
     end
 end
 
 Presence._ctxMenu = nil
+Presence._activeToasts = Presence._activeToasts or {}
+
+function Presence:ShowFavoriteToast(name, role, level)
+    if not name or name == "" then return end
+    if not FrostSeekDB or not FrostSeekDB.LFG or FrostSeekDB.LFG.silentNotifications == true then return end
+
+    local toast = CreateFrame("Frame", nil, UIParent)
+    toast:SetFrameStrata("TOOLTIP")
+    toast:SetToplevel(true)
+    toast:EnableMouse(true)
+    toast:SetSize(280, 56)
+
+    local toastW = 280
+    local toastH = 56
+
+    local idx = #Presence._activeToasts
+    toast:SetPoint("TOPRIGHT", UIParent, "TOPRIGHT", -20, -20 - (idx * (toastH + 6)))
+
+    toast.bg = toast:CreateTexture(nil, "BACKGROUND")
+    toast.bg:SetAllPoints()
+    toast.bg:SetColorTexture(0.08, 0.08, 0.12, 0.97)
+
+    toast.border = toast:CreateTexture(nil, "BORDER")
+    toast.border:SetAllPoints()
+    toast.border:SetColorTexture(0.7, 0.4, 1.0, 0.8)
+
+    toast.accent = toast:CreateTexture(nil, "ARTWORK")
+    toast.accent:SetSize(4, toastH - 6)
+    toast.accent:SetPoint("LEFT", toast, "LEFT", 3, 0)
+    toast.accent:SetColorTexture(0.7, 0.4, 1.0, 1.0)
+
+    toast.icon = toast:CreateTexture(nil, "ARTWORK")
+    toast.icon:SetSize(28, 28)
+    toast.icon:SetPoint("LEFT", toast, "LEFT", 12, 0)
+    toast.icon:SetTexture("Interface\\Icons\\INV_Misc_QuestionMark")
+
+    toast.title = toast:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    toast.title:SetPoint("TOPLEFT", toast.icon, "TOPRIGHT", 8, -2)
+    toast.title:SetText("|cffb366ff" .. (L["presence_favorite_online_title"] or "Favorite Online") .. "|r")
+
+    toast.body = toast:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    toast.body:SetPoint("BOTTOMLEFT", toast.icon, "BOTTOMRIGHT", 8, 2)
+    local bodyParts = {}
+    table.insert(bodyParts, "|cffffffff" .. tostring(name) .. "|r")
+    if level and level ~= "" then
+        table.insert(bodyParts, "|cff888888" .. (L["level"] or "Lvl") .. " " .. tostring(level) .. "|r")
+    end
+    if role and role ~= "" then
+        local roleColor = "|cff888888"
+        if role == "Tank" then roleColor = "|cff4aa3ff"
+        elseif role == "Healer" then roleColor = "|cff44ff66"
+        elseif role == "DPS" then roleColor = "|cffff5555"
+        elseif role == "Support" or role == "SUPPORT" then roleColor = "|cffb366ff"
+        end
+        table.insert(bodyParts, roleColor .. tostring(role) .. "|r")
+    end
+    toast.body:SetText(table.concat(bodyParts, "  "))
+
+    toast:SetAlpha(0)
+    toast:Show()
+    local elapsed = 0
+    local phase = "in"
+    toast:SetScript("OnUpdate", function(self, delta)
+        elapsed = elapsed + delta
+        if phase == "in" then
+            local a = math.min(1, elapsed / 0.25)
+            self:SetAlpha(a)
+            if a >= 1 then phase = "hold"; elapsed = 0 end
+        elseif phase == "hold" then
+            if elapsed >= 4.0 then phase = "out"; elapsed = 0 end
+        elseif phase == "out" then
+            local a = math.max(0, 1 - (elapsed / 0.4))
+            self:SetAlpha(a)
+            if a <= 0 then
+                self:Hide()
+                self:SetScript("OnUpdate", nil)
+                for i, t in ipairs(Presence._activeToasts) do
+                    if t == self then
+                        table.remove(Presence._activeToasts, i)
+                        break
+                    end
+                end
+                Presence:RelayoutToasts()
+                self:GetParent():SetScript("OnUpdate", nil)
+            end
+        end
+    end)
+
+    toast:SetScript("OnMouseDown", function(self)
+        if FrostSeekCompat and FrostSeekCompat.OpenChat then
+            FrostSeekCompat.OpenChat("/w " .. tostring(name) .. " ")
+        elseif ChatFrame_OpenChat then
+            ChatFrame_OpenChat("/w " .. tostring(name) .. " ")
+        end
+        self:SetScript("OnUpdate", nil)
+        self:Hide()
+        for i, t in ipairs(Presence._activeToasts) do
+            if t == self then
+                table.remove(Presence._activeToasts, i)
+                break
+            end
+        end
+        Presence:RelayoutToasts()
+    end)
+
+    table.insert(Presence._activeToasts, toast)
+    Presence:RelayoutToasts()
+end
+
+function Presence:RelayoutToasts()
+    local toastH = 56
+    local gap = 6
+    for i, t in ipairs(Presence._activeToasts) do
+        t:ClearAllPoints()
+        t:SetPoint("TOPRIGHT", UIParent, "TOPRIGHT", -20, -20 - ((i - 1) * (toastH + gap)))
+    end
+end
 
 function Presence:ShowRowContextMenu(userData)
     if not userData or not userData.name then return end
@@ -1078,9 +1293,10 @@ function Presence:ShowRowContextMenu(userData)
         Presence._ctxMenu = nil
     end
     local menu = CreateFrame("Frame", "FrostSeekPresenceCtxMenu", UIParent)
-    menu:SetFrameStrata("DIALOG")
+    menu:SetFrameStrata("TOOLTIP")
     menu:SetToplevel(true)
     menu:EnableMouse(true)
+    local isFav = FrostSeekDB and FrostSeekDB.Favorites and FrostSeekDB.Favorites[userData.name] ~= nil
     local options = {
         { label = L["popup_whisper"] or L["popup_whisper"], action = function()
             if FrostSeekCompat and FrostSeekCompat.OpenChat then
@@ -1095,13 +1311,17 @@ function Presence:ShowRowContextMenu(userData)
         { label = L["presence_add_friend"] or L["presence_add_friend"], action = function()
             pcall(function() AddOrRemoveFriend(userData.name) end)
         end },
+        { label = isFav and (L["presence_remove_favorite"] or "Remove Favorite") or (L["presence_add_favorite"] or "Add Favorite"),
+          action = function()
+            Presence.ToggleFavorite(userData.name)
+        end },
         { label = L["presence_join_voice"] or L["presence_join_voice"], action = function()
             local VB = FrostSeek and FrostSeek.VoiceBridge
             if VB then VB:JoinVoice(userData.name) end
         end },
     }
     local itemH = 22
-    menu:SetSize(160, #options * itemH + 8)
+    menu:SetSize(170, #options * itemH + 8)
     menu:SetPoint("CENTER")
     menu:SetBackdrop({
         bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background",
@@ -1112,8 +1332,9 @@ function Presence:ShowRowContextMenu(userData)
     menu:SetBackdropColor(0.08, 0.08, 0.12, 0.97)
     for i, opt in ipairs(options) do
         local btn = CreateFrame("Button", nil, menu)
-        btn:SetSize(150, itemH)
+        btn:SetSize(160, itemH)
         btn:SetPoint("TOPLEFT", menu, "TOPLEFT", 5, -4 - ((i - 1) * itemH))
+        btn:RegisterForClicks("LeftButtonUp")
         btn.text = btn:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
         btn.text:SetPoint("LEFT", btn, "LEFT", 8, 0)
         btn.text:SetText(opt.label)
@@ -1130,9 +1351,9 @@ function Presence:ShowRowContextMenu(userData)
             self.text:SetTextColor(0.9, 0.9, 0.9)
         end)
     end
-    
+
     local closer = CreateFrame("Button", nil, UIParent)
-    closer:SetFrameStrata("TOOLTIP")
+    closer:SetFrameStrata("DIALOG")
     closer:SetAllPoints(UIParent)
     closer:RegisterForClicks("AnyUp")
     closer:SetScript("OnClick", function()

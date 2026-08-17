@@ -55,7 +55,7 @@ function FrostSeek._v.g(name)
     return FrostSeek._v.w[name]
 end
 
-FrostSeek.VERSION = "2.2.6"
+FrostSeek.VERSION = "2.3.0"
 
 local L = setmetatable({}, {
     __index = function(_, key)
@@ -161,12 +161,14 @@ if not FrostSeekDB.LFG then
     FrostSeekDB.LFG = {
         myRole = "No Role",
         includeCurrentLre = true,
-        silentNotifications = false,
+        silentNotifications = true,
         frameDuration = 5,
         dontDisplayDeclinedDuration = 300,
         dontDisplaySpammers = 30,
         disablePopups = true,
         disableLFG = false,
+        doNotAlertInGroup = true,
+        doNotAlertInCombat = true,
         filterWords = "echo,lfg,wts,buy,shop,gold,sell,account,boost,carry,pve,eu,na,need,wtt,wtb,bazar,hello,player",
         maxMessageLength = 90,
         popupCooldown = 370,
@@ -189,6 +191,7 @@ if not FrostSeekDB.LFG then
         keystoneMinLevel = 0,
         chatFilterEnabled = false,
         chatFilterGuildPartyRaid = false,
+        chatFilterHideOwnMessages = false,
         chatFilterKeywords = "lfg,lfm,lf,lfg+,looking for group,looking for member,looking for raid,looking for,inv,invite,keystone,wts,wtb,boost,carry",
         showActiveRecruitersWindow = false,
         activeWindowPosition = nil,
@@ -410,8 +413,15 @@ local function EnsureSettingsIntegrity()
             FrostSeekDB.LFG.popupModeFilter = nil
         end
         if FrostSeekDB.LFG.keystoneMinLevel == nil then FrostSeekDB.LFG.keystoneMinLevel = 0 end
+        if FrostSeekDB.LFG.doNotAlertInGroup == nil then FrostSeekDB.LFG.doNotAlertInGroup = true end
+        if FrostSeekDB.LFG.doNotAlertInCombat == nil then FrostSeekDB.LFG.doNotAlertInCombat = true end
+        if FrostSeekDB._silentNotifMigrated ~= true then
+            FrostSeekDB.LFG.silentNotifications = true
+            FrostSeekDB._silentNotifMigrated = true
+        end
         if FrostSeekDB.LFG.chatFilterEnabled == nil then FrostSeekDB.LFG.chatFilterEnabled = false end
         if FrostSeekDB.LFG.chatFilterGuildPartyRaid == nil then FrostSeekDB.LFG.chatFilterGuildPartyRaid = false end
+        if FrostSeekDB.LFG.chatFilterHideOwnMessages == nil then FrostSeekDB.LFG.chatFilterHideOwnMessages = false end
         if not FrostSeekDB.LFG.chatFilterKeywords or FrostSeekDB.LFG.chatFilterKeywords == "" then
             FrostSeekDB.LFG.chatFilterKeywords = "lfg,lfm,lf,lfg+,looking for group,looking for member,looking for raid,looking for,inv,invite,keystone,wts,wtb,boost,carry"
         end
@@ -1248,6 +1258,47 @@ SlashCmdList["FSOPEN"] = function()
     LPrint("core_welcome")
 end
 
+SLASH_FSSOUND1 = "/fssound"
+SlashCmdList["FSSOUND"] = function(msg)
+    msg = (msg or ""):lower():gsub("^%s+", ""):gsub("%s+$", "")
+    local valid = { "popup", "listing", "applicant", "connect", "disconnect", "whisper" }
+    if msg == "" then
+        print("|cff88ccffFrostSeek:|r Test suoni custom. Uso: /fssound <tipo>")
+        print("  Tipi disponibili: " .. table.concat(valid, ", "))
+        print("  Esempio: |cff88ccff/fssound popup|r")
+        print("  Nota: questo comando ignora l'impostazione 'Notifiche Silenziose'.")
+        return
+    end
+    local found = false
+    for _, v in ipairs(valid) do
+        if v == msg then found = true; break end
+    end
+    if not found then
+        print("|cffff5555FrostSeek:|r Tipo suono non valido: '" .. msg .. "'")
+        print("  Tipi disponibili: " .. table.concat(valid, ", "))
+        return
+    end
+    local SOUNDS = {
+        popup = "Interface\\AddOns\\FrostSeek\\Media\\sound\\popup.wav",
+        listing = "Interface\\AddOns\\FrostSeek\\Media\\sound\\listing.wav",
+        applicant = "Interface\\AddOns\\FrostSeek\\Media\\sound\\applicant.wav",
+        connect = "Interface\\AddOns\\FrostSeek\\Media\\sound\\connect.wav",
+        disconnect = "Interface\\AddOns\\FrostSeek\\Media\\sound\\connect.wav",
+        whisper = "Sound\\Interface\\TellMessage",
+    }
+    local soundFile = SOUNDS[msg]
+    if not soundFile then
+        print("|cffff5555FrostSeek:|r Suono non mappato: " .. msg)
+        return
+    end
+    print("|cff88ccffFrostSeek:|r Riproduco il suono: |cffffff00" .. msg .. "|r")
+    if PlaySoundFile then
+        PlaySoundFile(soundFile)
+    else
+        print("|cffff5555FrostSeek:|r PlaySoundFile non disponibile in questo client.")
+    end
+end
+
 SLASH_FSNET1 = "/fsnet"
 SlashCmdList["FSNET"] = function()
     print(L["core_net_status_header"])
@@ -1598,6 +1649,16 @@ local function FrostSeekChatFilter(self, event, msg, sender, langName, chanName,
         local channelBaseName = select(5, ...)
         if channelBaseName and IsAddonChannelName(tostring(channelBaseName)) then
             return false
+        end
+    end
+
+    if db.chatFilterHideOwnMessages ~= true then
+        local playerName = UnitName("player")
+        if playerName and sender then
+            local senderShort = tostring(sender):match("^([^%-]+)") or tostring(sender)
+            if senderShort == playerName then
+                return false
+            end
         end
     end
 

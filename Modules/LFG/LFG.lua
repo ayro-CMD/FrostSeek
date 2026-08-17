@@ -512,6 +512,87 @@ local SHORT_NAME_OVERRIDES = {
     ["Dire Maul"] = "DM",
     ["Scholomance"] = "Scholo",
     ["Stratholme"] = "Strat",
+    ["Wailing Caverns"] = "WC",
+    ["Shadowfang Keep"] = "SFK",
+    ["Blackfathom Deeps"] = "BFD",
+    ["Blackrock Cavern"] = "BRC",
+    ["Dire Maul North"] = "DMN",
+    ["Shadowbone Depths"] = "SD",
+    ["Temple of Embers"] = "Embers",
+    ["Arena (2v2/3v3/5v5)"] = "Arena",
+    ["Manastorm (General)"] = "MStorm",
+    ["Manastorm Gold Farm"] = "MS Gold",
+    ["Manastorm Bonzo"] = "MS Bonzo",
+    ["Scarlet Monastery (MoP)"] = "SM (MoP)",
+    ["Scholomance (MoP)"] = "Scholo (MoP)",
+    ["Zul'Gurub (Cata)"] = "ZG (Cata)",
+    ["Zul'Aman (Cata)"] = "ZA (Cata)",
+    ["Utgarde Pinnacle"] = "UP",
+    ["Utgarde Keep"] = "UK",
+    ["Halls of Stone"] = "HoS",
+    ["Halls of Lightning"] = "HoL",
+    ["Culling of Stratholme"] = "CoS",
+    ["Trial of the Champion"] = "ToC",
+    ["Halls of Reflection"] = "HoR",
+    ["Forge of Souls"] = "FoS",
+    ["Pit of Saron"] = "PoS",
+    ["Drak'Tharon Keep"] = "DTK",
+    ["Lower Blackrock Spire"] = "LBRS",
+    ["Upper Blackrock Spire"] = "UBRS",
+    ["Blackrock Depths"] = "BRD",
+    ["Hellfire Ramparts"] = "Ramps",
+    ["Auchenai Crypts"] = "AC",
+    ["Sethekk Halls"] = "SH",
+    ["Shadow Labyrinth"] = "SL",
+    ["The Shattered Halls"] = "SHH",
+    ["The Steamvault"] = "SV",
+    ["The Black Morass"] = "BM",
+    ["Magister's Terrace"] = "MgT",
+    ["Old Hillsbrad"] = "OHF",
+    ["Gate of the Setting Sun"] = "Setting Sun",
+    ["Siege of Niuzao Temple"] = "Niuzao",
+    ["Stormstout Brewery"] = "Brewery",
+    ["Shado-Pan Monastery"] = "Shado-Pan",
+    ["Mogu'shan Palace"] = "Mogu'shan",
+    ["Vault of the Inquisition"] = "Vault",
+    ["Road to De' Other Side"] = "Roads",
+    ["The Radiant Spring"] = "TRS",
+    ["Glittermurk Mines"] = "GMM",
+    ["Karazhan Crypt"] = "KC",
+    ["Temple of the Jade Serpent"] = "Jade Serpent",
+    ["Siege of Orgrimmar"] = "SoO",
+    ["Throne of Thunder"] = "ToT",
+    ["Terrace of Endless Spring"] = "ToES",
+    ["Mogu'shan Vaults"] = "MSV",
+    ["Heart of Fear"] = "HoF",
+    ["Bastion of Twilight"] = "BoT",
+    ["Blackwing Descent"] = "BWD",
+    ["Throne of the Four Winds"] = "T4W",
+    ["Halls of Origination"] = "Origination",
+    ["Lost City of the Tol'vir"] = "Tol'vir",
+    ["Serpentshrine Cavern"] = "SSC",
+    ["Sunwell Plateau"] = "SWP",
+    ["Blackwing Lair"] = "BWL",
+    ["Molten Core"] = "MC",
+    ["Ruins of Ahn'Qiraj"] = "AQ20",
+    ["Temple of Ahn'Qiraj"] = "AQ40",
+    ["Zul'Gurub"] = "ZG",
+    ["Zul'Aman"] = "ZA",
+    ["Icecrown Citadel"] = "ICC",
+    ["Trial of the Crusader"] = "ToC",
+    ["Ruby Sanctum"] = "RS",
+    ["Baradin Hold"] = "BH",
+    ["Dragon Soul"] = "DS",
+    ["Vault of Archavon"] = "VoA",
+    ["Obsidian Sanctum"] = "OS",
+    ["Eye of Eternity"] = "EoE",
+    ["Black Temple"] = "BT",
+    ["Mount Hyjal"] = "Hyjal",
+    ["Tempest Keep"] = "TK",
+    ["The Vortex Pinnacle"] = "Vortex",
+    ["Throne of the Tides"] = "Tides",
+    ["World Boss Tour"] = "WB Tour",
+    ["Emerald Dream"] = "Dream",
 }
 
 function LFG.GetShortDungeonName(category, dungeon)
@@ -520,12 +601,12 @@ function LFG.GetShortDungeonName(category, dungeon)
     if SHORT_NAME_OVERRIDES[name] then
         return SHORT_NAME_OVERRIDES[name]
     end
-    if string.len(name) <= 14 then return name end
+    if string.len(name) <= 16 then return name end
     local firstWord = string.match(name, "^(%S+)")
-    if firstWord and string.len(firstWord) <= 14 then
+    if firstWord and string.len(firstWord) <= 16 then
         return firstWord
     end
-    return string.sub(name, 1, 12) .. "..."
+    return string.sub(name, 1, 14) .. "..."
 end
 
 function LFG.PassesActivityFilter(category, dungeon)
@@ -578,12 +659,12 @@ local SPAM_WORDS = {
     "raffle", "contest", "prize", "merch", "store", "shop", "buy now",
     "weakaura", "weakauras", "elvui", "tukui", "plater", "dbm", "bigwigs",
     "https", "discord.gg", "twitch.tv", "youtube", "but", "ahead",
-    "account", "heirloom","help","bazaar","token","don't", "shit",
-    "wtt","how","do","pets","stress","test","here","xd","<Minimum effort>","<cleanse>",
+    "account", "heirloom","help","bazaar","token","don't", "shit","<Minimum effort>","<cleanse>",
+    "wtt","how","do","pets","stress","test","here","xd","Minimum effort","cleanse",
     "farmers","chez","plf","test","pasticcio","nearby","never",
     "tSM", "mRP", "trp", "total rp","?","other","escort",
     "gamble", "bet", "wager", "jackpot", "lottery", "lucky draw", "spin the wheel",
-    "selling.*run", "gold.*run","where is","24/7","Minimum effort","cleanse",
+    "selling.*run", "gold.*run","where is","24/7",
     "alchemy", "alch", "blacksmithing", "bs", "enchanting", "ench", "engineering", "eng", "inscription",
     "jewelcrafting", "jc", "leatherworking", "lw", "tailoring", "skinning", "mining",
     "herbalism", "herb", "herbalist", "first aid", "fishing", "archaeology", "arch",
@@ -593,7 +674,7 @@ local SPAM_WORDS = {
     "enchant service", "jc service", "alch service", "lf enchanter", "lf bs", "lf lw",
     "lf jc", "lf alch", "lf eng", "lf tailor", "lf miner", "lf herbalist",
     "lf skinner", "lf crafter", "crafting lf", "enchanting lf", "smelting lf",
-    "cooking", "lf cook", " Cooking ","enchant",
+    "cooking", "lf cook", " Cooking ","enchant","reclutamos","recrutando","imortal",
     "raid on wednesday", "raid on thursday", "raid on friday", "raid on saturday",
     "raid on sunday", "raid on monday", "raid on tuesday",
 }
@@ -804,6 +885,13 @@ function LFG.GetMessageMode(msg)
         if string.match(lowerMsg, "^dps%s+lf") or string.match(lowerMsg, "^tank%s+lf") or
            string.match(lowerMsg, "^heal[a-z]*%s+lf") or
            string.match(lowerMsg, "^support%s+lf") or string.match(lowerMsg, "^supp%s+lf") then
+            if string.match(lowerMsg, "^%a+%s+lf[ %p]+%a*heal") or
+               string.match(lowerMsg, "^%a+%s+lf[ %p]+%a*tank") or
+               string.match(lowerMsg, "^%a+%s+lf[ %p]+%a*dps") or
+               string.match(lowerMsg, "^%a+%s+lf[ %p]+%a*support") or
+               string.match(lowerMsg, "^%a+%s+lf[ %p]+%a*supp") then
+                return false
+            end
             return true
         end
         if string.match(lowerMsg, "^%d+%s*i[lv]l%s+%a+%s+lf") or
@@ -860,9 +948,21 @@ function LFG.GetMessageMode(msg)
        string.match(lowerMsg, "need%s+%d*%s*dps") or
        string.match(lowerMsg, "need%s+%d*%s*support") or
        string.match(lowerMsg, "need%s+%d*%s*supp") then return "LFM" end
-    if string.match(lowerMsg, "lf[ %p].*%stank") or string.match(lowerMsg, "lf[ %p].*%sheal") or
-       string.match(lowerMsg, "lf[ %p].*%sdps") or string.match(lowerMsg, "lf[ %p].*%ssupport") or
-       string.match(lowerMsg, "lf[ %p].*%ssupp") then return "LFM" end
+    if string.match(lowerMsg, "lf[ %p]+%a*heal") or
+       string.match(lowerMsg, "lf[ %p]+%a*tank") or
+       string.match(lowerMsg, "lf[ %p]+%a*dps") or
+       string.match(lowerMsg, "lf[ %p]+%a*support") or
+       string.match(lowerMsg, "lf[ %p]+%a*supp") or
+       string.match(lowerMsg, "lf[ %p]+%d[%d%s%p]*heal") or
+       string.match(lowerMsg, "lf[ %p]+%d[%d%s%p]*tank") or
+       string.match(lowerMsg, "lf[ %p]+%d[%d%s%p]*dps") or
+       string.match(lowerMsg, "lf[ %p]+%d[%d%s%p]*support") or
+       string.match(lowerMsg, "lf[ %p]+%d[%d%s%p]*supp") then return "LFM" end
+    if string.match(lowerMsg, "lf%d*[ %p]+%d*[%s%p]*heal") or
+       string.match(lowerMsg, "lf%d*[ %p]+%d*[%s%p]*tank") or
+       string.match(lowerMsg, "lf%d*[ %p]+%d*[%s%p]*dps") or
+       string.match(lowerMsg, "lf%d*[ %p]+%d*[%s%p]*support") or
+       string.match(lowerMsg, "lf%d*[ %p]+%d*[%s%p]*supp") then return "LFM" end
     if string.match(lowerMsg, "^%d+%s+tank") or string.match(lowerMsg, "^%d+%s+heal") or
        string.match(lowerMsg, "^%d+%s+dps") or string.match(lowerMsg, "^%d+%s+support") or
        string.match(lowerMsg, "^%d+%s+supp") then return "LFM" end
@@ -1641,14 +1741,19 @@ end
 
 function LFG.CanShowPopup(sender, message)
     if not sender or not message then return false end
+    local now = GetTime()
+    local senderCooldown = lastPopupTimes["__sender_" .. sender]
+    if senderCooldown and (now - senderCooldown) < 3 then
+        return false
+    end
     local normalizedMessage = string.lower(message):gsub("%s+", " "):gsub("^%s*(.-)%s*$", "%1")
     local messageKey = sender .. ":" .. normalizedMessage
-    local now = GetTime()
     local lastTime = lastPopupTimes[messageKey]
     if lastTime and (now - lastTime) < (FrostSeekDB.LFG.popupCooldown or 400) then
         return false
     end
     lastPopupTimes[messageKey] = now
+    lastPopupTimes["__sender_" .. sender] = now
     return true
 end
 
@@ -2332,10 +2437,10 @@ function LFG.CreateLFGPopup(sender, message, dungeon, isHeroic, isMythic, isRaid
     end)
 
     if not FrostSeekDB.LFG.silentNotifications then
-        if FrostSeekDB.LFG.soundEnabled ~= false and Shared and Shared.PlaySound then
+        if Shared and Shared.PlaySound then
             Shared.PlaySound("popup")
-        else
-            PlaySoundFile("Sound\\Interface\\MapPing.wav")
+        elseif PlaySoundFile then
+            PlaySoundFile("Interface\\AddOns\\FrostSeek\\Media\\sound\\popup.wav")
         end
     end
     table.insert(openFrames, popup)
@@ -2920,7 +3025,7 @@ function LFG.UpdateRecruitersList()
             local roleStr = LFG.FormatRolesText(roles)
             local roleFullStr = LFG.FormatRolesFullText(roles)
             poolRow.roleText:SetText(roleStr)
-            if record.dungeon and record.dungeon ~= "MISC" and record.dungeon ~= "KEYSTONE" and record.dungeon ~= "PVP" and record.dungeon ~= "MANASTORM" and record.dungeon ~= "WORLD_BOSS" then
+            if record.dungeon and record.dungeon ~= "MISC" and record.dungeon ~= "PVP" and record.dungeon ~= "MANASTORM" and record.dungeon ~= "WORLD_BOSS" then
 
                 local diffLabel = LFG.ParseDifficulty(record.message, record.category)
                 local diffTag, diffColor
@@ -2967,8 +3072,30 @@ function LFG.UpdateRecruitersList()
                     diffTag = L["diff_normal"]
                     diffColor = "|cffcccccc"
                 end
+                local ksName, ksLevel
+                if record.isKeystone then
+                    ksName, ksLevel = LFG.ParseKeystoneInfo(record.message)
+                    if ksLevel then
+                        diffTag = "+" .. tostring(ksLevel)
+                        diffColor = "|cffff44ff"
+                    end
+                end
                 local fullDungeonName = record.dungeonName or record.dungeon or ""
                 local dungeonName = LFG.GetShortDungeonName(record.category, record.dungeon) or fullDungeonName
+                if record.isKeystone and ksName and ksName ~= "" then
+                    if SHORT_NAME_OVERRIDES[ksName] then
+                        dungeonName = SHORT_NAME_OVERRIDES[ksName]
+                    elseif string.len(ksName) > 16 then
+                        local firstWord = string.match(ksName, "^(%S+)")
+                        if firstWord and string.len(firstWord) <= 16 then
+                            dungeonName = firstWord
+                        else
+                            dungeonName = string.sub(ksName, 1, 14) .. "..."
+                        end
+                    else
+                        dungeonName = ksName
+                    end
+                end
                 local catAccent = CATEGORY_ACCENT[record.category] or CATEGORY_ACCENT.MISC
                 local ar2, ag2, ab2 = catAccent[1] or 0.7, catAccent[2] or 0.7, catAccent[3] or 0.7
                 local nameColorHex = string.format("|cff%02x%02x%02x",
@@ -2998,6 +3125,9 @@ function LFG.UpdateRecruitersList()
                 GameTooltip:AddLine(L["tip_time_label"] .. string.format("%ds ago", timeSinceForTooltip), 0.8, 0.8, 0.8)
                 if record.dungeon and record.dungeon ~= "MISC" then
                     local tipDungeon = record.dungeonName or record.dungeon
+                    if record.isKeystone and ksLevel then
+                        tipDungeon = tipDungeon .. " (+" .. tostring(ksLevel) .. ")"
+                    end
                     GameTooltip:AddLine(L["tip_dungeon_label"] .. tipDungeon, 0.8, 0.8, 0.8)
                 end
                 GameTooltip:AddLine(L["tip_category_label"] .. record.category, 0.8, 0.8, 0.8)
@@ -3713,7 +3843,6 @@ local function InitializeLFGSystem()
     FrostSeekDB.LFG.frameDuration = FrostSeekDB.LFG.frameDuration or 5
     FrostSeekDB.LFG.popupCooldown = FrostSeekDB.LFG.popupCooldown or 370
     FrostSeekDB.LFG.maxConcurrentPopups = FrostSeekDB.LFG.maxConcurrentPopups or 2
-    FrostSeekDB.LFG.soundEnabled = FrostSeekDB.LFG.soundEnabled ~= false
     C_Timer.NewTicker(10, LFG.CleanupActiveSearches)
     print(L["msg_lfg_system_initialized"])
 end

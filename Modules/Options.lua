@@ -45,10 +45,6 @@ local function EnsureSettingsStructure()
         minimapButton = true,
         savePosition = true,
         debugMode = false,
-        soundEnabled = true,
-        soundPopup = true,
-        soundListing = true,
-        soundApplicant = true,
     }
 
     for k, v in pairs(defaults) do
@@ -960,9 +956,9 @@ local function GetSettingsCategories()
     { id = "lfg", name = L["options_lfg"], icon = "Interface\\AddOns\\FrostSeek\\Media\\texture\\bottoni\\exp.tga", settings = {
         { type = "header", id = "lfgHeader", name = "", desc = L["lfg_title"] },
         { type = "checkbox", id = "disableLFG", name = L["options_disable_lfg"], desc = L["options_disable_lfg_desc"], default = false, getter = function() return FrostSeekDB.LFG.disableLFG end, setter = function(v) FrostSeekDB.LFG.disableLFG = v; local lfg = _G.FrostSeek and _G.FrostSeek.Modules and _G.FrostSeek.Modules.lfg; if lfg and lfg.UpdateToggleVisual then lfg.UpdateToggleVisual(not v) end; if _G.FrostSeek and _G.FrostSeek.UpdateMinimapDisabledOverlay then _G.FrostSeek.UpdateMinimapDisabledOverlay() end end },
-        { type = "checkbox", id = "silentNotifications", name = L["lfg_silent_notifications"], desc = L["options_silent_notifications_desc"], default = false, getter = function() return FrostSeekDB.LFG.silentNotifications end, setter = function(v) FrostSeekDB.LFG.silentNotifications = v end },
-        { type = "checkbox", id = "doNotAlertInGroup", name = L["lfg_no_alerts_group"], desc = L["options_no_alerts_group_desc"], default = false, getter = function() return FrostSeekDB.LFG.doNotAlertInGroup end, setter = function(v) FrostSeekDB.LFG.doNotAlertInGroup = v end },
-        { type = "checkbox", id = "doNotAlertInCombat", name = L["lfg_no_alerts_combat"], desc = L["options_no_alerts_combat_desc"], default = false, getter = function() return FrostSeekDB.LFG.doNotAlertInCombat end, setter = function(v) FrostSeekDB.LFG.doNotAlertInCombat = v end },
+        { type = "checkbox", id = "silentNotifications", name = L["lfg_silent_notifications"], desc = L["options_silent_notifications_desc"], default = true, getter = function() return FrostSeekDB.LFG.silentNotifications end, setter = function(v) FrostSeekDB.LFG.silentNotifications = v end },
+        { type = "checkbox", id = "doNotAlertInGroup", name = L["lfg_no_alerts_group"], desc = L["options_no_alerts_group_desc"], default = true, getter = function() return FrostSeekDB.LFG.doNotAlertInGroup end, setter = function(v) FrostSeekDB.LFG.doNotAlertInGroup = v end },
+        { type = "checkbox", id = "doNotAlertInCombat", name = L["lfg_no_alerts_combat"], desc = L["options_no_alerts_combat_desc"], default = true, getter = function() return FrostSeekDB.LFG.doNotAlertInCombat end, setter = function(v) FrostSeekDB.LFG.doNotAlertInCombat = v end },
         { type = "slider", id = "frameDuration", name = L["lfg_popup_duration"], desc = L["options_popup_duration_desc"], min = 2, max = 10, step = 1, default = 5, getter = function() return FrostSeekDB.LFG.frameDuration end, setter = function(v) FrostSeekDB.LFG.frameDuration = v end },
         { type = "slider", id = "popupCooldown", name = L["lfg_popup_cooldown"], desc = L["options_popup_cooldown_desc"], min = 60, max = 600, step = 10, default = 370, getter = function() return FrostSeekDB.LFG.popupCooldown end, setter = function(v) FrostSeekDB.LFG.popupCooldown = v end },
         { type = "slider", id = "maxConcurrentPopups", name = L["lfg_max_popups"], desc = L["options_max_popups_desc"], min = 1, max = 5, step = 1, default = 2, getter = function() return FrostSeekDB.LFG.maxConcurrentPopups end, setter = function(v) FrostSeekDB.LFG.maxConcurrentPopups = v end },
@@ -971,8 +967,12 @@ local function GetSettingsCategories()
     }},
     { id = "chatfilter", name = L["options_chat_filter"], icon = "Interface\\AddOns\\FrostSeek\\Media\\texture\\bottoni\\gi.tga", settings = {
         { type = "header", id = "chatFilterHeader", name = "", desc = L["options_chat_filter_desc"] },
-        { type = "checkbox", id = "chatFilterEnabled", name = L["options_chat_filter_enabled"], desc = L["options_chat_filter_enabled_desc"], default = false, getter = function() return FrostSeekDB.LFG.chatFilterEnabled end, setter = function(v) FrostSeekDB.LFG.chatFilterEnabled = v end },
+        { type = "checkbox", id = "chatFilterEnabled", name = L["options_chat_filter_enabled"], desc = L["options_chat_filter_enabled_desc"], default = false, isMaster = true, getter = function() return FrostSeekDB.LFG.chatFilterEnabled end, setter = function(v) FrostSeekDB.LFG.chatFilterEnabled = v end },
         { type = "checkbox", id = "chatFilterGuildPartyRaid", name = L["options_chat_filter_gpr"], desc = L["options_chat_filter_gpr_desc"], default = false, getter = function() return FrostSeekDB.LFG.chatFilterGuildPartyRaid end, setter = function(v) FrostSeekDB.LFG.chatFilterGuildPartyRaid = v end },
+        { type = "checkbox", id = "chatFilterHideOwnMessages", name = L["options_chat_filter_hide_own"], desc = L["options_chat_filter_hide_own_desc"], default = false,
+          master = { getter = function() return FrostSeekDB.LFG.chatFilterEnabled ~= false end },
+          getter = function() return FrostSeekDB.LFG.chatFilterHideOwnMessages == true end,
+          setter = function(v) FrostSeekDB.LFG.chatFilterHideOwnMessages = v and true or false end },
         { type = "editbox", id = "chatFilterKeywords", name = L["options_chat_filter_keywords"], desc = L["options_chat_filter_keywords_desc"], getter = function() return FrostSeekDB.LFG.chatFilterKeywords or "" end, setter = function(v) FrostSeekDB.LFG.chatFilterKeywords = tostring(v or "") end },
     }},
     { id = "activityfilter", name = L["options_activity_filter"], icon = "Interface\\AddOns\\FrostSeek\\Media\\texture\\bottoni\\filtri.tga", settings = {
@@ -1135,19 +1135,6 @@ local function GetSettingsCategories()
             end
         end }
     }},
-    { id = "sounds", name = L["options_sound"], icon = "Interface\\AddOns\\FrostSeek\\Media\\texture\\bottoni\\generale.tga", settings = {
-        { type = "header", id = "soundsHeader", name = "", desc = L["opt_sound_notifications_desc"] },
-        { type = "checkbox", id = "soundEnabled", name = L["options_enable_sounds"], desc = L["opt_enable_sounds_desc"], default = true, isMaster = true, getter = function() return FrostSeekDB.Settings.soundEnabled ~= false end, setter = function(v) FrostSeekDB.Settings.soundEnabled = v end },
-        { type = "checkbox", id = "soundPopup", name = L["sound_popup"], desc = L["opt_sound_popup_desc"], default = true,
-          master = { getter = function() return FrostSeekDB.Settings.soundEnabled ~= false end },
-          getter = function() return FrostSeekDB.Settings.soundPopup ~= false end, setter = function(v) FrostSeekDB.Settings.soundPopup = v end },
-        { type = "checkbox", id = "soundListing", name = L["opt_new_listing_sound"], desc = L["opt_new_listing_sound_desc"], default = true,
-          master = { getter = function() return FrostSeekDB.Settings.soundEnabled ~= false end },
-          getter = function() return FrostSeekDB.Settings.soundListing ~= false end, setter = function(v) FrostSeekDB.Settings.soundListing = v end },
-        { type = "checkbox", id = "soundApplicant", name = L["sound_applicant"], desc = L["opt_sound_applicant_desc"], default = true,
-          master = { getter = function() return FrostSeekDB.Settings.soundEnabled ~= false end },
-          getter = function() return FrostSeekDB.Settings.soundApplicant ~= false end, setter = function(v) FrostSeekDB.Settings.soundApplicant = v end },
-    }},
     { id = "advanced", name = L["options_advanced"], icon = "Interface\\AddOns\\FrostSeek\\Media\\texture\\bottoni\\avanzato.tga", settings = {
         { type = "header", id = "advancedHeader", name = "", desc = L["opt_advanced_desc"] },
         { type = "button", id = "resetPosition", name = L["options_reset_position"], desc = L["opt_reset_position_desc"], onClick = function() FrostSeekDB.Settings.windowPosition = nil; if FrostSeek.MainFrame then FrostSeek.MainFrame:ClearAllPoints(); FrostSeek.MainFrame:SetPoint("CENTER") end print(L["msg_window_positions_reset"]) end },
@@ -1199,8 +1186,8 @@ local function GetSettingsCategories()
             if Shared and Shared.ConfirmDialog then
                 Shared.ConfirmDialog(L["clear_all_data"], L["msg_clear_all_data_warning"], function()
                     FrostSeekDB = {
-                        Settings = { uiScale = 1.0, windowPosition = nil, minimapButton = true, debugMode = false, savePosition = true, autoOpen = false, soundEnabled = true, soundPopup = true, soundListing = true, soundApplicant = true },
-                        LFG = { myRole = "", silentNotifications = false, frameDuration = 5, disablePopups = true, disableLFG = false, maxMessageLength = 90, popupCooldown = 370, maxConcurrentPopups = 2, doNotAlertInGroup = true, doNotAlertInCombat = true, popupCategories = { ALL = true, DUNGEON = true, RAID = true, WORLD_BOSS = true, PVP = true, MANASTORM = true, KEYSTONE = true, MISC = false }, popupShowLFG = true, popupShowLFM = true, customFilterWords = "", showActiveRecruitersWindow = false, chatFilterGuildPartyRaid = false, customMessages = { enabled = false, template = "inv {role} {class} {spec} {ilvl} ilvl", showClass = true, showIlvl = true, showEnchant = true, showSpec = true, showRole = true, showLevel = true, showKeystone = false, keystoneLink = "" } },
+                        Settings = { uiScale = 1.0, windowPosition = nil, minimapButton = true, debugMode = false, savePosition = true, autoOpen = false },
+                        LFG = { myRole = "", silentNotifications = true, frameDuration = 5, disablePopups = true, disableLFG = false, maxMessageLength = 90, popupCooldown = 370, maxConcurrentPopups = 2, doNotAlertInGroup = true, doNotAlertInCombat = true, popupCategories = { ALL = true, DUNGEON = true, RAID = true, WORLD_BOSS = true, PVP = true, MANASTORM = true, KEYSTONE = true, MISC = false }, popupShowLFG = true, popupShowLFM = true, customFilterWords = "", showActiveRecruitersWindow = false, chatFilterEnabled = false, chatFilterGuildPartyRaid = false, chatFilterHideOwnMessages = false, customMessages = { enabled = false, template = "inv {role} {class} {spec} {ilvl} ilvl", showClass = true, showIlvl = true, showEnchant = true, showSpec = true, showRole = true, showLevel = true, showKeystone = false, keystoneLink = "" } },
                         LFM = { lastMessages = {}, favoriteTemplates = {}, channelPresets = {}, autoUpdateInterval = 60, autoInviteMinIlvl = 0 },
                     }
                     ReloadUI()
@@ -1369,7 +1356,13 @@ local function CreateSettingControl(parent, setting, yOffset)
         end
 
         local function Update()
-            local v = setting.getter and setting.getter() or FrostSeekDB.Settings[setting.id] or setting.default or false
+            local v
+            if setting.getter then
+                v = setting.getter()
+            else
+                v = FrostSeekDB.Settings[setting.id]
+                if v == nil then v = setting.default or false end
+            end
             checkbox.checked = v
             checkbox.check:SetShown(v)
             if checkbox.bg then

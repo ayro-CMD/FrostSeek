@@ -346,21 +346,22 @@ function Shared.ConfirmDialog(title, text, onConfirm, onCancel)
 end
 
 local SOUNDS = {
-    popup = "Sound\\Interface\\iQuestComplete",
-    listing = "Sound\\Interface\\AuctionWindowOpen",
-    applicant = "Sound\\Interface\\AuctionWindowOpen",
-    connect = "Sound\\Interface\\igCharacterInfoTab",
-    disconnect = "Sound\\Interface\\igCharacterInfoClose",
+    popup = "Interface\\AddOns\\FrostSeek\\Media\\sound\\popup.wav",
+    listing = "Interface\\AddOns\\FrostSeek\\Media\\sound\\listing.wav",
+    applicant = "Interface\\AddOns\\FrostSeek\\Media\\sound\\applicant.wav",
+    connect = "Interface\\AddOns\\FrostSeek\\Media\\sound\\connect.wav",
+    disconnect = "Interface\\AddOns\\FrostSeek\\Media\\sound\\connect.wav",
     whisper = "Sound\\Interface\\TellMessage",
 }
 
 function Shared.PlaySound(type)
-    if not FrostSeekDB or not FrostSeekDB.Settings then return end
-    local snd = FrostSeekDB.Settings.soundEnabled
-    if snd == false then return end
+    if not FrostSeekDB then return end
+    if FrostSeekDB.LFG and FrostSeekDB.LFG.silentNotifications == true then return end
     local soundFile = SOUNDS[type]
     if soundFile then
-        PlaySoundFile(soundFile)
+        if PlaySoundFile then
+            PlaySoundFile(soundFile)
+        end
     end
 end
 

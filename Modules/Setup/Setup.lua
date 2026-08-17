@@ -35,7 +35,6 @@ local wizardState = {
     language = "auto",
     role = "No Role",
     enablePopups = false,
-    enableSounds = true,
     enableChatFilter = false,
     theme = "Shadow",
     discord = "",
@@ -185,23 +184,8 @@ local function RenderPage3(content)
         UpdatePopupsBtn()
     end)
 
-    local soundsBtn = CreateModernButton(content, L["setup_enable_sounds"], 320, 36)
-    soundsBtn:SetPoint("TOPLEFT", 60, -150)
-    local function UpdateSoundsBtn()
-        if wizardState.enableSounds then
-            soundsBtn.text:SetText(L["setup_enable_sounds"] .. ": |cff44ff44" .. L["on"] .. "|r")
-        else
-            soundsBtn.text:SetText(L["setup_enable_sounds"] .. ": |cffff5555" .. L["off"] .. "|r")
-        end
-    end
-    UpdateSoundsBtn()
-    soundsBtn:SetScript("OnClick", function()
-        wizardState.enableSounds = not wizardState.enableSounds
-        UpdateSoundsBtn()
-    end)
-
     local chatFilterBtn = CreateModernButton(content, L["setup_enable_chat_filter"], 320, 36)
-    chatFilterBtn:SetPoint("TOPLEFT", 60, -200)
+    chatFilterBtn:SetPoint("TOPLEFT", 60, -150)
     local function UpdateChatFilterBtn()
         if wizardState.enableChatFilter then
             chatFilterBtn.text:SetText(L["setup_enable_chat_filter"] .. ": |cff44ff44" .. L["on"] .. "|r")
@@ -337,7 +321,6 @@ function Setup.Show()
         FrostSeekDB.Settings.language = wizardState.language
         if not FrostSeekDB.LFG then FrostSeekDB.LFG = {} end
         FrostSeekDB.LFG.disablePopups = not wizardState.enablePopups
-        FrostSeekDB.Settings.soundEnabled = wizardState.enableSounds
         FrostSeekDB.LFG.chatFilterEnabled = wizardState.enableChatFilter
 
         print(L["msg_setup_complete"])

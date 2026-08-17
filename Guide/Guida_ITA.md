@@ -20,7 +20,7 @@ Questa guida è scritta per chi non ha mai usato un addon in vita sua. Leggi una
    Interface\AddOns\FrostSeek\Modules\...
    ```
 4. Apri WoW. Al login vedrai in chat:
-   `FrostSeek v2.2.5 loaded!`
+   `FrostSeek v2.3 loaded!`
 
 Fatto. Se non vedi il messaggio, controlla che l'addon sia attivo nella schermata dei Personaggi → pulsante **AddOns** (in basso a sinistra) → spunta FrostSeek.
 
@@ -355,6 +355,6 @@ Il filtro nasconde i messaggi che contengono:
 
 ## 14) Versione
 
-FrostSeek v2.2.5 — Copyright © 2026 Ayro. Tutti i diritti riservati.
+FrostSeek v2.3 — Copyright © 2026 Ayro. Tutti i diritti riservati.
 
 Per supporto, contatta l'autore tramite il repository ufficiale CurseForge (Project ID: 1460315).

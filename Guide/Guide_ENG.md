@@ -20,7 +20,7 @@ This guide is written for people who have never used an addon before. Read one s
    Interface\AddOns\FrostSeek\Modules\...
    ```
 4. Open WoW. On login you'll see in chat:
-   `FrostSeek v2.2.5 loaded!`
+   `FrostSeek v2. loaded!`
 
 Done. If you don't see the message, check that the addon is enabled on the Character screen → **AddOns** button (bottom left) → tick FrostSeek.
 
@@ -267,7 +267,7 @@ The filter hides messages containing:
 
 ### What does NOT get hidden
 
-- Addon channels (**FSK, FSK-EVT, BLFG**) are **always excluded** from the filter
+- Addon channels (**FSK, FSK-EVT**) are **always excluded** from the filter
 - Whisper messages, guild (if you don't enable guild filter), say, yell (if you don't enable yell filter)
 
 ### Debug commands
@@ -355,6 +355,6 @@ The filter hides messages containing:
 
 ## 14) Version
 
-FrostSeek v2.2.5 — Copyright © 2026 Ayro. All rights reserved.
+FrostSeek v2.3.0 — Copyright © 2026 Ayro. All rights reserved.
 
 For support, contact the author through the official CurseForge repository (Project ID: 1460315).
