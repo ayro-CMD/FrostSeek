@@ -86,7 +86,7 @@ local WORLD_BOSS_KEYWORDS = {
     "soggoth", "sogoth", "azuregos", "kazzak", "doomwalker", "setis", "settis",
     "emeriss", "lethon", "taerar", "ysondre", "dream", "nightmare", "kaldros depthbreaker", "kaldros.depthbreaker", "kaldros",
     "snowgrave", "atal'zul", "atal.zul", "atal azul", "atal'azul", "world tour", "worldboss tour", "world boss tour",
-    "sha of anger", "galleon", "salyis", "nalak", "oondasta", "celestials", "celestial",
+    "sha of anger", "galleon", "salyis", "nalak", "oondasta", "celestials", "celestial","atalzul",
     "gonzor", "king gnok", "king mosh", "silithid lurker", "volchan", "corrupted ancient",
     "worldboss", "world boss", "wb",
 }
