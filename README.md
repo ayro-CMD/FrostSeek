@@ -4,7 +4,7 @@
 **Advanced LFG/LFM Manager with FrostNet** — for WoW Ascension & all WoW Classic / Retail clients.
 
 [![License](https://img.shields.io/badge/License-Proprietary-red.svg)](License)
-[![Version](https://img.shields.io/badge/Version-2.2.6-blue.svg)](https://www.curseforge.com/wow/addons/frostseek)
+[![Version](https://img.shields.io/badge/Version-2.3.0-blue.svg)](https://www.curseforge.com/wow/addons/frostseek)
 
 ---
 
@@ -314,5 +314,5 @@ Thanks to all the testers and users who provided feedback on Ascension, and othe
 
 ---
 
-**FrostSeek v2.2.6** — Find groups faster. Find members smarter.
-FrostSeek Pluginn https://github.com/jak2772/FrostSeekAddon-Aura-Tracker
+**FrostSeek** — Find groups faster. Find members smarter.
+FrostSeek Plugin https://github.com/jak2772/FrostSeekAddon-Aura-Tracker
