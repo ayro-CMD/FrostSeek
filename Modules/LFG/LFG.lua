@@ -647,7 +647,7 @@ local SPAM_WORDS = {
     "service", "cache", "nuked", "ksh", "keystone master","florida","grass","plf","guilde",
     "mdi", "server first", "top guild", "best guild","gf","which","every","recrute",
     "world first", "qualif","girl","small","boy","goth","gnome","testing","dont",
-    "awakening", "twisting","why","crafter","whick","professions","profession",
+    "awakening", "twisting","why","crafter","whick","professions","profession","reclutamos",
     "transfer", "transfers", "realm transfer", "server transfer", "move to", "come join",
     "invite link", "discord link", "discord server","WTB","days","sandles","damnit",
     "website", "hipe", "raider.io", "rio", "wowprogress", "wcl", "warcraftlogs",
