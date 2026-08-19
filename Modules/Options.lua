@@ -962,6 +962,10 @@ local function GetSettingsCategories()
         { type = "slider", id = "frameDuration", name = L["lfg_popup_duration"], desc = L["options_popup_duration_desc"], min = 2, max = 10, step = 1, default = 5, getter = function() return FrostSeekDB.LFG.frameDuration end, setter = function(v) FrostSeekDB.LFG.frameDuration = v end },
         { type = "slider", id = "popupCooldown", name = L["lfg_popup_cooldown"], desc = L["options_popup_cooldown_desc"], min = 60, max = 600, step = 10, default = 370, getter = function() return FrostSeekDB.LFG.popupCooldown end, setter = function(v) FrostSeekDB.LFG.popupCooldown = v end },
         { type = "slider", id = "maxConcurrentPopups", name = L["lfg_max_popups"], desc = L["options_max_popups_desc"], min = 1, max = 5, step = 1, default = 2, getter = function() return FrostSeekDB.LFG.maxConcurrentPopups end, setter = function(v) FrostSeekDB.LFG.maxConcurrentPopups = v end },
+        { type = "header", id = "inviteContextHeader", name = "", desc = L["options_invite_context_header"] or "Group Invite Context" },
+        { type = "checkbox", id = "inviteContextEnabled", name = L["options_invite_context_chat"] or "Show invite-context chat line", desc = L["options_invite_context_chat_desc"] or "When a recruiter you whispered sends a party invite back, print a chat line with their original LFG/LFM message.", default = true, getter = function() return FrostSeekDB.LFG.inviteContextEnabled ~= false end, setter = function(v) FrostSeekDB.LFG.inviteContextEnabled = v and true or false; local lfg = _G.FrostSeek and _G.FrostSeek.Modules and _G.FrostSeek.Modules.lfg; if lfg and lfg.SetInviteTrackerEnabled then lfg.SetInviteTrackerEnabled(v) end end },
+        { type = "checkbox", id = "inviteCenterAlertEnabled", name = L["options_invite_center_alert"] or "Show center-screen alert", desc = L["options_invite_center_alert_desc"] or "Also pop a large fading alert in the middle of the screen when a tracked invite arrives.", default = true, getter = function() return FrostSeekDB.LFG.inviteCenterAlertEnabled ~= false end, setter = function(v) FrostSeekDB.LFG.inviteCenterAlertEnabled = v and true or false end },
+        { type = "slider", id = "inviteCenterAlertDuration", name = L["options_invite_center_alert_duration"] or "Center alert duration (sec)", desc = L["options_invite_center_alert_duration_desc"] or "How long the center-screen alert stays visible. 0 = disabled.", min = 0, max = 15, step = 1, default = 5, getter = function() return FrostSeekDB.LFG.inviteCenterAlertDuration or 5 end, setter = function(v) FrostSeekDB.LFG.inviteCenterAlertDuration = tonumber(v) or 5 end },
         { type = "header", id = "keystoneFilterHeader", name = "", desc = L["options_keystone_filter"] },
         { type = "slider", id = "keystoneMinLevel", name = L["options_keystone_min_level"], desc = L["options_keystone_min_level_desc"], min = 0, max = 30, step = 1, default = 0, getter = function() return FrostSeekDB.LFG.keystoneMinLevel or 0 end, setter = function(v) FrostSeekDB.LFG.keystoneMinLevel = tonumber(v) or 0; local lfg = _G.FrostSeek and _G.FrostSeek.Modules and _G.FrostSeek.Modules.lfg; if lfg and lfg.keystoneMinBox then lfg.keystoneMinBox:SetText(tostring(FrostSeekDB.LFG.keystoneMinLevel)) end; if lfg and lfg.UpdateRecruitersList then lfg.UpdateRecruitersList() end end },
     }},
@@ -1052,6 +1056,16 @@ local function GetSettingsCategories()
                   FrostSeekDB.LFG.popupShowLFG = true
               end
           end },
+        { type = "dropdown", id = "popupRoleFilter", name = L["options_popup_role_filter"], desc = L["options_popup_role_filter_desc"], default = "ALL",
+          options = {
+            { value = "ALL",     text = L["popup_role_filter_all"] },
+            { value = "Tank",    text = "|cff4aa3ff" .. L["popup_role_filter_tank"] .. "|r" },
+            { value = "Healer",  text = "|cff44ff66" .. L["popup_role_filter_healer"] .. "|r" },
+            { value = "DPS",     text = "|cffff5555" .. L["popup_role_filter_dps"] .. "|r" },
+            { value = "Support", text = "|cffb366ff" .. L["popup_role_filter_support"] .. "|r" },
+          },
+          getter = function() return FrostSeekDB.LFG.popupRoleFilter or "ALL" end,
+          setter = function(v) FrostSeekDB.LFG.popupRoleFilter = v or "ALL" end },
         { type = "category", id = "popupCategories", name = L["opt_enable_popups_for"], categories = {
             { id = "ALL", name = L["cat_all"], desc = L["opt_enable_popups_for_desc"] },
             { id = "DUNGEON", name = L["cat_dungeon"], desc = L["opt_popups_dungeons_desc"] },

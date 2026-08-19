@@ -45,6 +45,274 @@ local mutedPlayers = {}
 local popupQueue = {}
 local isProcessingQueue = false
 local rowPool = {}
+local pendingInvites = pendingInvites or {}
+LFG._pendingInvites = pendingInvites
+local PENDING_INVITE_TTL = 600
+local inviteTrackerEnabled = true
+local function NormalizePlayerName(name)
+    if not name or name == "" then return "" end
+    name = tostring(name)
+    name = string.gsub(name, "%-[^|]+$", "")
+    name = string.gsub(name, "^%s+", "")
+    name = string.gsub(name, "%s+$", "")
+    return name
+end
+LFG.NormalizePlayerName = NormalizePlayerName
+
+local function FindActiveSearchByPlayer(playerName)
+    if not playerName or playerName == "" then return nil end
+    if not activeSearches then return nil end
+    local target = string.lower(NormalizePlayerName(playerName))
+    if target == "" then return nil end
+    for _, search in ipairs(activeSearches) do
+        local candidate = string.lower(NormalizePlayerName(search.player or ""))
+        if candidate == target then
+            return search
+        end
+    end
+    return nil
+end
+LFG.FindActiveSearchByPlayer = FindActiveSearchByPlayer
+
+function LFG.RememberWhisperSent(playerName, originalMessage, category, dungeon)
+    if not inviteTrackerEnabled then return end
+    local key = NormalizePlayerName(playerName)
+    if key == "" then return end
+    local msg = originalMessage or ""
+    msg = string.gsub(msg, "|c%x%x%x%x%x%x%x%x", "")
+    msg = string.gsub(msg, "|r", "")
+    msg = string.gsub(msg, "|Hitem:.-|h(.-)|h", "%1")
+    if msg == "" then return end
+    pendingInvites[key] = {
+        message   = msg,
+        time      = GetTime(),
+        category  = category or "MISC",
+        dungeon   = dungeon or "",
+    }
+end
+
+function LFG.CleanupPendingInvites()
+    local now = GetTime()
+    local purged = 0
+    for name, entry in pairs(pendingInvites) do
+        if entry and entry.time and (now - entry.time) > PENDING_INVITE_TTL then
+            pendingInvites[name] = nil
+            purged = purged + 1
+        end
+    end
+    return purged
+end
+
+function LFG.GetPendingInvite(playerName)
+    if not playerName then return nil end
+    local key = NormalizePlayerName(playerName)
+    if key == "" then return nil end
+    local entry = pendingInvites[key]
+    if not entry then return nil end
+    if entry.time and (GetTime() - entry.time) > PENDING_INVITE_TTL then
+        pendingInvites[key] = nil
+        return nil
+    end
+    return entry
+end
+
+function LFG.ClearPendingInvites()
+    wipe(pendingInvites)
+end
+
+function LFG.SetInviteTrackerEnabled(enabled)
+    inviteTrackerEnabled = enabled and true or false
+    if not enabled then
+        wipe(pendingInvites)
+    end
+end
+
+function LFG.IsInviteTrackerEnabled()
+    return inviteTrackerEnabled
+end
+
+local function PrintToChat(msg)
+    if not msg or msg == "" then return end
+    local frame = DEFAULT_CHAT_FRAME
+    if frame and frame.AddMessage then
+        frame:AddMessage(msg, 1.0, 0.85, 0.4)
+    else
+        print(msg)
+    end
+end
+LFG.PrintToChat = PrintToChat
+
+local centerAlertFrame = nil
+local centerAlertText  = nil
+local centerAlertTicker = nil
+
+local INVITE_ALERT_ACCENT = { 0.70, 0.40, 1.00 }
+
+local function CreateCenterAlertFrame()
+    if centerAlertFrame then return centerAlertFrame end
+    centerAlertFrame = CreateFrame("Frame", "FrostSeekInviteAlert", UIParent)
+    centerAlertFrame:SetSize(560, 90)
+    centerAlertFrame:SetPoint("CENTER", UIParent, "CENTER", 0, 120)
+    centerAlertFrame:SetFrameStrata("DIALOG")
+    centerAlertFrame:SetFrameLevel(50)
+    centerAlertFrame:SetClampedToScreen(true)
+    local bg = centerAlertFrame:CreateTexture(nil, "BACKGROUND")
+    bg:SetAllPoints()
+    bg:SetColorTexture(0.04, 0.02, 0.10, 0.78)
+    bg:SetVertexColor(0.10, 0.06, 0.18, 0.85)
+    centerAlertFrame.bg = bg
+    local accent = centerAlertFrame:CreateTexture(nil, "ARTWORK")
+    accent:SetPoint("TOPLEFT", centerAlertFrame, "TOPLEFT", 0, 0)
+    accent:SetPoint("BOTTOMLEFT", centerAlertFrame, "BOTTOMLEFT", 0, 0)
+    accent:SetWidth(4)
+    accent:SetColorTexture(INVITE_ALERT_ACCENT[1], INVITE_ALERT_ACCENT[2], INVITE_ALERT_ACCENT[3], 1.0)
+    centerAlertFrame.accent = accent
+    local topAccent = centerAlertFrame:CreateTexture(nil, "ARTWORK")
+    topAccent:SetPoint("TOPLEFT", 1, 0)
+    topAccent:SetPoint("TOPRIGHT", -1, 0)
+    topAccent:SetHeight(2)
+    topAccent:SetColorTexture(INVITE_ALERT_ACCENT[1], INVITE_ALERT_ACCENT[2], INVITE_ALERT_ACCENT[3], 0.9)
+    centerAlertFrame.topAccent = topAccent
+    centerAlertText = centerAlertFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalHuge")
+    centerAlertText:SetPoint("TOPLEFT", centerAlertFrame, "TOPLEFT", 14, -8)
+    centerAlertText:SetPoint("BOTTOMRIGHT", centerAlertFrame, "BOTTOMRIGHT", -14, 8)
+    centerAlertText:SetJustifyH("LEFT")
+    centerAlertText:SetJustifyV("MIDDLE")
+    centerAlertText:SetWordWrap(true)
+    centerAlertText:SetTextColor(1, 0.92, 0.55, 1)
+    centerAlertFrame:SetMovable(true)
+    centerAlertFrame:RegisterForDrag("LeftButton")
+    centerAlertFrame:SetScript("OnDragStart", function(self)
+        if LFG.IsPopupUnlockMode() then
+            self:StartMoving()
+            self._dragging = true
+        end
+    end)
+    centerAlertFrame:SetScript("OnDragStop", function(self)
+        if self._dragging then
+            self:StopMovingOrSizing()
+            self._dragging = false
+            LFG.SaveInviteAlertAnchorFromFrame(self)
+        end
+    end)
+
+    centerAlertFrame:EnableMouse(false)
+    centerAlertFrame:Hide()
+    return centerAlertFrame
+end
+
+function LFG.GetInviteAlertAnchorPoint()
+    local a = FrostSeekDB and FrostSeekDB.LFG and FrostSeekDB.LFG.inviteAlertAnchor
+    if a and a.point and a.relativePoint and a.x and a.y then
+        return a.point, UIParent, a.relativePoint, a.x, a.y
+    end
+    return "CENTER", UIParent, "CENTER", 0, 120
+end
+
+function LFG.SaveInviteAlertAnchorFromFrame(frame)
+    if not frame then return end
+    local point, _, relPoint, x, y = frame:GetPoint()
+    if point and relPoint and x and y then
+        if not FrostSeekDB.LFG then FrostSeekDB.LFG = {} end
+        FrostSeekDB.LFG.inviteAlertAnchor = {
+            point = point,
+            relativePoint = relPoint,
+            x = x,
+            y = y,
+        }
+    end
+end
+
+function LFG.SetInviteAlertUnlockMode(enabled)
+    LFG.SetPopupUnlockMode(enabled and true or false)
+end
+
+function LFG.ResetInviteAlertAnchor()
+    if FrostSeekDB and FrostSeekDB.LFG then
+        FrostSeekDB.LFG.inviteAlertAnchor = nil
+    end
+
+    if popupUnlockFrames and popupUnlockFrames.Invite and popupUnlockFrames.Invite:IsShown() then
+        popupUnlockFrames.Invite:ClearAllPoints()
+        popupUnlockFrames.Invite:SetPoint("CENTER", UIParent, "CENTER", 0, 120)
+    end
+    print(L["msg_invite_alert_anchor_reset"])
+end
+
+function LFG.IsInviteAlertUnlockMode()
+    return LFG.IsPopupUnlockMode()
+end
+
+function LFG.ShowCenterAlert(htmlText, duration)
+    if not htmlText or htmlText == "" then return end
+    if type(duration) ~= "number" or duration <= 0 then return end
+    if not centerAlertFrame then CreateCenterAlertFrame() end
+    if LFG.IsPopupUnlockMode() then return end
+    centerAlertFrame:ClearAllPoints()
+    local p, r, rp, x, y = LFG.GetInviteAlertAnchorPoint()
+    centerAlertFrame:SetPoint(p, r, rp, x, y)
+    centerAlertText:SetText(htmlText)
+    centerAlertFrame:Show()
+    centerAlertFrame:SetAlpha(0)
+    UIFrameFadeIn(centerAlertFrame, 0.2, 0, 1)
+    if centerAlertTicker then
+        centerAlertTicker:Cancel()
+        centerAlertTicker = nil
+    end
+
+    local fadeStart = math.max(0.2, duration - 0.6)
+    C_Timer.After(fadeStart, function()
+        if not centerAlertFrame then return end
+        UIFrameFadeOut(centerAlertFrame, 0.6, 1, 0)
+        centerAlertTicker = C_Timer.After(0.7, function()
+            if centerAlertFrame then
+                centerAlertFrame:Hide()
+                centerAlertFrame:SetAlpha(1)
+            end
+            centerAlertTicker = nil
+        end)
+    end)
+end
+
+function LFG.ShouldShowCenterAlert()
+    if not FrostSeekDB or not FrostSeekDB.LFG then return false end
+    if FrostSeekDB.LFG.inviteCenterAlertEnabled == false then return false end
+    if FrostSeekDB.LFG.doNotAlertInCombat and UnitAffectingCombat("player") then return false end
+    return true
+end
+
+local inviteEventFrame = CreateFrame("Frame")
+inviteEventFrame:RegisterEvent("PARTY_INVITE_REQUEST")
+inviteEventFrame:SetScript("OnEvent", function(self, event, ...)
+    if event ~= "PARTY_INVITE_REQUEST" then return end
+    if not inviteTrackerEnabled then return end
+    local inviter = ...
+    if not inviter or inviter == "" then return end
+    local entry = LFG.GetPendingInvite(inviter)
+    if not entry then return end
+    local key = NormalizePlayerName(inviter)
+    pendingInvites[key] = nil
+    local L = FrostSeek.L
+    local truncated = entry.message or ""
+    if #truncated > 160 then
+        truncated = string.sub(truncated, 1, 157) .. "..."
+    end
+    local prefix = L["msg_invite_context_prefix"] or "|cff88ccffFrostSeek:|r"
+    local template = L["msg_invite_context_body"] or "%s sent you a group invite for: '%s'"
+    local plain = string.gsub(prefix, "|c%x%x%x%x%x%x%x%x", "")
+    plain = string.gsub(plain, "|r", "")
+    local chatLine = string.format("%s %s", plain, string.format(template, inviter, truncated))
+    PrintToChat(chatLine)
+    if LFG.ShouldShowCenterAlert() then
+        local dur = tonumber(FrostSeekDB.LFG.inviteCenterAlertDuration) or 5
+        if dur > 0 then
+            local colored = string.format("|cff88ccff%s|r  %s", prefix,
+                string.format(template, "|cffffff00" .. inviter .. "|r", "|cff88ccff'" .. truncated .. "'|r"))
+            LFG.ShowCenterAlert(colored, dur)
+        end
+    end
+end)
+
 local sessionStartTime = GetTime()
 
 local function CloseAllDropdowns()
@@ -664,7 +932,7 @@ local SPAM_WORDS = {
     "farmers","chez","plf","test","pasticcio","nearby","never",
     "tSM", "mRP", "trp", "total rp","?","other","escort",
     "gamble", "bet", "wager", "jackpot", "lottery", "lucky draw", "spin the wheel",
-    "selling.*run", "gold.*run","where is","24/7",
+    "selling.*run", "gold.*run","where is","24/7","recherche","roaster",
     "alchemy", "alch", "blacksmithing", "bs", "enchanting", "ench", "engineering", "eng", "inscription",
     "jewelcrafting", "jc", "leatherworking", "lw", "tailoring", "skinning", "mining",
     "herbalism", "herb", "herbalist", "first aid", "fishing", "archaeology", "arch",
@@ -677,6 +945,13 @@ local SPAM_WORDS = {
     "cooking", "lf cook", " Cooking ","enchant","reclutamos","recrutando","imortal",
     "raid on wednesday", "raid on thursday", "raid on friday", "raid on saturday",
     "raid on sunday", "raid on monday", "raid on tuesday",
+    "levelers", "leveler", "raiding", "raider", "mythic team", "heroic team",
+    "gchat", "g-chat", "guildchat", "gchat",
+    "scheduled", "roster", "statics", "progression",
+    "casuals", "casual", "hardcore", "semihardcore", "semi-hardcore",
+    "america", "europe", "oceanic", "na-based", "eu-based", "na based", "eu based",
+    "whisper me", "dm me", "pst me",
+    "discord", "voice comms", "voice chat", "mumble", "teamspeak",
 }
 
 local SPAM_PHRASES = {
@@ -688,6 +963,30 @@ local SPAM_PHRASES = {
     "trade chat", "world chat", "global chat",
     "server time", "night at",
     "bell icon", "smash that", "ring the",
+    "chill gamers", "make friends", "laid-back", "laid back", "laidback setting",
+    "levelers welcome", "leveler welcome", "levelers welcome", "leveling welcome",
+    "push keys", "push heroic", "push mythic", "pushing keys", "pushing heroic",
+    "raids are @", "raid is @", "raid at ", "raids at ",
+    "no weekends", "weekend raid", "weekend run",
+    "m-th", "t-th", "w-f", "m-w", "m-f", "f-sun", "sun-thu", "mon-thu",
+    "7pm est", "8pm est", "9pm est", "7pm cst", "8pm cst", "9pm cst",
+    "7pm server", "8pm server", "9pm server", "server time",
+    "pst for more", "pst for info", "pst for details", "whisper for more",
+    "is lfm ", "is lfm chill", "is recruiting", "is looking for members",
+    "is looking for", "we are lfm", "we are looking", "we're lfm", "we're looking",
+    "all raids cleared", "all raid cleared", "raids cleared",
+    "casual setting", "casual raiding", "casual group",
+    "static raid", "static group", "static roster",
+    "raid schedule", "raid sched", "raid nights", "raid night",
+    "core raid", "core roster", "core spot", "core team",
+    "mythic team", "heroic team", "progression team",
+    "looking for chill", "looking for casual", "looking for mature",
+    "recruiting dps", "recruiting healers", "recruiting tanks",
+    "need healer for guild", "need tank for guild",
+    "raid log", "raid logger", "raid logging",
+    "two day raid", "three day raid", "2 day raid", "3 day raid",
+    "wed sun", "tue sun", "mon wed", "tue thu",
+    "static schedule", "schedule:", "schedule -", "schedule is",
 }
 
 local function IsSpamMessage(msg)
@@ -754,6 +1053,94 @@ local function IsSpamMessage(msg)
         return true
     end
     return shortSpamHits >= 2
+end
+
+local GUILD_RECRUIT_PATTERNS = {
+    "is lfm%s",
+    "is lfg%s",
+    "is recruiting",
+    "is looking for members",
+    "is looking for chill",
+    "is looking for casual",
+    "we are lfm",
+    "we are recruiting",
+    "we are looking for members",
+    "we're lfm",
+    "we're recruiting",
+    "we're looking for members",
+    "is now recruiting",
+    "currently recruiting",
+    "now recruiting",
+    "active recruitment",
+    "open recruitment",
+    "casual guild",
+    "hardcore guild",
+    "semi-hardcore guild",
+    "pve guild",
+    "pvp guild",
+    "leveling guild",
+    "social guild",
+    "friendly guild",
+    "mythic raiding guild",
+    "top guild",
+    "best guild",
+    "new guild",
+    "our guild",
+    "this guild",
+    "the guild is",
+    "guild is looking",
+    "guild lf",
+    "guild recruiting",
+    "guild recruitment",
+    "guild seeks",
+    "guild wants",
+    "gilda cerca",
+    "gilda recluta",
+    "gilda cerca",
+    "hermandad busca",
+    "guilde recrute",
+    "gilde sucht",
+    "^%s*<[gG][^>]+>%s",
+    "^%s*%[[gG][^%]]+%]%s",
+}
+
+local GUILD_RECRUIT_INDICATORS = {
+    "chill", "casual", "hardcore", "laid", "levelers", "leveler",
+    "make friends", "push keys", "push heroic", "push mythic",
+    "raid schedule", "raid night", "raid nights", "raid log",
+    "static", "progression", "core team", "core spot",
+    "discord.gg", "discord server", "voice comms", "voice chat",
+    "na-based", "eu-based", "na based", "eu based",
+    "america", "europe", "oceanic", "est", "cst", "pst", "server time",
+    "no weekends", "m-th", "t-th", "w-f", "wed sun",
+}
+
+local function IsGuildRecruitmentMessage(msg)
+    if not msg or msg == "" then return false end
+    local lowerMsg = string.lower(msg)
+    for _, pat in ipairs(GUILD_RECRUIT_PATTERNS) do
+        if string.find(lowerMsg, pat) then
+            return true
+        end
+    end
+
+    local hasLFM = string.find(lowerMsg, "%f[%a]lfm%f[^%a]") ~= nil
+                   or string.find(lowerMsg, "%f[%a]lfg%f[^%a]") ~= nil
+                   or string.find(lowerMsg, "lf%d*m") ~= nil
+                   or string.find(lowerMsg, "lf%d*g") ~= nil
+    if hasLFM then
+        local indicatorHits = 0
+        for _, ind in ipairs(GUILD_RECRUIT_INDICATORS) do
+            if string.find(lowerMsg, ind, 1, true) then
+                indicatorHits = indicatorHits + 1
+            end
+        end
+
+        if indicatorHits >= 2 then
+            return true
+        end
+    end
+    return false
 end
 
 local function GetCustomKeywords(category)
@@ -1348,6 +1735,9 @@ function LFG.RecordActiveSearch(sender, message, channel)
     if IsSpamMessage(message) then
         return
     end
+    if IsGuildRecruitmentMessage(message) then
+        return
+    end
     local category, dungeon, isHeroic, isMythic, isRaid, isKeystone, isPvp, isRanked = LFG.ClassifyMessage(message)
     if not LFG.PassesActivityFilter(category, dungeon) then
         return
@@ -1856,29 +2246,37 @@ local function BuildDemoPopup(kind)
     frame:RegisterForDrag("LeftButton")
     frame.kind = kind
 
+    local bgColor, borderColor, titleText
+    if kind == "LFG" then
+        bgColor     = { 0.18, 0.36, 0.55, 0.35 }
+        borderColor = { 0.53, 0.80, 1.00, 0.85 }
+        titleText   = L["txt_lfg_popup_anchor"]
+    elseif kind == "FrostNet" then
+        bgColor     = { 0.18, 0.50, 0.32, 0.35 }
+        borderColor = { 0.35, 0.95, 0.55, 0.85 }
+        titleText   = L["txt_frostnet_app_popup_anchor"]
+    else
+        bgColor     = { 0.20, 0.10, 0.32, 0.40 }
+        borderColor = { INVITE_ALERT_ACCENT[1], INVITE_ALERT_ACCENT[2], INVITE_ALERT_ACCENT[3], 0.85 }
+        titleText   = L["txt_invite_alert_popup_anchor"]
+    end
+
     frame.bg = frame:CreateTexture(nil, "BACKGROUND")
     frame.bg:SetAllPoints()
-    if kind == "LFG" then
-        frame.bg:SetColorTexture(0.18, 0.36, 0.55, 0.35)
-    else
-        frame.bg:SetColorTexture(0.18, 0.50, 0.32, 0.35)
-    end
+    frame.bg:SetColorTexture(unpack(bgColor))
 
     frame.border = frame:CreateTexture(nil, "BORDER")
     frame.border:SetAllPoints()
-    if kind == "LFG" then
-        frame.border:SetColorTexture(0.53, 0.80, 1.0, 0.85)
-    else
-        frame.border:SetColorTexture(0.35, 0.95, 0.55, 0.85)
-    end
+    frame.border:SetColorTexture(unpack(borderColor))
+    frame.topAccent = frame:CreateTexture(nil, "ARTWORK")
+    frame.topAccent:SetPoint("TOPLEFT", 1, 0)
+    frame.topAccent:SetPoint("TOPRIGHT", -1, 0)
+    frame.topAccent:SetHeight(2)
+    frame.topAccent:SetColorTexture(borderColor[1], borderColor[2], borderColor[3], 0.9)
 
     frame.title = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
     frame.title:SetPoint("TOP", frame, "TOP", 0, -10)
-    if kind == "LFG" then
-        frame.title:SetText(L["txt_lfg_popup_anchor"])
-    else
-        frame.title:SetText(L["txt_frostnet_app_popup_anchor"])
-    end
+    frame.title:SetText(titleText)
     frame.title:SetTextColor(1.0, 1.0, 1.0, 1.0)
 
     frame.hint = frame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
@@ -1971,6 +2369,7 @@ function LFG.SetPopupUnlockMode(enabled)
 
             popupUnlockFrames.LFG = BuildDemoPopup("LFG")
             popupUnlockFrames.FrostNet = BuildDemoPopup("FrostNet")
+            popupUnlockFrames.Invite = BuildDemoPopup("Invite")
         end
 
         local lfgPoint, lfgRel, lfgRelPoint, lfgX, lfgY = LFG.GetPopupAnchorPoint()
@@ -1981,9 +2380,14 @@ function LFG.SetPopupUnlockMode(enabled)
         popupUnlockFrames.FrostNet:ClearAllPoints()
         popupUnlockFrames.FrostNet:SetPoint(fnPoint, fnRel, fnRelPoint, fnX, fnY)
 
+        local ivPoint, ivRel, ivRelPoint, ivX, ivY = LFG.GetInviteAlertAnchorPoint()
+        popupUnlockFrames.Invite:ClearAllPoints()
+        popupUnlockFrames.Invite:SetPoint(ivPoint, ivRel, ivRelPoint, ivX, ivY)
+
         popupUnlockFrame:Show()
         popupUnlockFrames.LFG:Show()
         popupUnlockFrames.FrostNet:Show()
+        popupUnlockFrames.Invite:Show()
         print(L["msg_popup_editor_open"])
     else
         if popupUnlockFrames.LFG and popupUnlockFrames.LFG:IsShown() then
@@ -1993,6 +2397,10 @@ function LFG.SetPopupUnlockMode(enabled)
         if popupUnlockFrames.FrostNet and popupUnlockFrames.FrostNet:IsShown() then
             LFG.SaveApplicantPopupAnchorFromFrame(popupUnlockFrames.FrostNet)
             popupUnlockFrames.FrostNet:Hide()
+        end
+        if popupUnlockFrames.Invite and popupUnlockFrames.Invite:IsShown() then
+            LFG.SaveInviteAlertAnchorFromFrame(popupUnlockFrames.Invite)
+            popupUnlockFrames.Invite:Hide()
         end
         if popupUnlockFrame and popupUnlockFrame:IsShown() then
             popupUnlockFrame:Hide()
@@ -2048,6 +2456,7 @@ end
 function LFG.ResetPopupAnchor()
     if FrostSeekDB and FrostSeekDB.LFG then
         FrostSeekDB.LFG.popupAnchor = nil
+        FrostSeekDB.LFG.inviteAlertAnchor = nil
     end
     if FrostSeekDB and FrostSeekDB.Listings then
         FrostSeekDB.Listings.appPopupAnchor = nil
@@ -2059,6 +2468,10 @@ function LFG.ResetPopupAnchor()
     if popupUnlockFrames.FrostNet then
         popupUnlockFrames.FrostNet:ClearAllPoints()
         popupUnlockFrames.FrostNet:SetPoint("TOPLEFT", UIParent, "TOPLEFT", 10, -40)
+    end
+    if popupUnlockFrames.Invite then
+        popupUnlockFrames.Invite:ClearAllPoints()
+        popupUnlockFrames.Invite:SetPoint("CENTER", UIParent, "CENTER", 0, 120)
     end
     LFG.RepositionPopups()
     if _G.FrostSeek and _G.FrostSeek.Listings and _G.FrostSeek.Listings.RepositionAppPopups then
@@ -2107,6 +2520,15 @@ function LFG.CreateLFGPopup(sender, message, dungeon, isHeroic, isMythic, isRaid
     end
     if category ~= "MISC" and not FrostSeekDB.LFG.popupCategories[category] and not FrostSeekDB.LFG.popupCategories["ALL"] then
         return
+    end
+    local roleFilter = FrostSeekDB.LFG.popupRoleFilter or "ALL"
+    if roleFilter ~= "ALL" then
+        local parsedRoles = LFG.ParseRoles(message)
+        local roleKey = string.lower(roleFilter)
+        if parsedRoles and parsedRoles[roleKey] and parsedRoles[roleKey] > 0 then
+        else
+            return
+        end
     end
     local msgModePre = LFG.GetMessageMode(message) or "LFG"
     local showLFGPre = FrostSeekDB.LFG.popupShowLFG ~= false
@@ -2337,6 +2759,7 @@ function LFG.CreateLFGPopup(sender, message, dungeon, isHeroic, isMythic, isRaid
     whisperBtn:SetScript("OnClick", function()
         local whisperMsg = LFG.CreateWhisperMessage()
         SendChatMessage(whisperMsg, "WHISPER", nil, sender)
+        LFG.RememberWhisperSent(sender, message, category, dungeon)
         LFG.RemovePopupFrame(popup)
         UIErrorsFrame:AddMessage("|cff88ccff" .. FrostSeek.Lf("popup_whisper_sent", sender) .. "|r", 1, 1, 1, 3)
     end)
@@ -2546,6 +2969,17 @@ local function CreateContextMenu()
         if not contextMenu.playerName then return end
         local msg = LFG.CreateWhisperMessage()
         SendChatMessage(msg, "WHISPER", nil, contextMenu.playerName)
+        local search = LFG.FindActiveSearchByPlayer(contextMenu.playerName)
+        if search then
+            LFG.RememberWhisperSent(
+                contextMenu.playerName,
+                search.message,
+                search.category,
+                search.dungeon
+            )
+        else
+            LFG.RememberWhisperSent(contextMenu.playerName, "")
+        end
         print(L["msg_lfg_whisper_sent_to"] .. contextMenu.playerName)
     end
     local function OnClick_AddFriend()
@@ -2701,6 +3135,12 @@ function LFG.InitRowPool(parent)
             if pr and pr.currentRecord then
                 local msg = LFG.CreateWhisperMessage()
                 SendChatMessage(msg, "WHISPER", nil, pr.currentRecord.player)
+                LFG.RememberWhisperSent(
+                    pr.currentRecord.player,
+                    pr.currentRecord.message,
+                    pr.currentRecord.category,
+                    pr.currentRecord.dungeon
+                )
                 print(L["msg_whisper_sent_to_lfg"] .. pr.currentRecord.player)
             end
         end)
@@ -2844,6 +3284,12 @@ function LFG.CreateRowForPool(parent, idx)
         if pr and pr.currentRecord then
             local msg = LFG.CreateWhisperMessage()
             SendChatMessage(msg, "WHISPER", nil, pr.currentRecord.player)
+            LFG.RememberWhisperSent(
+                pr.currentRecord.player,
+                pr.currentRecord.message,
+                pr.currentRecord.category,
+                pr.currentRecord.dungeon
+            )
             print(L["msg_whisper_sent_to_lfg"] .. pr.currentRecord.player)
         end
     end)
@@ -3803,6 +4249,14 @@ local function InitializeLFGSystem()
     }
     if FrostSeekDB.LFG.popupModeFilter == nil then FrostSeekDB.LFG.popupModeFilter = "LFM" end
 
+    if FrostSeekDB.LFG.popupRoleFilter == nil then
+        FrostSeekDB.LFG.popupRoleFilter = "ALL"
+    end
+
+    if FrostSeekDB.LFG.inviteAlertAnchor == nil then
+        FrostSeekDB.LFG.inviteAlertAnchor = nil
+    end
+
     if FrostSeekDB.LFG.popupShowLFG == nil or FrostSeekDB.LFG.popupShowLFM == nil then
         local legacy = FrostSeekDB.LFG.popupModeFilter
         if legacy == "LFG" then
@@ -3843,9 +4297,55 @@ local function InitializeLFGSystem()
     FrostSeekDB.LFG.frameDuration = FrostSeekDB.LFG.frameDuration or 5
     FrostSeekDB.LFG.popupCooldown = FrostSeekDB.LFG.popupCooldown or 370
     FrostSeekDB.LFG.maxConcurrentPopups = FrostSeekDB.LFG.maxConcurrentPopups or 2
+    if type(FrostSeekDB.LFG.inviteContextEnabled) ~= "boolean" then
+        FrostSeekDB.LFG.inviteContextEnabled = true
+    end
+    inviteTrackerEnabled = FrostSeekDB.LFG.inviteContextEnabled ~= false
+    if type(FrostSeekDB.LFG.inviteCenterAlertEnabled) ~= "boolean" then
+        FrostSeekDB.LFG.inviteCenterAlertEnabled = true
+    end
+    if type(FrostSeekDB.LFG.inviteCenterAlertDuration) ~= "number" then
+        FrostSeekDB.LFG.inviteCenterAlertDuration = 5
+    end
+
+    C_Timer.NewTicker(60, LFG.CleanupPendingInvites)
     C_Timer.NewTicker(10, LFG.CleanupActiveSearches)
     print(L["msg_lfg_system_initialized"])
 end
+
+SLASH_FSINVITES1 = "/fsinvites"
+SlashCmdList["FSINVITES"] = function(msg)
+    msg = (msg or ""):lower():gsub("^%s+", ""):gsub("%s+$", "")
+    local L = FrostSeek.L
+    if msg == "clear" then
+        local count = 0
+        for _ in pairs(pendingInvites) do count = count + 1 end
+        LFG.ClearPendingInvites()
+        print((L["msg_invites_cleared"] or "|cff88ccffFrostSeek:|r Cleared %d pending invite(s)."):format(count))
+        return
+    end
+    if msg == "on" then
+        LFG.SetInviteTrackerEnabled(true)
+        FrostSeekDB.LFG.inviteContextEnabled = true
+        print(L["msg_invites_enabled"] or "|cff88ccffFrostSeek:|r Invite context message enabled.")
+        return
+    end
+    if msg == "off" then
+        LFG.SetInviteTrackerEnabled(false)
+        FrostSeekDB.LFG.inviteContextEnabled = false
+        print(L["msg_invites_disabled"] or "|cff88ccffFrostSeek:|r Invite context message disabled.")
+        return
+    end
+
+    local count = 0
+    for _ in pairs(pendingInvites) do count = count + 1 end
+    print((L["msg_invites_status"] or "|cff88ccffFrostSeek:|r Invite tracker: %s, %d pending whisper(s) tracked."):format(
+        LFG.IsInviteTrackerEnabled() and (L["on"] or "ON") or (L["off"] or "OFF"),
+        count
+    ))
+    print(L["msg_invites_usage"] or "Usage: /fsinvites [on|off|clear]")
+end
+
 
 C_Timer.After(2, InitializeLFGSystem)
 

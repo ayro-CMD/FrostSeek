@@ -4,7 +4,7 @@
 **Advanced LFG/LFM Manager with FrostNet** — for WoW Ascension & all WoW Classic / Retail clients.
 
 [![License](https://img.shields.io/badge/License-Proprietary-red.svg)](License)
-[![Version](https://img.shields.io/badge/Version-2.3.0-blue.svg)](https://www.curseforge.com/wow/addons/frostseek)
+[![Version](https://img.shields.io/badge/Version-2.3.1-blue.svg)](https://www.curseforge.com/wow/addons/frostseek)
 
 ---
 
@@ -183,6 +183,37 @@ Supported languages:
 
 ---
 
+## 🆕 New Features in v2.3.1
+
+### Group Invite Context Message
+When you accept multiple recruiters by clicking the Accept button (or use the
+popup Whisper button, or use the right-click "Send whisper with LFG" menu), the
+addon tracks each whisper you sent. As soon as one of those recruiters sends
+you a party invite back, FrostSeek prints a chat line like:
+
+> `Ayro sent you a group invite for: 'LF1M scholo m+10'`
+
+This works for all four LFG whisper entry points:
+- The recruiters-list **Accept** button
+- The popup **Whisper** button
+- The player right-click menu **Send whisper with LFG**
+- Any context in which the recruiter's original message can be resolved
+
+Tracked whispers auto-expire after 10 minutes. Toggle with `/fsinvites on|off`,
+inspect status with `/fsinvites`, or purge with `/fsinvites clear`.
+
+### Center-screen alert (optional)
+In addition to the chat line, FrostSeek can pop a large fading alert in the
+middle of the screen so you don't miss the invite. Two new options under
+**Options → LFG → Group Invite Context**:
+
+- **Show center-screen alert** — toggle the center alert on/off (chat line still fires)
+- **Center alert duration (sec)** — how long the alert stays visible (0–15 seconds, default 5; 0 = disabled)
+
+The alert respects the existing "No Alerts in Combat" guard.
+
+---
+
 ## 🆕 New Features in v2.2.5
 
 ### Chat Filter
@@ -268,6 +299,7 @@ Supported languages:
 | `/fscf reregister` | Force re-register filter |
 | `/fskeytest <msg>` | Test keystone parser |
 | `/fschatsniff` | Chat event sniffer (debug) |
+| `/fsinvites [on\|off\|clear]` | Group invite context tracker: status / toggle / purge |
 
 ---
 
