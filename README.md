@@ -281,7 +281,7 @@ Supported languages:
 ## 🔧 Technical Details
 
 - **Saved Variables:** `FrostSeekDB`
-- **Supported clients:** Vanilla Classic, TBC Classic, WotLK (3.3.5),WorLK Classic, Cata Classic, Mists Classic, Ascension Private Server
+- **Supported clients:** Vanilla Classic, TBC Classic, WotLK (3.3.5),WotLK Classic, Cata Classic, Mists Classic, Ascension Private Server
 - **Load order:** Compat → Theme → UIUtils → Shared → Core → Locales → Modules
 - **Network protocol:** FSK2 (backward compatible with FSK1)
 - **Channels:** FSK (main), FSK-EVT (events)
