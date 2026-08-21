@@ -329,7 +329,7 @@ local RAID_KEYWORDS = {
     "onyxia", "ony", "molten core", "mc", "blackwing lair", "bwl",
     "zul'gurub", "zg", "ruins of ahn'qiraj", "aq20", "temple of ahn'qiraj", "aq40",
     "naxxramas", "naxx", "karazhan", "kara", "gruul", "magtheridon", "mag",
-    "serpentshrine cavern", "ssc", "tempest keep", "tk", "the eye", "eye",
+    "serpentshrine cavern", "ssc", "tempest keep", "tk", "the eye",
     "hyjal", "mount hyjal", "black temple", "bt", "zul'aman", "za", "sunwell plateau", "swp",
     "vault of archavon", "voa", "archavon", "obsidian sanctum", "sarth", "sartharion",
     "eye of eternity", "eoe", "malygos", "ulduar", "uld",
@@ -515,7 +515,7 @@ local ACTIVITY_FILTER_GROUPS = {
     { id = "NAXX", name = "Naxxramas", keywords = {"NAXX", "NAXXRAMAS"} },
     { id = "VOA", name = "Vault of Archavon", keywords = {"VOA", "ARCHAVON", "VAULT OF ARCHAVON"} },
     { id = "OS", name = "Obsidian Sanctum", keywords = {"OS", "OBSIDIAN", "SARTH", "SARTHARION", "OBSIDIAN SANCTUM"} },
-    { id = "EOE", name = "Eye of Eternity", keywords = {"EOE", "MALYGOS", "EYE", "EYE OF ETERNITY", "THE EYE"} },
+    { id = "EOE", name = "Eye of Eternity", keywords = {"EOE", "MALYGOS", "EYE OF ETERNITY", "THE EYE"} },
     { id = "ULD", name = "Ulduar", keywords = {"ULD", "ULDUAR", "ALGOLON"} },
     { id = "TOC", name = "Trial of the Crusader", keywords = {"TOC", "CRUSADER", "TRIAL OF THE CRUSADER"} },
     { id = "ICC", name = "Icecrown Citadel", keywords = {"ICC", "ICECROWN", "ICECROWN CITADEL", "LICH KING", "SINDRAGOSA", "BLOOD QUEEN", "PUTRICIDE", "ANUB'ARAK"} },
@@ -930,7 +930,7 @@ local SPAM_WORDS = {
     "account", "heirloom","help","bazaar","token","don't", "shit","<Minimum effort>","<cleanse>",
     "wtt","how","do","pets","stress","test","here","xd","Minimum effort","cleanse",
     "farmers","chez","plf","test","pasticcio","nearby","never",
-    "tSM", "mRP", "trp", "total rp","?","other","escort",
+    "tSM", "mRP", "trp", "total rp","?","other","escort","rekrutac","recluta/e",
     "gamble", "bet", "wager", "jackpot", "lottery", "lucky draw", "spin the wheel",
     "selling.*run", "gold.*run","where is","24/7","recherche","roaster",
     "alchemy", "alch", "blacksmithing", "bs", "enchanting", "ench", "engineering", "eng", "inscription",
@@ -1084,6 +1084,7 @@ local GUILD_RECRUIT_PATTERNS = {
     "mythic raiding guild",
     "top guild",
     "best guild",
+    "gildia",
     "new guild",
     "our guild",
     "this guild",
@@ -1726,7 +1727,6 @@ function LFG.ApplyKeystoneMinLevelFilter()
         end
     end
     if removed > 0 then
-        print("|cff88ccffFrostSeek:|r Rimosse " .. removed .. " keystone sotto il livello " .. minLevel)
     end
 end
 
