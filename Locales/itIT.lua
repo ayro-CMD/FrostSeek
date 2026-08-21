@@ -1126,6 +1126,19 @@ local IT = {
     ["time_minutes_ago"] = "m fa",
     ["time_seconds_ago"] = "s fa",
 
+    ["filter_role_label"] = "Ruolo:",
+    ["role_all"] = "Tutti",
+    ["role_tank"] = "Tank",
+    ["role_healer"] = "Healer",
+    ["role_dps"] = "DPS",
+    ["role_support"] = "Support",
+
+    ["version_check_outdated"] = "La tua versione e' obsoleta. Hai la versione |cffffcc00%s|r, la versione piu' recente vista e' |cff44ff44%s|r",
+    ["version_check_curseforge_label"] = "Aggiorna su CurseForge:",
+    ["version_check_github_label"] = "Sorgente su GitHub:",
+    ["version_check_up_to_date"] = "|cff88ccffFrostSeek:|r Stai usando l'ultima versione (v%s).",
+    ["version_check_no_data_yet"] = "|cff88ccffFrostSeek:|r Controllo versione saltato - nessun dato versione ricevuto da altri giocatori.",
+
 
 }
 

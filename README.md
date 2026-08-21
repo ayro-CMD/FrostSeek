@@ -4,7 +4,7 @@
 **Advanced LFG/LFM Manager with FrostNet** — for WoW Ascension & all WoW Classic / Retail clients.
 
 [![License](https://img.shields.io/badge/License-Proprietary-red.svg)](License)
-[![Version](https://img.shields.io/badge/Version-2.3.1-blue.svg)](https://www.curseforge.com/wow/addons/frostseek)
+[![Version](https://img.shields.io/badge/Version-2.3.2-blue.svg)](https://www.curseforge.com/wow/addons/frostseek)
 
 ---
 
@@ -183,7 +183,7 @@ Supported languages:
 
 ---
 
-## 🆕 New Features in v2.3.1
+## 🆕 New Features in v2.3.2
 
 ### Group Invite Context Message
 When you accept multiple recruiters by clicking the Accept button (or use the

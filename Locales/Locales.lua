@@ -1096,6 +1096,19 @@ local STRINGS = {
     ["time_minutes_ago"] = "m ago",
     ["time_seconds_ago"] = "s ago",
 
+    ["filter_role_label"] = "Role:",
+    ["role_all"] = "All",
+    ["role_tank"] = "Tank",
+    ["role_healer"] = "Healer",
+    ["role_dps"] = "DPS",
+    ["role_support"] = "Support",
+
+    ["version_check_outdated"] = "Your version is outdated. You have version |cffffcc00%s|r, the newest version seen is |cff44ff44%s|r",
+    ["version_check_curseforge_label"] = "Update on CurseForge:",
+    ["version_check_github_label"] = "Source on GitHub:",
+    ["version_check_up_to_date"] = "|cff88ccffFrostSeek:|r You are running the latest version (v%s).",
+    ["version_check_no_data_yet"] = "|cff88ccffFrostSeek:|r Version check skipped - no version data received from other players yet.",
+
 
 }
 

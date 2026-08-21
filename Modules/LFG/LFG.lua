@@ -3373,6 +3373,20 @@ function LFG.UpdateRecruitersList()
             if f.label == diffFilter then activeDiffMatch = f.match; break end
         end
     end
+
+    local roleFilter = LFG.RoleFilter or "ALL"
+    local roleFilterKey = nil
+    if roleFilter ~= "ALL" then
+        roleFilterKey = string.lower(roleFilter)
+    end
+
+    local function passesRoleFilter(search)
+        if not roleFilterKey then return true end
+        local roles = LFG.ParseRoles(search.message)
+        local count = tonumber(roles and roles[roleFilterKey]) or 0
+        return count > 0
+    end
+
     for _, search in ipairs(activeSearches) do
         if LFG.GroupMatchesCategory(search, LFG.CurrentCategory or "ALL") then
             local passesMode = true
@@ -3382,6 +3396,8 @@ function LFG.UpdateRecruitersList()
                 passesMode = (recMode == LFG.ModeFilter)
             end
             if not passesMode then
+
+            elseif not passesRoleFilter(search) then
 
             elseif activeDiffMatch then
                 local diffLabel = LFG.ParseDifficulty(search.message, search.category)
@@ -3718,20 +3734,154 @@ function LFG:Initialize(parentFrame)
     modeLabel:SetPoint("LEFT", self.modeFilterFrame, "LEFT", 10, 0)
     modeLabel:SetText(L["search_mode_label"] or "Mode:")
     modeLabel:SetTextColor(unpack(_tc("textNorm")))
-    LFG.modeDropdown = FrostSeekUIUtils.CreateModernDropdown(self.modeFilterFrame, 110, 20)
-    LFG.modeDropdown:SetPoint("LEFT", modeLabel, "RIGHT", 8, 0)
-    LFG.modeDropdown:SetText("All")
-    LFG.modeDropdown.selectedValue = "ALL"
-    LFG.modeDropdown:SetOptions({"All", "LFG", "LFM"})
+
     LFG.ModeFilter = "ALL"
-    LFG.modeDropdown.onChange = function(value)
-        if value == "All" then
-            LFG.ModeFilter = "ALL"
-        else
-            LFG.ModeFilter = value
+
+    local MODE_OPTIONS = {
+        { label = L["cat_all"] or "All", value = "ALL", color = { 0.40, 0.40, 0.45 } },
+        { label = "LFG",                  value = "LFG", color = { 0.25, 0.55, 1.00 } },
+        { label = "LFM",                  value = "LFM", color = { 1.00, 0.55, 0.10 } },
+    }
+    local function GetModeOptionIndex(value)
+        for i, opt in ipairs(MODE_OPTIONS) do
+            if opt.value == value then return i end
         end
-        if LFG.UpdateRecruitersList then LFG.UpdateRecruitersList() end
+        return 1
     end
+
+    local modeBtnWidth, modeBtnHeight = 80, 22
+    local modeBtn = FrostSeekUIUtils.CreateModernButton(
+        self.modeFilterFrame, modeBtnWidth, modeBtnHeight,
+        MODE_OPTIONS[1].label, MODE_OPTIONS[1].color
+    )
+    modeBtn:SetPoint("LEFT", modeLabel, "RIGHT", 8, 0)
+    modeBtn:SetScript("OnClick", function()
+        local curIdx = GetModeOptionIndex(LFG.ModeFilter)
+        local nextIdx = (curIdx % #MODE_OPTIONS) + 1
+        LFG.ModeFilter = MODE_OPTIONS[nextIdx].value
+        LFG.UpdateModeFilterVisuals()
+        if LFG.UpdateRecruitersList then LFG.UpdateRecruitersList() end
+    end)
+    LFG.modeButton = modeBtn
+
+    function LFG.UpdateModeFilterVisuals()
+        local opt = MODE_OPTIONS[GetModeOptionIndex(LFG.ModeFilter)]
+        if not opt then return end
+        local c = opt.color
+        if modeBtn.text then
+            modeBtn.text:SetText(opt.label)
+        end
+
+        if modeBtn.bg then
+            modeBtn.bg:SetColorTexture(c[1] * 0.45, c[2] * 0.45, c[3] * 0.45, 0.95)
+        end
+        if modeBtn.border then
+            modeBtn.border:SetColorTexture(c[1], c[2], c[3], 1.0)
+        end
+        if modeBtn.text then
+            modeBtn.text:SetTextColor(
+                math.min(c[1] * 1.5 + 0.3, 1),
+                math.min(c[2] * 1.5 + 0.3, 1),
+                math.min(c[3] * 1.5 + 0.3, 1)
+            )
+        end
+
+        modeBtn.color = c
+        modeBtn:SetScript("OnEnter", function(self)
+            self.bg:SetColorTexture(c[1] * 0.65, c[2] * 0.65, c[3] * 0.65, 1.0)
+            self.border:SetColorTexture(c[1], c[2], c[3], 1.0)
+            self.text:SetTextColor(1, 1, 1)
+        end)
+        modeBtn:SetScript("OnLeave", function(self)
+            self.bg:SetColorTexture(c[1] * 0.45, c[2] * 0.45, c[3] * 0.45, 0.95)
+            self.border:SetColorTexture(c[1], c[2], c[3], 1.0)
+            self.text:SetTextColor(
+                math.min(c[1] * 1.5 + 0.3, 1),
+                math.min(c[2] * 1.5 + 0.3, 1),
+                math.min(c[3] * 1.5 + 0.3, 1)
+            )
+        end)
+    end
+
+    
+    LFG.RoleFilter = "ALL"
+
+    local ROLE_OPTIONS = {
+        { label = L["role_all"]     or "All",     value = "ALL",     color = { 0.40, 0.40, 0.45 } },
+        { label = L["role_tank"]    or "Tank",    value = "TANK",    color = { 0.25, 0.55, 1.00 } },
+        { label = L["role_healer"]  or "Healer",  value = "HEALER",  color = { 0.20, 0.80, 0.40 } },
+        { label = L["role_dps"]     or "DPS",     value = "DPS",     color = { 1.00, 0.30, 0.20 } },
+        { label = L["role_support"] or "Support", value = "SUPPORT", color = { 0.65, 0.35, 1.00 } },
+    }
+    local function GetRoleOptionIndex(value)
+        for i, opt in ipairs(ROLE_OPTIONS) do
+            if opt.value == value then return i end
+        end
+        return 1
+    end
+
+    local roleLabel = self.modeFilterFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    roleLabel:SetPoint("LEFT", modeBtn, "RIGHT", 20, 0)
+    roleLabel:SetText(L["filter_role_label"] or "Role:")
+    roleLabel:SetTextColor(unpack(_tc("textNorm")))
+
+    local roleBtnWidth, roleBtnHeight = 90, 22
+    local roleBtn = FrostSeekUIUtils.CreateModernButton(
+        self.modeFilterFrame, roleBtnWidth, roleBtnHeight,
+        ROLE_OPTIONS[1].label, ROLE_OPTIONS[1].color
+    )
+    roleBtn:SetPoint("LEFT", roleLabel, "RIGHT", 8, 0)
+    roleBtn:SetScript("OnClick", function()
+        local curIdx = GetRoleOptionIndex(LFG.RoleFilter)
+        local nextIdx = (curIdx % #ROLE_OPTIONS) + 1
+        LFG.RoleFilter = ROLE_OPTIONS[nextIdx].value
+        LFG.UpdateRoleFilterVisuals()
+        if LFG.UpdateRecruitersList then LFG.UpdateRecruitersList() end
+    end)
+    LFG.roleButton = roleBtn
+
+    function LFG.UpdateRoleFilterVisuals()
+        local opt = ROLE_OPTIONS[GetRoleOptionIndex(LFG.RoleFilter)]
+        if not opt then return end
+        local c = opt.color
+        if roleBtn.text then
+            roleBtn.text:SetText(opt.label)
+        end
+        if roleBtn.bg then
+            roleBtn.bg:SetColorTexture(c[1] * 0.45, c[2] * 0.45, c[3] * 0.45, 0.95)
+        end
+        if roleBtn.border then
+            roleBtn.border:SetColorTexture(c[1], c[2], c[3], 1.0)
+        end
+        if roleBtn.text then
+            roleBtn.text:SetTextColor(
+                math.min(c[1] * 1.5 + 0.3, 1),
+                math.min(c[2] * 1.5 + 0.3, 1),
+                math.min(c[3] * 1.5 + 0.3, 1)
+            )
+        end
+
+        roleBtn.color = c
+        roleBtn:SetScript("OnEnter", function(self)
+            self.bg:SetColorTexture(c[1] * 0.65, c[2] * 0.65, c[3] * 0.65, 1.0)
+            self.border:SetColorTexture(c[1], c[2], c[3], 1.0)
+            self.text:SetTextColor(1, 1, 1)
+        end)
+        roleBtn:SetScript("OnLeave", function(self)
+            self.bg:SetColorTexture(c[1] * 0.45, c[2] * 0.45, c[3] * 0.45, 0.95)
+            self.border:SetColorTexture(c[1], c[2], c[3], 1.0)
+            self.text:SetTextColor(
+                math.min(c[1] * 1.5 + 0.3, 1),
+                math.min(c[2] * 1.5 + 0.3, 1),
+                math.min(c[3] * 1.5 + 0.3, 1)
+            )
+        end)
+    end
+
+    LFG.UpdateModeFilterVisuals()
+    LFG.UpdateRoleFilterVisuals()
+
+    LFG.modeDropdown = nil
 
     self.searchFrame = CreateFrame("Frame", nil, self.mainContainer)
     self.searchFrame:SetSize(IW, 26)
