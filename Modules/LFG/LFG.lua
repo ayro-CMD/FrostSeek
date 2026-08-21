@@ -946,7 +946,7 @@ local SPAM_WORDS = {
     "raid on wednesday", "raid on thursday", "raid on friday", "raid on saturday",
     "raid on sunday", "raid on monday", "raid on tuesday",
     "levelers", "leveler", "raiding", "raider", "mythic team", "heroic team",
-    "gchat", "g-chat", "guildchat", "gchat",
+    "gchat", "g-chat", "guildchat", "gchat","linkin","Guilde",
     "scheduled", "roster", "statics", "progression",
     "casuals", "casual", "hardcore", "semihardcore", "semi-hardcore",
     "america", "europe", "oceanic", "na-based", "eu-based", "na based", "eu based",
@@ -1110,7 +1110,7 @@ local GUILD_RECRUIT_INDICATORS = {
     "raid schedule", "raid night", "raid nights", "raid log",
     "static", "progression", "core team", "core spot",
     "discord.gg", "discord server", "voice comms", "voice chat",
-    "na-based", "eu-based", "na based", "eu based",
+    "na-based", "eu-based", "na based", "eu based","guilde",
     "america", "europe", "oceanic", "est", "cst", "pst", "server time",
     "no weekends", "m-th", "t-th", "w-f", "wed sun",
 }
