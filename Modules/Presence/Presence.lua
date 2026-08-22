@@ -1251,7 +1251,6 @@ function Presence:ShowFavoriteToast(name, role, level)
                     end
                 end
                 Presence:RelayoutToasts()
-                self:GetParent():SetScript("OnUpdate", nil)
             end
         end
     end)

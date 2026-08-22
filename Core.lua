@@ -55,7 +55,7 @@ function FrostSeek._v.g(name)
     return FrostSeek._v.w[name]
 end
 
-FrostSeek.VERSION = "2.3.2"
+FrostSeek.VERSION = "2.3.3"
 
 local L = setmetatable({}, {
     __index = function(_, key)
@@ -135,7 +135,7 @@ function FrostSeek.SafeCall(fn, ...)
     local args = { ... }
     local ok, err = xpcall(function() return fn(unpack(args)) end,
         function(e)
-            return tostring(e) .. "\n" .. debugstack and debugstack(2, 8) or ""
+            return tostring(e) .. "\n" .. (debugstack and debugstack(2, 8) or "")
         end)
     if not ok then
         FrostSeek.Logger.Error("SafeCall failed: " .. tostring(err))
@@ -814,8 +814,11 @@ miniButton:SetHeight(32)
 miniButton:SetFrameStrata("TOOLTIP")
 miniButton:SetFrameLevel(100)
 
-local minimapPosition = FrostSeekDB.MinimapButtonPosition or 45
-miniButton:SetPoint("CENTER", Minimap, "CENTER", minimapPosition, minimapPosition - 80)
+local MINIMAP_DEFAULT_ANGLE = 45
+local MINIMAP_RADIUS = 80
+local minimapAngle = FrostSeekDB.MinimapButtonPosition or MINIMAP_DEFAULT_ANGLE
+local rad = math.rad(minimapAngle)
+miniButton:SetPoint("CENTER", Minimap, "CENTER", math.cos(rad) * MINIMAP_RADIUS, math.sin(rad) * MINIMAP_RADIUS)
 
 local ICON_BASE = "Interface\\AddOns\\FrostSeek\\Media\\texture\\icon\\map\\"
 
@@ -944,7 +947,7 @@ end
 
 local function UpdateMinimapVisual()
     if FrostSeek.IsAddonDisabled() then
-        miniButton:SetNormalTexture(ICON_BASE .. "red.tga")
+        miniButton:SetNormalTexture(ICON_BASE .. "pvp.tga")
         FrostSeek._activeMinimapCategory = nil
         blinkFrame:Hide()
         miniButton:SetAlpha(1)

@@ -407,7 +407,7 @@ function FrostSeekCompat.ChannelAPI.GetChannelID(channelName)
     end
 
     for i = 1, 20 do
-        local ok, name = pcall(function()
+        local ok, _, name = pcall(function()
             return GetChannelName(i)
         end)
         if ok and name and tostring(name) ~= "" and string.lower(tostring(name)) == targetLower then
@@ -510,8 +510,16 @@ FrostSeekCompat.GetOnlineFriendsCount = function()
             local ok, info = pcall(function() return C_FriendList.GetFriendInfoByIndex(i) end)
             if ok and info then connected = info.connected or false end
         elseif GetFriendInfo then
-            local ok, _, _, _, _, conn = pcall(function() return GetFriendInfo(i) end)
-            if ok then connected = conn or false end
+            local ok, _, _, _, conn5, conn6 = pcall(function() return GetFriendInfo(i) end)
+            if ok then
+                if type(conn5) == "boolean" then
+                    connected = conn5
+                elseif type(conn6) == "boolean" then
+                    connected = conn6
+                elseif conn5 ~= nil then
+                    connected = conn5 and true or false
+                end
+            end
         end
         if connected then onlineFriends = onlineFriends + 1 end
     end

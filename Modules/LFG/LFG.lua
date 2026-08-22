@@ -913,7 +913,7 @@ local SPAM_WORDS = {
     "wts", "wtb", "sell", "selling", "buy", "gdkp", "carry service","anybody","lockboxes",
     "boosting service", "pilot", "piloted", "price", "cheap", "offer","addon","frame","warhalla","<Warhalla>",
     "service", "cache", "nuked", "ksh", "keystone master","florida","grass","plf","guilde",
-    "mdi", "server first", "top guild", "best guild","gf","which","every","recrute",
+    "mdi", "server first", "top guild", "best guild","gf","which","every","recrute","days","kill",
     "world first", "qualif","girl","small","boy","goth","gnome","testing","dont",
     "awakening", "twisting","why","crafter","whick","professions","profession","reclutamos",
     "transfer", "transfers", "realm transfer", "server transfer", "move to", "come join",
@@ -2026,6 +2026,18 @@ function LFG.ParseRoles(message)
             end
         end
     end
+
+    totalRoles = roles.tank + roles.healer + roles.dps + roles.support
+    if totalRoles == 0 then
+        if string.find(lowerMsg, "%f[%a]all%f[^%a]")
+           or string.find(lowerMsg, "%f[%a]anyone%f[^%a]")
+           or string.find(lowerMsg, "%f[%a]any%f[^%a]") then
+            roles.tank = 1
+            roles.healer = 1
+            roles.dps = 1
+            roles.support = 1
+        end
+    end
     return roles
 end
 
@@ -2525,8 +2537,13 @@ function LFG.CreateLFGPopup(sender, message, dungeon, isHeroic, isMythic, isRaid
     if roleFilter ~= "ALL" then
         local parsedRoles = LFG.ParseRoles(message)
         local roleKey = string.lower(roleFilter)
-        if parsedRoles and parsedRoles[roleKey] and parsedRoles[roleKey] > 0 then
-        else
+        local totalParsed = 0
+        if parsedRoles then
+            totalParsed = (parsedRoles.tank or 0) + (parsedRoles.healer or 0)
+                       + (parsedRoles.dps or 0) + (parsedRoles.support or 0)
+        end
+
+        if totalParsed > 0 and not (parsedRoles[roleKey] and parsedRoles[roleKey] > 0) then
             return
         end
     end
@@ -3383,7 +3400,12 @@ function LFG.UpdateRecruitersList()
     local function passesRoleFilter(search)
         if not roleFilterKey then return true end
         local roles = LFG.ParseRoles(search.message)
-        local count = tonumber(roles and roles[roleFilterKey]) or 0
+        if not roles then return true end
+        local totalParsed = (roles.tank or 0) + (roles.healer or 0)
+                         + (roles.dps or 0) + (roles.support or 0)
+        
+        if totalParsed == 0 then return true end
+        local count = tonumber(roles[roleFilterKey]) or 0
         return count > 0
     end
 
@@ -3478,7 +3500,7 @@ function LFG.UpdateRecruitersList()
             poolRow.nameText:SetText(record.player or L["unknown"])
             local timeSince = now - (record.lastUpdate or 0)
             if timeSince < 60 then
-                poolRow.timeText:SetText(string.format("%ds", timeSince))
+                poolRow.timeText:SetText(string.format("%ds", math.floor(timeSince)))
             else
                 poolRow.timeText:SetText(string.format("%dm", math.floor(timeSince/60)))
             end
@@ -4366,12 +4388,10 @@ EventFrame:SetScript("OnEvent", function(self, event, message, sender, language,
         if CHANNEL_BLACKLIST[cleanName] then return end
         local chIdx = select(4, ...)
         if chIdx then
-            local okGN, n = pcall(function() return GetChannelName(chIdx) end)
-            if okGN and n then
-                if type(n) == "string" then
-                    n = string.match(n, "^%s*%d*%.?%s*(.-)%s*$") or ""
-                end
-                if CHANNEL_BLACKLIST[n] then return end
+            local okGN, _, chanName = pcall(function() return GetChannelName(chIdx) end)
+            if okGN and chanName then
+                local cn = tostring(chanName)
+                if CHANNEL_BLACKLIST[cn] then return end
             end
         end
         local chBase = select(5, ...)
@@ -4401,10 +4421,6 @@ local function InitializeLFGSystem()
 
     if FrostSeekDB.LFG.popupRoleFilter == nil then
         FrostSeekDB.LFG.popupRoleFilter = "ALL"
-    end
-
-    if FrostSeekDB.LFG.inviteAlertAnchor == nil then
-        FrostSeekDB.LFG.inviteAlertAnchor = nil
     end
 
     if FrostSeekDB.LFG.popupShowLFG == nil or FrostSeekDB.LFG.popupShowLFM == nil then

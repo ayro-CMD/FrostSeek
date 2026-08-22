@@ -443,7 +443,7 @@ function Protocol:IsAddonSpam(text)
     return false
 end
 
-local PLAYER_NAME_PATTERN = "^[%a][%a']*$" 
+local PLAYER_NAME_PATTERN = "^[%a][%a%d'%-]*$"
 function Protocol.IsValidListing(l)
     if not l then return false end
     if not l.id or l.id == "" then return false end

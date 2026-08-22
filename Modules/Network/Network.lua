@@ -106,7 +106,7 @@ local function getChannelId(channelName)
     end
     local targetLower = string.lower(channelName)
     for i = 1, 20 do
-        local ok2, name = pcall(function()
+        local ok2, _, name = pcall(function()
             return GetChannelName(i)
         end)
         if ok2 and name and tostring(name) ~= "" and string.lower(tostring(name)) == targetLower then

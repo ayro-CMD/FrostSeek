@@ -857,8 +857,8 @@ local THEMES = {
     },
 }
 
-local _currentName = "Shadow"
-local _currentTheme = THEMES.Shadow
+local _currentName = "Frost"
+local _currentTheme = THEMES.Frost
 
 local _crossDeps = {
     _dShift = 0,
@@ -987,7 +987,7 @@ local function InitTheme()
 
     if FrostSeekDB and FrostSeekDB.Settings then
         if FrostSeekDB.Settings.theme == nil then
-            FrostSeekDB.Settings.theme = "Shadow"
+            FrostSeekDB.Settings.theme = "Frost"
         end
 
         local saved = FrostSeekDB.Settings.theme

@@ -1,10 +1,10 @@
 # ⚡ FrostSeek 
 
-**ONLY ENG/IT LANGUAGE IS FULL TRANSLATE ATM** (OTHER IS WIP)
+**6 languages  localized: English, Italian, German, Spanish, French, Portuguese.**
 **Advanced LFG/LFM Manager with FrostNet** — for WoW Ascension & all WoW Classic / Retail clients.
 
 [![License](https://img.shields.io/badge/License-Proprietary-red.svg)](License)
-[![Version](https://img.shields.io/badge/Version-2.3.2-blue.svg)](https://www.curseforge.com/wow/addons/frostseek)
+[![Version](https://img.shields.io/badge/Version-2.3.3-blue.svg)](https://www.curseforge.com/wow/addons/frostseek)
 
 ---
 
@@ -135,7 +135,7 @@ Supported languages:
    ├── Media\
    └── Modules\
    ```
-4. Open WoW — you'll see `FrostSeek v2.2.5 loaded!` in chat
+4. Open WoW — you'll see `FrostSeek v2.3.3 loaded!` in chat
 
 ---
 
@@ -181,125 +181,6 @@ Supported languages:
 | **Community** | Guild browser, recruitment, event board |
 | **Options** | All settings |
 
----
-
-## 🆕 New Features in v2.3.2
-
-### Group Invite Context Message
-When you accept multiple recruiters by clicking the Accept button (or use the
-popup Whisper button, or use the right-click "Send whisper with LFG" menu), the
-addon tracks each whisper you sent. As soon as one of those recruiters sends
-you a party invite back, FrostSeek prints a chat line like:
-
-> `Ayro sent you a group invite for: 'LF1M scholo m+10'`
-
-This works for all four LFG whisper entry points:
-- The recruiters-list **Accept** button
-- The popup **Whisper** button
-- The player right-click menu **Send whisper with LFG**
-- Any context in which the recruiter's original message can be resolved
-
-Tracked whispers auto-expire after 10 minutes. Toggle with `/fsinvites on|off`,
-inspect status with `/fsinvites`, or purge with `/fsinvites clear`.
-
-### Center-screen alert (optional)
-In addition to the chat line, FrostSeek can pop a large fading alert in the
-middle of the screen so you don't miss the invite. Two new options under
-**Options → LFG → Group Invite Context**:
-
-- **Show center-screen alert** — toggle the center alert on/off (chat line still fires)
-- **Center alert duration (sec)** — how long the alert stays visible (0–15 seconds, default 5; 0 = disabled)
-
-The alert respects the existing "No Alerts in Combat" guard.
-
----
-
-## 🆕 New Features in v2.2.5
-
-### Chat Filter
-- Hide LFG/LFM spam from Trade, General, Yell, Say, Guild
-- Smart keyword matching with role detection
-- Custom keywords support
-- Addon channels always excluded
-- Debug commands: `/fscf status`, `/fscf log`, `/fscf reregister`
-
-### Keystone Level Filter
-- Show only keystones at or above a minimum level
-- Works in LFG popups and recruiters list
-- Smart parser handles all keystone formats (CoA, standard, item links)
-- Test command: `/fskeytest <message>`
-
-### Setup Wizard
-- 4-page guided setup for new users
-- Language, role, popups, sounds, chat filter
-- Saves to FrostSeekDB
-
-### UI Improvements
-- Removed FrostNet button from LFG (channel managed in background)
-- Removed LFG toggle from top-right
-- Profile button moved to bottom-right
-- New Custom Wisp button (opens custom whisper settings)
-- Bonus Coin checkbox renamed from "Keystone"
-- Popup buttons themed to match addon UI
-- Whisper button preview tooltip (shows message before sending)
-
-### Localization
-- Full Italian localization (1000+ strings)
-- English base localization updated
-- All option names, descriptions, tooltips, buttons, messages translated
-- No more raw key names in UI
-
-### Bug Fixes
-- Fixed popup queue getting stuck after first item
-- Fixed CreateLFGPopup missing isMythic parameter
-- Fixed Dashboard nil dereference on netStats
-- Fixed LFM UpdateMessagePreview clearing message on role toggle
-- Fixed Network _FlushQueue not using AddonMessage API
-- Fixed Community PostEvent silent drop
-- Fixed Compat.lua typo CLASSIC_335 → wotlk335
-- Fixed Core.lua /fsdebug nil deref on Network
-- Fixed LFG.lua ClearAllSearches stale reference
-- Fixed channel blacklist select() indices
-- Fixed LFM string.find plain=true (malformed pattern crash)
-- Fixed LFM StartAutoSpam multiple ticker creation
-- Fixed SetItemRef not forwarding chatFrame argument
-- Fixed keystone stale currentKeystone value
-- Fixed nil checks in Presence, Profile, VoiceBridge, Community, Dashboard
-- Fixed OnEnter nil check in Core.lua
-- Fixed theme typo "ShadowS" → "Shadow"
-- Fixed ConsoleExec("reloadui") fallback (doesn't work, use ReloadUI)
-- Fixed Profile.lua SetColorTexture called with table instead of unpacked values
-- Fixed Options.lua SetPoint 2-arg invalid form
-- Fixed Theme.lua dead code
-- Fixed Network.lua tostring() for sentId
-- Fixed Community.lua gsub pattern escaping for language tags
-
-### Network
-- FSK and FSK-EVT channels now join 10 seconds after login (so they get higher channel numbers)
-
----
-
-## ⌨️ Slash Commands
-
-| Command | Description |
-|---------|-------------|
-| `/fs` | Open main window |
-| `/fslfg` | Open LFG tab |
-| `/fslfm` | Open LFM tab |
-| `/fsnet` | FrostNet network status |
-| `/fsoptions` | Open settings |
-| `/fsetup` | Repeat setup wizard |
-| `/fsdebug` | Debug info |
-| `/fsdumplog` | Dump log |
-| `/fsclass` | Class management (Ascension) |
-| `/fsreset confirm` | Full reset |
-| `/fscf` or `/fschatfilter` | Chat filter management |
-| `/fscf status` | Show filter status |
-| `/fscf log [n]` | Show last N filtered messages |
-| `/fscf reregister` | Force re-register filter |
-| `/fskeytest <msg>` | Test keystone parser |
-| `/fschatsniff` | Chat event sniffer (debug) |
-| `/fsinvites [on\|off\|clear]` | Group invite context tracker: status / toggle / purge |
 
 ---
 
