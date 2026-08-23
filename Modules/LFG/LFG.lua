@@ -376,7 +376,7 @@ local PVP_KEYWORDS = {
 }
 
 local MANASTORM_KEYWORDS = {
-    "manastorm", "bonzo", "alva", "ms","manastorm goldfarm",
+    "manastorm", "bonzo", "alva","manastorm goldfarm",
 }
 
 local DUNGEON_KEYWORDS = {
@@ -914,7 +914,7 @@ local SPAM_WORDS = {
     "boosting service", "pilot", "piloted", "price", "cheap", "offer","addon","frame","warhalla","<Warhalla>",
     "service", "cache", "nuked", "ksh", "keystone master","florida","grass","plf","guilde",
     "mdi", "server first", "top guild", "best guild","gf","which","every","recrute","days","kill",
-    "world first", "qualif","girl","small","boy","goth","gnome","testing","dont",
+    "world first", "qualif","girl","small","boy","goth","gnome","testing","dont","same",
     "awakening", "twisting","why","crafter","whick","professions","profession","reclutamos",
     "transfer", "transfers", "realm transfer", "server transfer", "move to", "come join",
     "invite link", "discord link", "discord server","WTB","days","sandles","damnit",
