@@ -376,7 +376,7 @@ local PVP_KEYWORDS = {
 }
 
 local MANASTORM_KEYWORDS = {
-    "manastorm", "bonzo", "alva","manastorm goldfarm",
+    "manastorm", "bonzo", "alva","manastorm goldfarm","ms",
 }
 
 local DUNGEON_KEYWORDS = {
