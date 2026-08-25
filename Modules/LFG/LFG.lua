@@ -295,7 +295,7 @@ inviteEventFrame:SetScript("OnEvent", function(self, event, ...)
     local L = FrostSeek.L
     local truncated = entry.message or ""
     if #truncated > 160 then
-        truncated = string.sub(truncated, 1, 157) .. "..."
+        truncated = LFG.TruncateVisible and LFG.TruncateVisible(truncated, 160) or (string.sub(truncated, 1, 157) .. "...")
     end
     local prefix = L["msg_invite_context_prefix"] or "|cff88ccffFrostSeek:|r"
     local template = L["msg_invite_context_body"] or "%s sent you a group invite for: '%s'"
@@ -376,7 +376,7 @@ local PVP_KEYWORDS = {
 }
 
 local MANASTORM_KEYWORDS = {
-    "manastorm", "bonzo", "alva","manastorm goldfarm","ms",
+    "manastorm", "bonzo", "alva", "ms","manastorm goldfarm",
 }
 
 local DUNGEON_KEYWORDS = {
@@ -914,7 +914,7 @@ local SPAM_WORDS = {
     "boosting service", "pilot", "piloted", "price", "cheap", "offer","addon","frame","warhalla","<Warhalla>",
     "service", "cache", "nuked", "ksh", "keystone master","florida","grass","plf","guilde",
     "mdi", "server first", "top guild", "best guild","gf","which","every","recrute","days","kill",
-    "world first", "qualif","girl","small","boy","goth","gnome","testing","dont","same",
+    "world first", "qualif","girl","small","boy","goth","gnome","testing","dont",
     "awakening", "twisting","why","crafter","whick","professions","profession","reclutamos",
     "transfer", "transfers", "realm transfer", "server transfer", "move to", "come join",
     "invite link", "discord link", "discord server","WTB","days","sandles","damnit",
@@ -1566,6 +1566,63 @@ function LFG.GetLegendaryEnchant()
     return ""
 end
 
+function LFG.GetPlayerSpec()
+    if GetSpecialization and GetSpecializationInfo then
+        local ok, specIndex = pcall(GetSpecialization)
+        if ok and specIndex then
+            local ok2, _, specName = pcall(GetSpecializationInfo, specIndex)
+            if ok2 and specName and specName ~= "" then
+                return specName
+            end
+        end
+    end
+    if GetPrimaryTalentTree and GetTalentTabInfo then
+        local ok, primaryTab = pcall(GetPrimaryTalentTree)
+        if ok and primaryTab then
+            local ok2, tabName = pcall(GetTalentTabInfo, primaryTab)
+            if ok2 and tabName and tabName ~= "" then
+                return tabName
+            end
+        end
+    end
+    if GetNumTalentTabs and GetTalentTabInfo then
+        local okN, numTabs = pcall(GetNumTalentTabs)
+        if okN and numTabs and numTabs > 0 then
+            local bestName, bestPoints
+            for i = 1, numTabs do
+                local ok, tabName, _, pointsSpent = pcall(GetTalentTabInfo, i)
+                if ok and tabName then
+                    local pts = tonumber(pointsSpent) or 0
+                    if not bestPoints or pts > bestPoints then
+                        bestPoints = pts
+                        bestName = tabName
+                    end
+                end
+            end
+            if bestName and bestName ~= "" and (bestPoints or 0) > 0 then
+                return bestName
+            end
+        end
+    end
+    if FrostSeekDB and FrostSeekDB.Profile and FrostSeekDB.Profile.spec
+        and FrostSeekDB.Profile.spec ~= "" then
+        return FrostSeekDB.Profile.spec
+    end
+    return ""
+end
+
+function LFG.GetSpecWithEnchant()
+    local enchant = LFG.GetLegendaryEnchant()
+    local spec = LFG.GetPlayerSpec()
+    if enchant and enchant ~= "" then
+        if spec and spec ~= "" then
+            return spec .. " " .. enchant
+        end
+        return enchant
+    end
+    return spec or ""
+end
+
 function LFG.GetFullPlayerInfo()
     local classInfo = LFG.GetClassInfo()
     local ilvl = LFG.GetAverageItemLevel()
@@ -1625,6 +1682,7 @@ end
 
 function LFG.CreateWhisperMessage()
     local classInfo, ilvl, enchant = LFG.GetFullPlayerInfo()
+    local specValue = LFG.GetSpecWithEnchant()
     local roleText = FrostSeekDB.LFG.myRole ~= "" and FrostSeekDB.LFG.myRole ~= L["none"] and FrostSeekDB.LFG.myRole or ""
     local playerLevel = UnitLevel("player") or 0
     if FrostSeekDB.LFG.customMessages and FrostSeekDB.LFG.customMessages.enabled then
@@ -1634,7 +1692,7 @@ function LFG.CreateWhisperMessage()
         message = string.gsub(message, "{ilvl}", tostring(ilvl or 0))
         message = string.gsub(message, "{gs}", "")
         message = string.gsub(message, "{ench}", enchant or "")
-        message = string.gsub(message, "{spec}", enchant or "")
+        message = string.gsub(message, "{spec}", specValue or "")
         message = string.gsub(message, "{role}", roleText or "")
         message = string.gsub(message, "{level}", tostring(playerLevel))
         if FrostSeekDB.LFG.customMessages.showAchievement and FrostSeekDB.LFG.customMessages.achievementLink ~= "" then
@@ -1758,6 +1816,7 @@ function LFG.RecordActiveSearch(sender, message, channel)
     for _, record in ipairs(activeSearches) do
         if record.player == sender then
             record.message = message
+            record._ksLevel = nil
             record.lastUpdate = now
             record.dungeon = dungeon
             record.dungeonName = LFG.GetCanonicalDungeonName(category, dungeon)
@@ -1924,28 +1983,28 @@ end
 
 local DIFFICULTY_PATTERNS = {
     RAID = {
-        { keywords = {"ascended", "asc"}, label = "Ascended" },
-        { keywords = {"trial 10", "trial10", "t10"}, label = "Trial 10" },
-        { keywords = {"trial 9", "trial9", "t9"}, label = "Trial 9" },
-        { keywords = {"trial 8", "trial8", "t8"}, label = "Trial 8" },
-        { keywords = {"trial 7", "trial7", "t7"}, label = "Trial 7" },
-        { keywords = {"trial 6", "trial6", "t6"}, label = "Trial 6" },
-        { keywords = {"trial 5", "trial5", "t5"}, label = "Trial 5" },
-        { keywords = {"trial 4", "trial4", "t4"}, label = "Trial 4" },
-        { keywords = {"trial 3", "trial3", "t3"}, label = "Trial 3" },
-        { keywords = {"trial 2", "trial2", "t2"}, label = "Trial 2" },
-        { keywords = {"trial 1", "trial1", "t1"}, label = "Trial 1" },
+        { keywords = {"ascended", "%f[%a%d]asc%f[^%a%d]"}, label = "Ascended" },
+        { keywords = {"trial 10", "trial10", "%f[%a%d]t10%f[^%a%d]"}, label = "Trial 10" },
+        { keywords = {"trial 9", "trial9", "%f[%a%d]t9%f[^%a%d]"}, label = "Trial 9" },
+        { keywords = {"trial 8", "trial8", "%f[%a%d]t8%f[^%a%d]"}, label = "Trial 8" },
+        { keywords = {"trial 7", "trial7", "%f[%a%d]t7%f[^%a%d]"}, label = "Trial 7" },
+        { keywords = {"trial 6", "trial6", "%f[%a%d]t6%f[^%a%d]"}, label = "Trial 6" },
+        { keywords = {"trial 5", "trial5", "%f[%a%d]t5%f[^%a%d]"}, label = "Trial 5" },
+        { keywords = {"trial 4", "trial4", "%f[%a%d]t4%f[^%a%d]"}, label = "Trial 4" },
+        { keywords = {"trial 3", "trial3", "%f[%a%d]t3%f[^%a%d]"}, label = "Trial 3" },
+        { keywords = {"trial 2", "trial2", "%f[%a%d]t2%f[^%a%d]"}, label = "Trial 2" },
+        { keywords = {"trial 1", "trial1", "%f[%a%d]t1%f[^%a%d]"}, label = "Trial 1" },
         { keywords = {"mythic"}, label = "Mythic" },
         { keywords = {"heroic", "hc"}, label = "Heroic" },
-        { keywords = {"normal", "norm"}, label = "Normal" },
+        { keywords = {"normal", "norm", "%f[%a%d]nm%f[^%a%d]"}, label = "Normal" },
     },
     DUNGEON = {
         { keywords = {"mythic", "m%+", "mythic%+"}, label = "Mythic" },
         { keywords = {"heroic", "hc"}, label = "Heroic" },
-        { keywords = {"normal", "norm"}, label = "Normal" },
+        { keywords = {"normal", "norm", "%f[%a%d]nm%f[^%a%d]"}, label = "Normal" },
     },
     WORLD_BOSS = {
-        { keywords = {"ascended", "asc%d", " asc "}, label = "Ascended" },
+        { keywords = {"ascended", "asc%d", "%f[%a%d]asc%f[^%a%d]"}, label = "Ascended" },
         { keywords = {"mythic"}, label = "Mythic" },
         { keywords = {"heroic", "hc"}, label = "HC" },
         { keywords = {"instanced"}, label = "Instanced" },
@@ -1964,51 +2023,208 @@ local DIFFICULTY_PATTERNS = {
     },
 }
 
+local DIFFICULTY_ANCHOR_KEYWORDS = {
+    RAID = RAID_KEYWORDS,
+    DUNGEON = DUNGEON_KEYWORDS,
+    WORLD_BOSS = WORLD_BOSS_KEYWORDS,
+}
+
 function LFG.ParseDifficulty(message, category)
     if not message or not category then return nil end
     local lowerMsg = string.lower(message)
     local patterns = DIFFICULTY_PATTERNS[category]
     if not patterns then return nil end
-    for _, entry in ipairs(patterns) do
+    local matches = {}
+    for order, entry in ipairs(patterns) do
         for _, kw in ipairs(entry.keywords) do
-            if string.find(kw, "%%") then
-                if string.match(lowerMsg, kw) then
-                    return entry.label
+            local isPattern = string.find(kw, "%%", 1, true) ~= nil
+            local startPos = 1
+            while startPos <= #lowerMsg do
+                local s
+                if isPattern then
+                    s = string.match(lowerMsg, "()" .. kw, startPos)
+                else
+                    s = string.find(lowerMsg, kw, startPos, true)
                 end
-            else
-                if string.find(lowerMsg, kw, 1, true) then
-                    return entry.label
-                end
+                if not s then break end
+                table.insert(matches, { pos = s, label = entry.label, order = order })
+                startPos = s + 1
+                if #matches > 50 then break end
+            end
+            if #matches > 50 then break end
+        end
+        if #matches > 50 then break end
+    end
+    if #matches == 0 then return nil end
+    local anchorPos = nil
+    local anchorList = DIFFICULTY_ANCHOR_KEYWORDS[category]
+    if anchorList then
+        for _, kw in ipairs(anchorList) do
+            local s = string.find(lowerMsg, kw, 1, true)
+            if s and (not anchorPos or s < anchorPos) then
+                anchorPos = s
             end
         end
     end
-    return nil
+    if anchorPos then
+        local best
+        for _, m in ipairs(matches) do
+            local dist = math.abs(m.pos - anchorPos)
+            if not best or dist < best.dist or (dist == best.dist and m.order < best.order) then
+                best = { dist = dist, label = m.label, order = m.order, pos = m.pos }
+            end
+        end
+        return best.label
+    end
+    local best
+    for _, m in ipairs(matches) do
+        if not best or m.pos < best.pos or (m.pos == best.pos and m.order < best.order) then
+            best = m
+        end
+    end
+    return best and best.label or nil
+end
+
+local function lower_cyrillic(s)
+    if not s then return s end
+    local out = {}
+    local i = 1
+    local len = #s
+    while i <= len do
+        local b1 = string.byte(s, i)
+        if b1 == 0xD0 and i + 1 <= len then
+            local b2 = string.byte(s, i + 1)
+            if b2 >= 0x90 and b2 <= 0x9F then
+                table.insert(out, string.char(0xD0, b2 + 0x20))
+                i = i + 2
+            elseif b2 >= 0xA0 and b2 <= 0xAF then
+                table.insert(out, string.char(0xD1, b2 - 0x20))
+                i = i + 2
+            else
+                table.insert(out, string.char(b1, b2))
+                i = i + 2
+            end
+        else
+            table.insert(out, string.char(b1))
+            i = i + 1
+        end
+    end
+    return table.concat(out)
+end
+
+local function is_ascii_kw(kw)
+    for i = 1, #kw do
+        if string.byte(kw, i) > 127 then return false end
+    end
+    return true
 end
 
 function LFG.ParseRoles(message)
     if not message then return { tank = 0, healer = 0, dps = 0, support = 0 } end
     local roles = { tank = 0, healer = 0, dps = 0, support = 0 }
-    local lowerMsg = string.lower(message)
-    local function parseRole(roleKeywords, roleName)
-        for _, kw in ipairs(roleKeywords) do
-            local num = string.match(lowerMsg, "(%d)%s*" .. kw .. "%f[^%a%d]")
-            if num then
-                roles[roleName] = roles[roleName] + tonumber(num)
+    local lowerMsg = lower_cyrillic(string.lower(message))
+
+    local function count_role(roleKeywords)
+        local total = 0
+        local pos = 1
+        local len = #lowerMsg
+        while pos <= len do
+            local best_kw = nil
+            local best_end = nil
+            local best_len = 0
+            for _, kw in ipairs(roleKeywords) do
+                local s, e = string.find(lowerMsg, kw, pos, true)
+                if s == pos then
+                    local ok_boundary = true
+                    if is_ascii_kw(kw) and pos > 1 then
+                        local prev_byte = string.byte(lowerMsg, pos - 1)
+                        if (prev_byte >= 48 and prev_byte <= 57)
+                           or (prev_byte >= 65 and prev_byte <= 90)
+                           or (prev_byte >= 97 and prev_byte <= 122) then
+                            ok_boundary = false
+                        end
+                    end
+                    if ok_boundary then
+                        local kw_len = e - s + 1
+                        if kw_len > best_len then
+                            best_len = kw_len
+                            best_kw = kw
+                            best_end = e
+                        end
+                    end
+                end
+            end
+            if best_kw then
+                local num = nil
+                local after_byte = string.byte(lowerMsg, best_end + 1)
+                if after_byte and after_byte >= 48 and after_byte <= 57 then
+                    local after = string.sub(lowerMsg, best_end + 1, math.min(len, best_end + 4))
+                    num = string.match(after, "^(%d+)")
+                end
+
+                if not num then
+                    local before = string.sub(lowerMsg, math.max(1, pos - 8), pos - 1)
+                    num = string.match(before, "(%d)%s*$")
+                end
+                if num then
+                    total = total + tonumber(num)
+                end
+                pos = best_end + 1
+            else
+                pos = pos + 1
             end
         end
-        if roles[roleName] == 0 then
-            for _, kw in ipairs(roleKeywords) do
+        return total
+    end
+
+    local function has_role(roleKeywords)
+        for _, kw in ipairs(roleKeywords) do
+            if is_ascii_kw(kw) then
                 if string.find(lowerMsg, "%f[%a]" .. kw .. "%f[^%a]") then
-                    roles[roleName] = roles[roleName] + 1
-                    break
+                    return true
+                end
+            else
+                if string.find(lowerMsg, kw, 1, true) then
+                    return true
                 end
             end
         end
+        return false
     end
-    parseRole({"tank", "tanks"}, "tank")
-    parseRole({"healer", "healers", "heal", "heals"}, "healer")
-    parseRole({"dps", "damage", "dd"}, "dps")
-    parseRole({"support", "supp", "supt"}, "support")
+
+    local function parseRole(roleKeywords, roleName)
+        roles[roleName] = count_role(roleKeywords)
+        if roles[roleName] == 0 and has_role(roleKeywords) then
+            roles[roleName] = 1
+        end
+    end
+
+    parseRole({
+        "tank", "tanks",
+        "танк", "танка", "танки", "танков",
+        "坦克",
+        "탱커", "탱",
+    }, "tank")
+    parseRole({
+        "healer", "healers", "heal", "heals",
+        "хил", "хила", "хилер", "хилов",
+        "целитель", "лекарь",
+        "治疗", "奶",
+        "힐러", "힐",
+    }, "healer")
+    parseRole({
+        "dps", "damage", "dd",
+        "дд", "дамагер", "дилер",
+        "输出", "伤害",
+        "딜러", "딜",
+    }, "dps")
+    parseRole({
+        "support", "supp", "supt",
+        "саппорт", "саппорта", "саппортов",
+        "辅助", 
+        "서포터",
+    }, "support")
+
     local totalRoles = roles.tank + roles.healer + roles.dps + roles.support
     if totalRoles == 0 then
         local lfCount = string.match(lowerMsg, "lf(%d)")
@@ -2132,13 +2348,72 @@ function LFG.ParseKeystoneInfo(message)
     return name, level
 end
 
+local function TruncateVisible(msg, maxVisible)
+    if not msg or msg == "" then return msg or "" end
+    local len = #msg
+    local vis = 0
+    local i = 1
+    local safeCut = 0
+    local inLink = false
+    local colorDepth = 0
+    while i <= len do
+        local c = string.sub(msg, i, i)
+        if c == "|" then
+            local n = string.sub(msg, i + 1, i + 1)
+            local isColorOpen = (n == "c")
+            if n == "c" then
+                i = i + 10
+                colorDepth = colorDepth + 1
+            elseif n == "H" then
+                local e = string.find(msg, "|h", i, true)
+                i = e and (e + 2) or (len + 1)
+                inLink = true
+            elseif n == "T" then
+                local e = string.find(msg, "|t", i, true)
+                i = e and (e + 2) or (len + 1)
+            elseif n == "h" then
+                i = i + 2
+                inLink = false
+            else
+                i = i + 2
+                if n == "r" then
+                    colorDepth = math.max(0, colorDepth - 1)
+                end
+            end
+            if not inLink and not isColorOpen then
+                safeCut = i
+                if vis >= maxVisible then
+                    local suffix = "..."
+                    if colorDepth > 0 then suffix = suffix .. "|r" end
+                    return string.sub(msg, 1, i - 1) .. suffix
+                end
+            end
+        else
+            vis = vis + 1
+            if vis > maxVisible then
+                local suffix = "..."
+                if colorDepth > 0 then suffix = suffix .. "|r" end
+                if safeCut > 0 then
+                    return string.sub(msg, 1, safeCut - 1) .. suffix
+                else
+                    return string.sub(msg, 1, i - 1) .. suffix
+                end
+            end
+            if not inLink then safeCut = i end
+            i = i + 1
+        end
+    end
+    return msg
+end
+LFG.TruncateVisible = TruncateVisible
+
 function LFG.ShortenMessage(message)
     if not message then return "" end
     local maxLength = FrostSeekDB.LFG.maxMessageLength or 150
     if string.len(message) <= maxLength then
         return message
     end
-    return string.sub(message, 1, maxLength - 3) .. "..."
+    return TruncateVisible(message, maxLength)
 end
 
 function LFG.CanShowPopup(sender, message)
@@ -2758,7 +3033,7 @@ function LFG.CreateLFGPopup(sender, message, dungeon, isHeroic, isMythic, isRaid
     msgFS:SetJustifyH("LEFT")
     msgFS:SetWordWrap(false)
     local rawForDisplay = message or ""
-    local truncMsg = #rawForDisplay > 80 and string.sub(rawForDisplay, 1, 77) .. "..." or rawForDisplay
+    local truncMsg = #rawForDisplay > 80 and TruncateVisible(rawForDisplay, 80) or rawForDisplay
     msgFS:SetTextColor(1, 1, 1, 1)
     msgFS:SetText(LFG.FormatMessageWithIcons(truncMsg))
 
@@ -2785,7 +3060,7 @@ function LFG.CreateLFGPopup(sender, message, dungeon, isHeroic, isMythic, isRaid
         GameTooltip:SetText(L["popup_whisper"] .. " -> " .. tostring(sender), 0.8, 1, 0.8)
         local previewMsg = LFG.CreateWhisperMessage() or ""
         if #previewMsg > 200 then
-            previewMsg = string.sub(previewMsg, 1, 197) .. "..."
+            previewMsg = LFG.TruncateVisible and LFG.TruncateVisible(previewMsg, 200) or (string.sub(previewMsg, 1, 197) .. "...")
         end
         local isCustom = FrostSeekDB.LFG.customMessages and FrostSeekDB.LFG.customMessages.enabled
         local label = isCustom and (L["tip_preview_custom"] or "Preview (custom):") or (L["tip_preview_base"] or "Preview (base):")
@@ -3069,9 +3344,9 @@ function LFG.InitRowPool(parent)
         local row = CreateFrame("Frame", nil, parent)
         row:SetSize(rowW, ROW_HEIGHT)
         if i == 1 then
-            row:SetPoint("TOP", parent, "TOP", 0, -2)
+            row:SetPoint("TOPLEFT", parent, "TOPLEFT", 0, -2)
         else
-            row:SetPoint("TOP", rowPool[i-1].frame, "BOTTOM", 0, 0)
+            row:SetPoint("TOPLEFT", rowPool[i-1].frame, "BOTTOMLEFT", 0, 0)
         end
         local bg = row:CreateTexture(nil, "BACKGROUND")
         bg:SetPoint("TOPLEFT", 3, 0)
@@ -3167,7 +3442,7 @@ function LFG.InitRowPool(parent)
             GameTooltip:SetOwner(self, "ANCHOR_TOP")
             GameTooltip:SetText(L["listings_accept"] .. " -> " .. tostring(pr.currentRecord.player), 0.8, 1, 0.8)
             local previewMsg = LFG.CreateWhisperMessage() or ""
-            if #previewMsg > 200 then previewMsg = string.sub(previewMsg, 1, 197) .. "..." end
+            if #previewMsg > 200 then previewMsg = LFG.TruncateVisible and LFG.TruncateVisible(previewMsg, 200) or (string.sub(previewMsg, 1, 197) .. "...") end
             local isCustom = FrostSeekDB.LFG.customMessages and FrostSeekDB.LFG.customMessages.enabled
             local label = isCustom and (L["tip_preview_custom"] or "Preview (custom):") or (L["tip_preview_base"] or "Preview (base):")
             GameTooltip:AddLine(label, 0.7, 0.85, 1, true)
@@ -3223,9 +3498,9 @@ function LFG.CreateRowForPool(parent, idx)
     local rowW = parent:GetWidth() or 740
     row:SetSize(rowW, ROW_HEIGHT)
     if prev then
-        row:SetPoint("TOP", prev.frame, "BOTTOM", 0, 0)
+        row:SetPoint("TOPLEFT", prev.frame, "BOTTOMLEFT", 0, 0)
     else
-        row:SetPoint("TOP", parent, "TOP", 0, -2)
+        row:SetPoint("TOPLEFT", parent, "TOPLEFT", 0, -2)
     end
     local bg = row:CreateTexture(nil, "BACKGROUND")
     bg:SetPoint("TOPLEFT", 3, 0)
@@ -3316,7 +3591,7 @@ function LFG.CreateRowForPool(parent, idx)
         GameTooltip:SetOwner(self, "ANCHOR_TOP")
         GameTooltip:SetText(L["listings_accept"] .. " -> " .. tostring(pr.currentRecord.player), 0.8, 1, 0.8)
         local previewMsg = LFG.CreateWhisperMessage() or ""
-        if #previewMsg > 200 then previewMsg = string.sub(previewMsg, 1, 197) .. "..." end
+        if #previewMsg > 200 then previewMsg = LFG.TruncateVisible and LFG.TruncateVisible(previewMsg, 200) or (string.sub(previewMsg, 1, 197) .. "...") end
         local isCustom = FrostSeekDB.LFG.customMessages and FrostSeekDB.LFG.customMessages.enabled
         local label = isCustom and (L["tip_preview_custom"] or "Preview (custom):") or (L["tip_preview_base"] or "Preview (base):")
         GameTooltip:AddLine(label, 0.7, 0.85, 1, true)
@@ -3365,6 +3640,18 @@ function LFG.CreateRowForPool(parent, idx)
     }
     rowPool[idx] = newRow
     return newRow
+end
+
+function LFG.UpdateKeySortHeader()
+    if not LFG.keySortHeaderText then return end
+    local baseText = L["col_dungeon"] or "Dungeon"
+    if LFG.CurrentCategory == "KEYSTONE" and LFG.KeySortState == "desc" then
+        LFG.keySortHeaderText:SetText(baseText .. " |cff88ccffv|r")
+    elseif LFG.CurrentCategory == "KEYSTONE" and LFG.KeySortState == "asc" then
+        LFG.keySortHeaderText:SetText(baseText .. " |cff88ccff^|r")
+    else
+        LFG.keySortHeaderText:SetText(baseText)
+    end
 end
 
 function LFG.UpdateRecruitersList()
@@ -3464,6 +3751,36 @@ function LFG.UpdateRecruitersList()
     table.sort(filteredSearches, function(a, b)
         return (a.lastUpdate or 0) > (b.lastUpdate or 0)
     end)
+    if LFG.CurrentCategory == "KEYSTONE" and LFG.KeySortState then
+        local function GetRecordKeyLevel(rec)
+            if not rec then return -1 end
+            if rec._ksLevel == nil then
+                local _, lvl = LFG.ParseKeystoneInfo(rec.message)
+                rec._ksLevel = lvl or -1
+            end
+            return rec._ksLevel
+        end
+        table.sort(filteredSearches, function(a, b)
+            local la = GetRecordKeyLevel(a)
+            local lb = GetRecordKeyLevel(b)
+            local aHas = la >= 0
+            local bHas = lb >= 0
+            if aHas ~= bHas then
+                return aHas
+            end
+            if not aHas and not bHas then
+                return (a.lastUpdate or 0) > (b.lastUpdate or 0)
+            end
+            if la ~= lb then
+                if LFG.KeySortState == "desc" then
+                    return la > lb
+                else
+                    return la < lb
+                end
+            end
+            return (a.lastUpdate or 0) > (b.lastUpdate or 0)
+        end)
+    end
     if LFG.lfgCountText then
         LFG.lfgCountText:SetText(string.format(L["lfg_active_recruiters"], #filteredSearches))
     end
@@ -3615,6 +3932,18 @@ function LFG.UpdateRecruitersList()
                     GameTooltip:AddLine(L["tip_dungeon_label"] .. tipDungeon, 0.8, 0.8, 0.8)
                 end
                 GameTooltip:AddLine(L["tip_category_label"] .. record.category, 0.8, 0.8, 0.8)
+                local Presence = FrostSeek and FrostSeek.Presence
+                local presenceUser = Presence and Presence.onlineUsers and record.player and Presence.onlineUsers[record.player] or nil
+                if presenceUser then
+                    GameTooltip:AddLine(" ")
+                    GameTooltip:AddLine("|cff88ccff" .. (L["tooltip_frostnet_user"] or "FrostNet User") .. "|r")
+                    if presenceUser.version and presenceUser.version ~= "" then
+                        GameTooltip:AddLine(string.format(L["tooltip_frostnet_version"] or "FrostSeek v%s", presenceUser.version), 0.6, 0.8, 1)
+                    end
+                    if presenceUser.role and presenceUser.role ~= "" and presenceUser.role ~= L["none"] then
+                        GameTooltip:AddLine((L["col_role"] or "Role") .. ": " .. presenceUser.role, 0.8, 0.8, 0.8)
+                    end
+                end
                 GameTooltip:Show()
             end)
             poolRow.tooltipFrame:SetScript("OnLeave", function(self)
@@ -3639,6 +3968,10 @@ end
 function LFG.ChangeCategory(category)
     LFG.CurrentCategory = category
     LFG.DifficultyFilter = nil
+    if category ~= "KEYSTONE" then
+        LFG.KeySortState = nil
+    end
+    if LFG.UpdateKeySortHeader then LFG.UpdateKeySortHeader() end
     if LFG.recruitersScrollFrame then
         LFG.recruitersScrollFrame:SetVerticalScroll(0)
     end
@@ -4134,30 +4467,77 @@ function LFG:Initialize(parentFrame)
     headerFrame:SetPoint("TOPRIGHT", self.recruitersFrame, "TOPRIGHT", -24, -40)
     local nameHeader = headerFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     nameHeader:SetPoint("LEFT", headerFrame, "LEFT", 18, 0)
+    nameHeader:SetWidth(80)
+    nameHeader:SetJustifyH("LEFT")
     nameHeader:SetText(L["col_player"])
     nameHeader:SetTextColor(unpack(_tc("textAccent")))
     local timeHeader = headerFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     timeHeader:SetPoint("LEFT", headerFrame, "LEFT", 108, 0)
+    timeHeader:SetWidth(40)
+    timeHeader:SetJustifyH("LEFT")
     timeHeader:SetText(L["col_time"])
     timeHeader:SetTextColor(unpack(_tc("textAccent")))
     local catHeader = headerFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     catHeader:SetPoint("LEFT", headerFrame, "LEFT", 158, 0)
+    catHeader:SetWidth(30)
+    catHeader:SetJustifyH("LEFT")
     catHeader:SetText(L["col_type"])
     catHeader:SetTextColor(unpack(_tc("textAccent")))
     local roleHeader = headerFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     roleHeader:SetPoint("LEFT", headerFrame, "LEFT", 192, 0)
+    roleHeader:SetWidth(70)
+    roleHeader:SetJustifyH("LEFT")
     roleHeader:SetText(L["col_role"])
     roleHeader:SetTextColor(unpack(_tc("textAccent")))
-    local dungeonHeader = headerFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-    dungeonHeader:SetPoint("LEFT", headerFrame, "LEFT", 266, 0)
+    local dungeonHeaderBtn = CreateFrame("Button", nil, headerFrame)
+    dungeonHeaderBtn:SetSize(92, 18)
+    dungeonHeaderBtn:SetPoint("LEFT", headerFrame, "LEFT", 266, 0)
+    local dungeonHeader = dungeonHeaderBtn:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    dungeonHeader:SetPoint("LEFT", dungeonHeaderBtn, "LEFT", 0, 0)
+    dungeonHeader:SetWidth(92)
+    dungeonHeader:SetJustifyH("LEFT")
     dungeonHeader:SetText(L["col_dungeon"])
     dungeonHeader:SetTextColor(unpack(_tc("textAccent")))
+    dungeonHeaderBtn:SetScript("OnClick", function()
+        if LFG.CurrentCategory ~= "KEYSTONE" then return end
+        if LFG.KeySortState == nil then
+            LFG.KeySortState = "desc"
+        elseif LFG.KeySortState == "desc" then
+            LFG.KeySortState = "asc"
+        else
+            LFG.KeySortState = nil
+        end
+        LFG.UpdateKeySortHeader()
+        if LFG.recruitersScrollFrame then
+            LFG.recruitersScrollFrame:SetVerticalScroll(0)
+        end
+        LFG.UpdateRecruitersList()
+    end)
+    dungeonHeaderBtn:SetScript("OnEnter", function(self)
+        if LFG.CurrentCategory == "KEYSTONE" then
+            dungeonHeader:SetTextColor(1, 1, 1)
+            GameTooltip:SetOwner(self, "ANCHOR_TOP")
+            GameTooltip:SetText(L["tooltip_sort_key_level"] or "Sort by keystone level", 0.8, 0.9, 1)
+            GameTooltip:Show()
+        end
+    end)
+    dungeonHeaderBtn:SetScript("OnLeave", function(self)
+        dungeonHeader:SetTextColor(unpack(_tc("textAccent")))
+        GameTooltip:Hide()
+    end)
+    LFG.keySortBtn = dungeonHeaderBtn
+    LFG.keySortHeaderText = dungeonHeader
+    LFG.KeySortState = nil
     local msgHeader = headerFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     msgHeader:SetPoint("LEFT", headerFrame, "LEFT", 350, 0)
+    msgHeader:SetWidth(120)
+    msgHeader:SetJustifyH("LEFT")
     msgHeader:SetText(L["col_message"])
     msgHeader:SetTextColor(unpack(_tc("textAccent")))
     local acceptHeader = headerFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-    acceptHeader:SetPoint("RIGHT", headerFrame, "RIGHT", -10, 0)
+    acceptHeader:SetPoint("RIGHT", headerFrame, "RIGHT", -8, 0)
+    acceptHeader:SetWidth(60)
+    acceptHeader:SetJustifyH("RIGHT")
     acceptHeader:SetText(L["col_action"])
     acceptHeader:SetTextColor(unpack(_tc("textAccent")))
     local separator = self.recruitersFrame:CreateTexture(nil, "BACKGROUND")

@@ -25,8 +25,61 @@ local FrostSeek = _G.FrostSeek
 local Tooltip = {}
 local _tk = FrostSeek and FrostSeek._v and FrostSeek._v.a("tooltip", Tooltip)
 
+local L = FrostSeek and FrostSeek.L or {}
+
 local ilvlCache = {}
 local cacheExpiry = 300
+
+local function GetFrostNetUser(name)
+    if not name or name == "" then return nil end
+    local cleanName = string.match(name, "^([^%-]+)")
+    if not cleanName or cleanName == "" then return nil end
+    local Presence = FrostSeek and FrostSeek.Presence
+    if Presence and Presence.onlineUsers then
+        local u = Presence.onlineUsers[cleanName]
+        if u then return u end
+    end
+    local myName = UnitName and UnitName("player") or ""
+    if cleanName == myName then
+        return { version = FrostSeek and FrostSeek.VERSION or "", role = (FrostSeekDB and FrostSeekDB.Profile and FrostSeekDB.Profile.role) or "" }
+    end
+    return nil
+end
+
+local function AppendFrostNetLines(tip, name)
+    local u = GetFrostNetUser(name)
+    if not u then return end
+    tip:AddLine("|cff88ccff" .. (L["tooltip_frostnet_user"] or "FrostNet User") .. "|r")
+    if u.version and u.version ~= "" then
+        tip:AddLine(string.format(L["tooltip_frostnet_version"] or "FrostSeek v%s", u.version), 0.6, 0.8, 1, true)
+    end
+    if u.role and u.role ~= "" and u.role ~= (L["none"] or "None") then
+        tip:AddLine((L["col_role"] or "Role") .. ": " .. tostring(u.role), 0.8, 0.8, 0.8)
+    end
+end
+
+local function GetTooltipUnitName(tip)
+    local ok, name = pcall(function() return tip:GetUnit() end)
+    if ok and name and name ~= "" then
+        return name
+    end
+    local okL, line = pcall(function()
+        if tip.TextLeft1 then return tip.TextLeft1:GetText() end
+    end)
+    if okL and line and line ~= "" then
+        return string.match(line, "^%s*([%w]+)")
+    end
+    return nil
+end
+
+pcall(function()
+    GameTooltip:HookScript("OnTooltipSetUnit", function(self)
+        local name = GetTooltipUnitName(self)
+        if name then
+            AppendFrostNetLines(self, name)
+        end
+    end)
+end)
 
 local function CalculatePlayerItemLevel(unit)
     if not unit then return nil end

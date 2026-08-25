@@ -1167,7 +1167,7 @@ function Listings:BuildBrowseFrame()
             previewMsg = LFG.CreateWhisperMessage() or ""
         end
         if previewMsg and previewMsg ~= "" then
-            if #previewMsg > 200 then previewMsg = string.sub(previewMsg, 1, 197) .. "..." end
+            if #previewMsg > 200 then previewMsg = LFG.TruncateVisible and LFG.TruncateVisible(previewMsg, 200) or (string.sub(previewMsg, 1, 197) .. "...") end
             local isCustom = FrostSeekDB and FrostSeekDB.LFG and FrostSeekDB.LFG.customMessages and FrostSeekDB.LFG.customMessages.enabled
             local label = isCustom and (L["tip_preview_custom"] or "Preview (custom):") or (L["tip_preview_base"] or "Preview (base):")
             GameTooltip:AddLine(label, 0.7, 0.85, 1, true)

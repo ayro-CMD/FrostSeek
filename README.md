@@ -4,7 +4,7 @@
 **Advanced LFG/LFM Manager with FrostNet** — for WoW Ascension & all WoW Classic / Retail clients.
 
 [![License](https://img.shields.io/badge/License-Proprietary-red.svg)](License)
-[![Version](https://img.shields.io/badge/Version-2.3.3-blue.svg)](https://www.curseforge.com/wow/addons/frostseek)
+[![Version](https://img.shields.io/badge/Version-2.3.4-blue.svg)](https://www.curseforge.com/wow/addons/frostseek)
 
 ---
 
@@ -135,7 +135,7 @@ Supported languages:
    ├── Media\
    └── Modules\
    ```
-4. Open WoW — you'll see `FrostSeek v2.3.3 loaded!` in chat
+4. Open WoW — you'll see `FrostSeek v2.3.4 loaded!` in chat
 
 ---
 

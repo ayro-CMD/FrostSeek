@@ -55,7 +55,7 @@ function FrostSeek._v.g(name)
     return FrostSeek._v.w[name]
 end
 
-FrostSeek.VERSION = "2.3.3"
+FrostSeek.VERSION = "2.3.4"
 
 local L = setmetatable({}, {
     __index = function(_, key)

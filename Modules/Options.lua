@@ -458,11 +458,19 @@ local function UpdateCustomPreview(previewText)
     if customMessages and customMessages.enabled then
         local message = customMessages.template or "inv {role} {class} {spec} {ilvl} ilvl"
 
+        local LFGMod = _G.FrostSeek and _G.FrostSeek.Modules and _G.FrostSeek.Modules.lfg
+        local specValue = ""
+        if LFGMod and LFGMod.GetSpecWithEnchant then
+            specValue = LFGMod.GetSpecWithEnchant() or ""
+        else
+            specValue = enchant or ""
+        end
+
         message = string.gsub(message, "{class}", classInfo or "")
         message = string.gsub(message, "{ilvl}", tostring(ilvl or 0))
         message = string.gsub(message, "{gs}", "")
         message = string.gsub(message, "{ench}", enchant or "")
-        message = string.gsub(message, "{spec}", enchant or "")
+        message = string.gsub(message, "{spec}", specValue)
         message = string.gsub(message, "{role}", roleText or "")
         local playerLevel = UnitLevel("player") or 0
         message = string.gsub(message, "{level}", tostring(playerLevel))
