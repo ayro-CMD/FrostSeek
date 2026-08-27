@@ -651,7 +651,100 @@ local KEYSTONE_SPECIAL_NAMES = {
     LBRS = "Lower Blackrock Spire",
     UBRS = "Upper Blackrock Spire",
     MC = "Molten Core",
+    MARA = "Maraudon",
+    DM = "Dire Maul",
+    SFK = "Shadowfang Keep",
+    SM = "Scarlet Monastery",
 }
+
+local DUNGEON_WINGS = {
+    {
+        id = "MARA",
+        name = "Maraudon",
+        keywords = { "maraudon", "mara" },
+        wings = {
+            { name = "Orange",   short = "Orange",   keywords = { "orange" } },
+            { name = "Purple",   short = "Purple",   keywords = { "purple" } },
+            { name = "Pristine", short = "Pristine", keywords = { "pristine" } },
+        },
+    },
+    {
+        id = "DM",
+        name = "Dire Maul",
+        keywords = { "dire maul", "dire", "maul", "dme", "dmn", "dmw" },
+        wings = {
+            { name = "East",  short = "East",  keywords = { "east", "dme" } },
+            { name = "North", short = "North", keywords = { "north", "dmn" } },
+            { name = "West",  short = "West",  keywords = { "west", "dmw" } },
+        },
+    },
+    {
+        id = "STRAT",
+        name = "Stratholme",
+        keywords = { "stratholme", "strat" },
+        wings = {
+            { name = "Living", short = "Living", keywords = { "living", "living side", "live", "main gate", "scarlet" } },
+            { name = "Undead", short = "Undead", keywords = { "undead", "undead side", "dead side", "dead", "baron", "ud" } },
+        },
+    },
+    {
+        id = "SFK",
+        name = "Shadowfang Keep",
+        keywords = { "shadowfang keep", "shadowfang", "sfk" },
+        wings = {
+            { name = "Halls of the Damned", short = "HotD",   keywords = { "halls of the damned", "halls of damned", "hotd", "damned", "halls" } },
+            { name = "Argal's Rise",        short = "Argal",  keywords = { "argal's rise", "argals rise", "argal rise", "argal" } },
+        },
+    },
+    {
+        id = "BRD",
+        name = "Blackrock Depths",
+        keywords = { "blackrock depths", "brd" },
+        wings = {
+            { name = "Upper", short = "Upper", keywords = { "upper" } },
+            { name = "Lower", short = "Lower", keywords = { "lower" } },
+        },
+    },
+    {
+        id = "SM",
+        name = "Scarlet Monastery",
+        keywords = { "scarlet monastery", "scarlet", "sm" },
+        wings = {
+            { name = "Graveyard", short = "GY",   keywords = { "graveyard", "gy" } },
+            { name = "Library",   short = "Lib",  keywords = { "library", "lib" } },
+            { name = "Armory",    short = "Arm",  keywords = { "armory", "armoury", "arm" } },
+            { name = "Cathedral", short = "Cath", keywords = { "cathedral", "cath" } },
+        },
+    },
+    {
+        id = "WC",
+        name = "Wailing Caverns",
+        keywords = { "wailing caverns", "wailing", "wc" },
+        wings = {
+            { name = "Pit of the Fangs", short = "Pit", keywords = { "pit of the fangs", "pit of fangs", "pit" } },
+        },
+    },
+}
+
+local DUNGEON_WING_LOOKUP = {}
+for _, entry in ipairs(DUNGEON_WINGS) do
+    DUNGEON_WING_LOOKUP[entry.id] = entry
+end
+
+LFG.DUNGEON_WINGS = DUNGEON_WINGS
+LFG.DUNGEON_WING_LOOKUP = DUNGEON_WING_LOOKUP
+
+local function SafeTipLabel(key, fallback)
+    local v = L[key]
+    if type(v) == "string" and v ~= "" and v ~= key then
+        return v
+    end
+    return fallback
+end
+LFG.GetTipLabel = SafeTipLabel
+
+local WING_LABEL_COLOR = "|cff8cc7ff"
+local WING_NAME_COLOR = "|cffffffff"
 
 local PVP_SUBTYPE_NAMES = {
     ARENA_2V2 = "Arena 2v2",
@@ -785,6 +878,8 @@ local SHORT_NAME_OVERRIDES = {
     ["Blackfathom Deeps"] = "BFD",
     ["Blackrock Cavern"] = "BRC",
     ["Dire Maul North"] = "DMN",
+    ["Dire Maul East"] = "DME",
+    ["Dire Maul West"] = "DMW",
     ["Shadowbone Depths"] = "SD",
     ["Temple of Embers"] = "Embers",
     ["Arena (2v2/3v3/5v5)"] = "Arena",
@@ -862,6 +957,8 @@ local SHORT_NAME_OVERRIDES = {
     ["World Boss Tour"] = "WB Tour",
     ["Emerald Dream"] = "Dream",
 }
+
+LFG.SHORT_NAME_OVERRIDES = SHORT_NAME_OVERRIDES
 
 function LFG.GetShortDungeonName(category, dungeon)
     local name = LFG.GetCanonicalDungeonName(category, dungeon)
@@ -1187,6 +1284,51 @@ local function wholeWordFind(text, word)
     return string.find(text, "%f[%a%d]" .. word .. "%f[^%a%d]") ~= nil
 end
 
+function LFG.ParseDungeonWing(message, category, dungeon)
+    if not message or message == "" then return nil end
+    local lowerMsg = string.lower(message)
+    local entry = dungeon and DUNGEON_WING_LOOKUP[string.upper(tostring(dungeon))] or nil
+    if not entry then
+        for _, e in ipairs(DUNGEON_WINGS) do
+            for _, kw in ipairs(e.keywords) do
+                if wholeWordFind(lowerMsg, kw) then
+                    entry = e
+                    break
+                end
+            end
+            if entry then break end
+        end
+    end
+    if not entry and category == "KEYSTONE" and wholeWordFind(lowerMsg, "dm") then
+        entry = DUNGEON_WING_LOOKUP["DM"]
+    end
+    if not entry then return nil end
+    for _, wing in ipairs(entry.wings) do
+        for _, kw in ipairs(wing.keywords) do
+            if wholeWordFind(lowerMsg, kw) then
+                return wing.name, wing.short, entry.name, entry.id
+            end
+        end
+    end
+    return nil, nil, entry.name, entry.id
+end
+
+function LFG.ParseKeystoneLevel(message)
+    if not message then return nil end
+    local _, level = LFG.ParseKeystoneInfo(message)
+    if level then return level end
+    local lvl = string.match(message, "%+(%d+)")
+    if lvl then return tonumber(lvl) end
+    local lowerMsg = string.lower(message)
+    lvl = string.match(lowerMsg, "%sm(%d+)")
+    if lvl then return tonumber(lvl) end
+    lvl = string.match(lowerMsg, "^m(%d+)")
+    if lvl then return tonumber(lvl) end
+    lvl = string.match(message, "%((%d+)%)")
+    if lvl then return tonumber(lvl) end
+    return nil
+end
+
 local RAID_ICON_TEXTURES = {
     ["star"]     = "Interface\\TargetingFrame\\UI-RaidTargetingIcon_1",
     ["circle"]   = "Interface\\TargetingFrame\\UI-RaidTargetingIcon_2",
@@ -1412,6 +1554,25 @@ function LFG.ClassifyMessage(msg)
         local dungeonName = string.match(msg, "%[Keystone: ([^%]]+)")
         if dungeonName then
             dungeonName = string.lower(dungeonName)
+            local keystoneNameChecks = {
+                { "stratholme", "STRAT" }, { "strath", "STRAT" }, { "strat", "STRAT" },
+                { "dire maul", "DM" },
+                { "blackrock depths", "BRD" },
+                { "scholomance", "SCHOLO" }, { "scholo", "SCHOLO" },
+                { "lower blackrock spire", "LBRS" }, { "lbrs", "LBRS" },
+                { "upper blackrock spire", "UBRS" }, { "ubrs", "UBRS" },
+                { "molten core", "MC" },
+                { "maraudon", "MARA" }, { "mara", "MARA" },
+                { "wailing caverns", "WC" }, { "wailing", "WC" },
+                { "shadowfang keep", "SFK" }, { "shadowfang", "SFK" }, { "sfk", "SFK" },
+                { "scarlet monastery", "SM" }, { "scarlet", "SM" },
+                { "dme", "DM" }, { "dmn", "DM" }, { "dmw", "DM" }, { "brd", "BRD" }, { "mc", "MC" },
+            }
+            for _, check in ipairs(keystoneNameChecks) do
+                if string.find(dungeonName, check[1], 1, true) then
+                    return "KEYSTONE", check[2], false, false, false, true, false
+                end
+            end
             for _, d in ipairs(DUNGEON_KEYWORDS) do
                 if string.find(dungeonName, d) then
                     return "KEYSTONE", string.upper(d), false, false, false, true, false
@@ -1435,19 +1596,25 @@ function LFG.ClassifyMessage(msg)
     end
     for _, kw in ipairs(KEYSTONE_KEYWORDS) do
         if wholeWordFind(lowerMsg, kw) then
-            if wholeWordFind(lowerMsg, "strath") then
+            if wholeWordFind(lowerMsg, "stratholme") or wholeWordFind(lowerMsg, "strath") or wholeWordFind(lowerMsg, "strat") then
                 return "KEYSTONE", "STRAT", false, false, false, true, false
             elseif wholeWordFind(lowerMsg, "dire maul") or wholeWordFind(lowerMsg, "dme") or wholeWordFind(lowerMsg, "dmn") or wholeWordFind(lowerMsg, "dmw") then
                 return "KEYSTONE", "DM", false, false, false, true, false
             elseif wholeWordFind(lowerMsg, "brd") or wholeWordFind(lowerMsg, "blackrock depths") then
                 return "KEYSTONE", "BRD", false, false, false, true, false
-            elseif wholeWordFind(lowerMsg, "scholo") then
+            elseif wholeWordFind(lowerMsg, "scholomance") or wholeWordFind(lowerMsg, "scholo") then
                 return "KEYSTONE", "SCHOLO", false, false, false, true, false
-            elseif wholeWordFind(lowerMsg, "lbrs") then
+            elseif wholeWordFind(lowerMsg, "lbrs") or wholeWordFind(lowerMsg, "lower blackrock spire") then
                 return "KEYSTONE", "LBRS", false, false, false, true, false
-            elseif wholeWordFind(lowerMsg, "ubrs") then
+            elseif wholeWordFind(lowerMsg, "ubrs") or wholeWordFind(lowerMsg, "upper blackrock spire") then
                 return "KEYSTONE", "UBRS", false, false, false, true, false
-            elseif wholeWordFind(lowerMsg, "mc") or wholeWordFind(lowerMsg, "molten core") then
+            elseif wholeWordFind(lowerMsg, "maraudon") or wholeWordFind(lowerMsg, "mara") then
+                return "KEYSTONE", "MARA", false, false, false, true, false
+            elseif wholeWordFind(lowerMsg, "shadowfang") or wholeWordFind(lowerMsg, "sfk") then
+                return "KEYSTONE", "SFK", false, false, false, true, false
+            elseif wholeWordFind(lowerMsg, "scarlet monastery") or wholeWordFind(lowerMsg, "sm") then
+                return "KEYSTONE", "SM", false, false, false, true, false
+            elseif wholeWordFind(lowerMsg, "molten core") or wholeWordFind(lowerMsg, "mc") then
                 return "KEYSTONE", "MC", false, false, false, true, false
             else
                 return "KEYSTONE", "KEYSTONE", false, false, false, true, false
@@ -1761,6 +1928,18 @@ SlashCmdList["FSKEYTEST"] = function(msg)
     local ksName, ksLevel = LFG.ParseKeystoneInfo(msg)
     print("  ksName: " .. tostring(ksName))
     print("  ksLevel: " .. tostring(ksLevel))
+    if ksName and ksName ~= "" then
+        local linkBase, linkWing = LFG.SplitKeystoneWingName(ksName)
+        if linkWing then
+            print("  KsSplit: " .. tostring(linkBase) .. " / " .. tostring(linkWing))
+        end
+    end
+    if not ksLevel then
+        print("  ksLevel (fallback): " .. tostring(LFG.ParseKeystoneLevel(msg)))
+    end
+    local wingName, wingShort, wingParentName, wingParentId = LFG.ParseDungeonWing(msg, category, dungeon)
+    print("  Wing: " .. tostring(wingName) .. " (" .. tostring(wingShort) .. ")")
+    print("  WingDungeon: " .. tostring(wingParentName) .. " [" .. tostring(wingParentId) .. "]")
     local minLevel = FrostSeekDB and FrostSeekDB.LFG and FrostSeekDB.LFG.keystoneMinLevel or 0
     print("  keystoneMinLevel (DB): " .. tostring(minLevel))
     if isKeystone and minLevel and minLevel > 0 and ksLevel then
@@ -2346,6 +2525,13 @@ function LFG.ParseKeystoneInfo(message)
     name = string.gsub(name, "%s+$", "")
 
     return name, level
+end
+
+function LFG.SplitKeystoneWingName(name)
+    if not name or name == "" then return nil, nil end
+    local base, wing = string.match(name, "^(.-)%s+%-%s+(.+)$")
+    if not base or base == "" or not wing or wing == "" then return nil, nil end
+    return base, wing
 end
 
 local function TruncateVisible(msg, maxVisible)
@@ -2969,14 +3155,53 @@ function LFG.CreateLFGPopup(sender, message, dungeon, isHeroic, isMythic, isRaid
     local shortDungeon = LFG.GetShortDungeonName(category, dungeon)
     if isKeystone then
         local ksName, ksLevel = LFG.ParseKeystoneInfo(message)
-        if ksName then
-            dungeonDisplay = ksName
-            if ksLevel then
-                diffTag = L["diff_mythic"] .. ksLevel
-                diffColor = "|cffff44ff"
+        if not ksLevel then
+            ksLevel = LFG.ParseKeystoneLevel(message)
+        end
+        local _, wingShort, wingParentName, wingParentId = LFG.ParseDungeonWing(message, category, dungeon)
+        if ksName and ksName ~= "" then
+            local linkBase, linkWing = LFG.SplitKeystoneWingName(ksName)
+            if linkWing then
+                local dispBase = linkBase
+                if SHORT_NAME_OVERRIDES[dispBase] then
+                    dispBase = SHORT_NAME_OVERRIDES[dispBase]
+                elseif string.len(dispBase) > 16 then
+                    local firstWord = string.match(dispBase, "^(%S+)")
+                    if firstWord and string.len(firstWord) <= 16 then
+                        dispBase = firstWord
+                    else
+                        dispBase = string.sub(dispBase, 1, 14) .. "..."
+                    end
+                end
+                local linkShort = linkWing
+                if string.len(linkShort) > 12 then
+                    linkShort = string.match(linkWing, "^(%S+)") or linkWing
+                end
+                local dispBaseLower = string.lower(dispBase or "")
+                if not string.find(dispBaseLower, string.lower(linkShort), 1, true) then
+                    dungeonDisplay = dispBase .. " " .. linkShort
+                else
+                    dungeonDisplay = dispBase
+                end
+            else
+                dungeonDisplay = ksName
             end
         else
-            dungeonDisplay = shortDungeon ~= "" and shortDungeon or L["cat_keystone"]
+            if wingParentName and (dungeon == "KEYSTONE" or wingParentId == dungeon) then
+                dungeonDisplay = SHORT_NAME_OVERRIDES[wingParentName] or LFG.GetShortDungeonName(category, wingParentId) or (shortDungeon ~= "" and shortDungeon or L["cat_keystone"])
+            else
+                dungeonDisplay = shortDungeon ~= "" and shortDungeon or L["cat_keystone"]
+            end
+            if wingShort and wingParentId and wingParentId == dungeon then
+                local dispLower = string.lower(dungeonDisplay)
+                if not string.find(dispLower, string.lower(wingShort), 1, true) then
+                    dungeonDisplay = dungeonDisplay .. " " .. wingShort
+                end
+            end
+        end
+        if ksLevel then
+            diffTag = L["diff_mythic"] .. ksLevel
+            diffColor = "|cffff44ff"
         end
     elseif category == "RAID" then
         dungeonDisplay = shortDungeon ~= "" and shortDungeon or L["cat_raid"]
@@ -3826,6 +4051,22 @@ function LFG.UpdateRecruitersList()
             local roleStr = LFG.FormatRolesText(roles)
             local roleFullStr = LFG.FormatRolesFullText(roles)
             poolRow.roleText:SetText(roleStr)
+            local ksName, ksLevel
+            if record.isKeystone then
+                ksName, ksLevel = LFG.ParseKeystoneInfo(record.message)
+                if not ksLevel then
+                    ksLevel = LFG.ParseKeystoneLevel(record.message)
+                end
+            end
+            local ksBaseName, ksLinkWing
+            if ksName and ksName ~= "" then
+                local linkBase, linkWing = LFG.SplitKeystoneWingName(ksName)
+                if linkWing then
+                    ksBaseName = linkBase
+                    ksLinkWing = linkWing
+                end
+            end
+            local wingName, wingShort, wingParentName, wingParentId = LFG.ParseDungeonWing(record.message, record.category, record.dungeon)
             if record.dungeon and record.dungeon ~= "MISC" and record.dungeon ~= "PVP" and record.dungeon ~= "MANASTORM" and record.dungeon ~= "WORLD_BOSS" then
 
                 local diffLabel = LFG.ParseDifficulty(record.message, record.category)
@@ -3870,31 +4111,59 @@ function LFG.UpdateRecruitersList()
                     diffTag = L["diff_heroic"]
                     diffColor = "|cff44cc44"
                 elseif record.category == "DUNGEON" or record.category == "RAID" or record.category == "WORLD_BOSS" then
-                    diffTag = L["diff_normal"]
-                    diffColor = "|cffcccccc"
-                end
-                local ksName, ksLevel
-                if record.isKeystone then
-                    ksName, ksLevel = LFG.ParseKeystoneInfo(record.message)
-                    if ksLevel then
-                        diffTag = "+" .. tostring(ksLevel)
+                    local plusLvl = string.match(record.message or "", "%+(%d%d+)")
+                    if plusLvl then
+                        diffTag = "+" .. plusLvl
                         diffColor = "|cffff44ff"
+                    else
+                        diffTag = L["diff_normal"]
+                        diffColor = "|cffcccccc"
                     end
+                end
+                if record.isKeystone and ksLevel then
+                    diffTag = "+" .. tostring(ksLevel)
+                    diffColor = "|cffff44ff"
                 end
                 local fullDungeonName = record.dungeonName or record.dungeon or ""
                 local dungeonName = LFG.GetShortDungeonName(record.category, record.dungeon) or fullDungeonName
                 if record.isKeystone and ksName and ksName ~= "" then
-                    if SHORT_NAME_OVERRIDES[ksName] then
-                        dungeonName = SHORT_NAME_OVERRIDES[ksName]
-                    elseif string.len(ksName) > 16 then
-                        local firstWord = string.match(ksName, "^(%S+)")
+                    local rowName = ksBaseName or ksName
+                    if SHORT_NAME_OVERRIDES[rowName] then
+                        dungeonName = SHORT_NAME_OVERRIDES[rowName]
+                    elseif string.len(rowName) > 16 then
+                        local firstWord = string.match(rowName, "^(%S+)")
                         if firstWord and string.len(firstWord) <= 16 then
                             dungeonName = firstWord
                         else
-                            dungeonName = string.sub(ksName, 1, 14) .. "..."
+                            dungeonName = string.sub(rowName, 1, 14) .. "..."
                         end
                     else
-                        dungeonName = ksName
+                        dungeonName = rowName
+                    end
+                end
+                if record.isKeystone and (not ksName or ksName == "") and wingParentName
+                    and (record.dungeon == "KEYSTONE" or DUNGEON_WING_LOOKUP[record.dungeon]) then
+                    dungeonName = SHORT_NAME_OVERRIDES[wingParentName] or LFG.GetShortDungeonName(record.category, wingParentId) or dungeonName
+                end
+                if wingShort and wingParentName then
+                    local wingBaseLower = string.lower(dungeonName or "")
+                    if not string.find(wingBaseLower, string.lower(wingShort), 1, true) then
+                        local wingBaseName = SHORT_NAME_OVERRIDES[wingParentName] or LFG.GetShortDungeonName(record.category, wingParentId) or dungeonName
+                        if wingBaseName and wingBaseName ~= "" then
+                            dungeonName = wingBaseName .. " " .. wingShort
+                        else
+                            dungeonName = dungeonName .. " " .. wingShort
+                        end
+                    end
+                end
+                if ksLinkWing and not (wingShort and wingParentName) then
+                    local linkShort = ksLinkWing
+                    if string.len(linkShort) > 12 then
+                        linkShort = string.match(ksLinkWing, "^(%S+)") or ksLinkWing
+                    end
+                    local rowBaseLower = string.lower(dungeonName or "")
+                    if not string.find(rowBaseLower, string.lower(linkShort), 1, true) then
+                        dungeonName = dungeonName .. " " .. linkShort
                     end
                 end
                 local catAccent = CATEGORY_ACCENT[record.category] or CATEGORY_ACCENT.MISC
@@ -3926,12 +4195,58 @@ function LFG.UpdateRecruitersList()
                 GameTooltip:AddLine(L["tip_time_label"] .. string.format("%ds ago", timeSinceForTooltip), 0.8, 0.8, 0.8)
                 if record.dungeon and record.dungeon ~= "MISC" then
                     local tipDungeon = record.dungeonName or record.dungeon
-                    if record.isKeystone and ksLevel then
-                        tipDungeon = tipDungeon .. " (+" .. tostring(ksLevel) .. ")"
+                    local tipWing = wingName
+                    if record.isKeystone then
+                        if ksName and ksName ~= "" then
+                            tipDungeon = ksName
+                            local linkBase, linkWing = LFG.SplitKeystoneWingName(ksName)
+                            if linkWing then
+                                tipWing = linkWing
+                                if linkBase and linkBase ~= "" then
+                                    tipDungeon = linkBase
+                                end
+                            elseif wingName then
+                                local stripped = string.gsub(tipDungeon, "%s*%-?%s*" .. wingName .. "%s*$", "")
+                                stripped = string.gsub(stripped, "%s*[%-:]%s*$", "")
+                                if stripped ~= "" and stripped ~= tipDungeon then
+                                    tipDungeon = stripped
+                                end
+                            end
+                        elseif wingParentName and (record.dungeon == "KEYSTONE" or DUNGEON_WING_LOOKUP[record.dungeon]) then
+                            tipDungeon = wingParentName
+                        end
+                    elseif wingName and wingParentName then
+                        tipDungeon = wingParentName
                     end
                     GameTooltip:AddLine(L["tip_dungeon_label"] .. tipDungeon, 0.8, 0.8, 0.8)
+                    if tipWing then
+                        GameTooltip:AddLine(WING_LABEL_COLOR .. SafeTipLabel("tip_wing_label", "Wing: ") .. "|r " .. WING_NAME_COLOR .. tipWing .. "|r")
+                    end
                 end
                 GameTooltip:AddLine(L["tip_category_label"] .. record.category, 0.8, 0.8, 0.8)
+                local tipDifficulty = nil
+                if record.isKeystone then
+                    if ksLevel then
+                        tipDifficulty = "+" .. tostring(ksLevel)
+                    end
+                elseif record.category == "PVP" or record.category == "MISC" then
+                    tipDifficulty = nil
+                elseif record.isMythic then
+                    tipDifficulty = L["diff_mythic"]
+                elseif record.isHeroic then
+                    tipDifficulty = L["diff_heroic"]
+                else
+                    tipDifficulty = LFG.ParseDifficulty(record.message, record.category)
+                    if not tipDifficulty then
+                        local plusLvl = string.match(record.message or "", "%+(%d%d+)")
+                        if plusLvl then
+                            tipDifficulty = "+" .. plusLvl
+                        end
+                    end
+                end
+                if tipDifficulty and tipDifficulty ~= "" then
+                    GameTooltip:AddLine(SafeTipLabel("tip_difficulty_label", "Difficulty: ") .. tipDifficulty, 1, 0.6, 0.3)
+                end
                 local Presence = FrostSeek and FrostSeek.Presence
                 local presenceUser = Presence and Presence.onlineUsers and record.player and Presence.onlineUsers[record.player] or nil
                 if presenceUser then
