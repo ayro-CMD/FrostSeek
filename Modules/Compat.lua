@@ -147,31 +147,77 @@ if not C_Timer then
     end
 end
 
-local textureMt = getmetatable(CreateFrame("Frame"):CreateTexture())
-if textureMt and not textureMt.__index.SetColorTexture then
-    textureMt.__index.SetColorTexture = function(self, r, g, b, a)
-        self:SetTexture(r, g, b)
-        if a then self:SetAlpha(a) end
+local FSK_METHOD_FALLBACKS = {}
+
+local function PolyfillWidgetMethod(widget, methodName, impl)
+    if not widget then return end
+    pcall(function()
+        local mt = getmetatable(widget)
+        if not mt then return end
+        local idx = mt.__index
+        if type(idx) == "table" then
+            if idx[methodName] == nil then
+                idx[methodName] = impl
+            end
+        elseif type(idx) == "function" then
+            if rawget(mt, "__fskPolyfill") ~= true then
+                local oldIndex = idx
+                mt.__index = function(self, key)
+                    local v = oldIndex(self, key)
+                    if v == nil then
+                        return FSK_METHOD_FALLBACKS[key]
+                    end
+                    return v
+                end
+                rawset(mt, "__fskPolyfill", true)
+            end
+            if FSK_METHOD_FALLBACKS[methodName] == nil then
+                FSK_METHOD_FALLBACKS[methodName] = impl
+            end
+        end
+    end)
+end
+
+local function PolyfillSetShown(self, shown)
+    if shown then
+        if self.Show then self:Show() end
+    else
+        if self.Hide then self:Hide() end
     end
 end
 
-local frameMt = getmetatable(CreateFrame("Frame"))
-if frameMt and not frameMt.__index.SetShown then
-    frameMt.__index.SetShown = function(self, shown)
-        if shown then self:Show() else self:Hide() end
+local function PolyfillSetColorTexture(self, r, g, b, a)
+    self:SetTexture(r, g, b)
+    if a then self:SetAlpha(a) end
+end
+
+do
+    local WIDGET_TYPES = {
+        "Frame", "Button", "CheckButton", "Slider", "EditBox",
+        "MessageFrame", "ScrollFrame", "SimpleHTML", "StatusBar",
+        "ColorSelect", "Cooldown", "Model", "PlayerModel",
+    }
+    for _, widgetType in ipairs(WIDGET_TYPES) do
+        local ok, widget = pcall(CreateFrame, widgetType)
+        if ok and widget then
+            PolyfillWidgetMethod(widget, "SetShown", PolyfillSetShown)
+        end
     end
 end
 
-local testFrame = CreateFrame("Frame")
-local testTex = testFrame:CreateTexture()
-local textureMt2 = getmetatable(testTex)
-if textureMt2 and not textureMt2.__index.SetShown then
-    textureMt2.__index.SetShown = function(self, shown)
-        if shown then self:Show() else self:Hide() end
+do
+    local probe = CreateFrame("Frame")
+    local okT, tex = pcall(function() return probe:CreateTexture() end)
+    if okT and tex then
+        PolyfillWidgetMethod(tex, "SetShown", PolyfillSetShown)
+        PolyfillWidgetMethod(tex, "SetColorTexture", PolyfillSetColorTexture)
     end
+    local okF, fs = pcall(function() return probe:CreateFontString() end)
+    if okF and fs then
+        PolyfillWidgetMethod(fs, "SetShown", PolyfillSetShown)
+    end
+    probe:Hide()
 end
-testFrame = nil
-testTex = nil
 
 FrostSeekCompat = FrostSeekCompat or {}
 

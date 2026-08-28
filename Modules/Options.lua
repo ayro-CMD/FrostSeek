@@ -257,9 +257,10 @@ local function CreateCleanEditBox(parent, width, height, isMultiLine)
 
     editBox:SetBackdrop(nil)
 
-    for i = 1, #editBox:GetRegions() do
-        local region = select(i, editBox:GetRegions())
-        if region and region:GetObjectType() == "Texture" then
+    local regions = { editBox:GetRegions() }
+    for i = 1, #regions do
+        local region = regions[i]
+        if region and region.GetObjectType and region:GetObjectType() == "Texture" then
             region:SetTexture(nil)
             region:Hide()
         end

@@ -31,6 +31,11 @@ local currentPage = 1
 local TOTAL_PAGES = 4
 local ShowPage
 
+local pageFrames = {}
+local pageRefreshers = {}
+local pagesBuilt = false
+local showScheduled = false
+
 local wizardState = {
     language = "auto",
     role = "No Role",
@@ -45,15 +50,33 @@ local function L_(key, default)
     return L[key] or default or key
 end
 
+local function SetVisible(widget, visible)
+    if not widget then return end
+    if visible then
+        if widget.Show then widget:Show() end
+    else
+        if widget.Hide then widget:Hide() end
+    end
+end
+
+local function SetSolidColor(texture, r, g, b, a)
+    if not texture then return end
+    if texture.SetColorTexture then
+        texture:SetColorTexture(r, g, b, a)
+    else
+        texture:SetTexture(r, g, b, a or 1)
+    end
+end
+
 local function CreateModernButton(parent, text, width, height)
     local btn = CreateFrame("Button", nil, parent)
     btn:SetSize(width or 120, height or 28)
     btn.bg = btn:CreateTexture(nil, "BACKGROUND")
     btn.bg:SetAllPoints()
-    btn.bg:SetColorTexture(unpack(_tc("bgButton")))
+    SetSolidColor(btn.bg, unpack(_tc("bgButton")))
     btn.border = btn:CreateTexture(nil, "BORDER")
     btn.border:SetAllPoints()
-    btn.border:SetColorTexture(unpack(_tc("border")))
+    SetSolidColor(btn.border, unpack(_tc("border")))
     btn.text = btn:CreateFontString(nil, "OVERLAY", "FSKFontNormal")
     btn.text:SetPoint("CENTER")
     btn.text:SetText(text)
@@ -72,47 +95,32 @@ local function CreateModernButton(parent, text, width, height)
     end
     btn:FitText()
     btn:SetScript("OnEnter", function(self)
-        self.bg:SetColorTexture(unpack(_tc("bgTabActive")))
+        SetSolidColor(self.bg, unpack(_tc("bgTabActive")))
         self.text:SetTextColor(unpack(_tc("textAccent")))
-        self.border:SetColorTexture(unpack(_tc("borderHover")))
+        SetSolidColor(self.border, unpack(_tc("borderHover")))
     end)
     btn:SetScript("OnLeave", function(self)
-        self.bg:SetColorTexture(unpack(_tc("bgButton")))
+        SetSolidColor(self.bg, unpack(_tc("bgButton")))
         self.text:SetTextColor(unpack(_tc("textPrimary")))
-        self.border:SetColorTexture(unpack(_tc("border")))
+        SetSolidColor(self.border, unpack(_tc("border")))
     end)
     return btn
 end
 
---noah
-local function ClearPageContent(content)
-    if not content then return end
-    local children = { content:GetChildren() }
-    for _, child in ipairs(children) do
-        if child and child.Hide then child:Hide() end
-    end
-    local regions = { content:GetRegions() }
-    for _, region in ipairs(regions) do
-        if region and region.Hide then region:Hide() end
-    end
-end
-
-local function RenderPage1(content)
-    ClearPageContent(content)
+local function BuildPage1(content)
+    local cw = content:GetWidth()
+    if not cw or cw < 300 then cw = 610 end
 
     local title = content:CreateFontString(nil, "OVERLAY", "FSKFontNormalLarge")
     title:SetPoint("TOP", content, "TOP", 0, -10)
-    title:SetText(L["setup_page_1_title"])
     title:SetTextColor(unpack(_tc("textAccent")))
 
     local desc = content:CreateFontString(nil, "OVERLAY", "FSKFontNormal")
     desc:SetPoint("TOP", title, "BOTTOM", 0, -15)
-    desc:SetText(L["setup_page_1_desc"])
     desc:SetTextColor(unpack(_tc("textMuted")))
 
     local langLabel = content:CreateFontString(nil, "OVERLAY", "FSKFontNormal")
     langLabel:SetPoint("TOP", desc, "BOTTOM", 0, -40)
-    langLabel:SetText(L["settings_language"] .. ":")
     langLabel:SetTextColor(unpack(_tc("textPrimary")))
 
     local langBtn = CreateModernButton(content, "auto", 200, 32)
@@ -127,7 +135,25 @@ local function RenderPage1(content)
         langBtn.text:SetText(GetLangDisplay(wizardState.language))
         langBtn:FitText()
     end
-    UpdateLangBtn()
+
+    local themeLabel = content:CreateFontString(nil, "OVERLAY", "FSKFontNormal")
+    themeLabel:SetPoint("TOP", langBtn, "BOTTOM", 0, -28)
+    themeLabel:SetTextColor(unpack(_tc("textPrimary")))
+
+    local themeBtn = CreateModernButton(content, wizardState.theme or "Shadow", 200, 32)
+    themeBtn:SetPoint("TOP", themeLabel, "BOTTOM", 0, -10)
+
+    local function UpdateThemeBtn()
+        themeBtn.text:SetText(wizardState.theme or "Shadow")
+        themeBtn:FitText()
+    end
+
+    local note = content:CreateFontString(nil, "OVERLAY", "FSKFontNormalSmall")
+    note:SetPoint("BOTTOM", content, "BOTTOM", 0, 20)
+    note:SetWidth(cw - 80)
+    note:SetTextColor(unpack(_tc("textDim")))
+    note:SetJustifyH("CENTER")
+    note:SetWordWrap(true)
 
     langBtn:SetScript("OnClick", function()
         local codes = { "auto" }
@@ -146,23 +172,8 @@ local function RenderPage1(content)
         if not FrostSeekDB then FrostSeekDB = {} end
         if not FrostSeekDB.Settings then FrostSeekDB.Settings = {} end
         FrostSeekDB.Settings.language = wizardState.language
-        UpdateLangBtn()
         ShowPage(currentPage)
     end)
-
-    local themeLabel = content:CreateFontString(nil, "OVERLAY", "FSKFontNormal")
-    themeLabel:SetPoint("TOP", langBtn, "BOTTOM", 0, -28)
-    themeLabel:SetText((L["options_theme"] or "Theme") .. ":")
-    themeLabel:SetTextColor(unpack(_tc("textPrimary")))
-
-    local themeBtn = CreateModernButton(content, wizardState.theme or "Shadow", 200, 32)
-    themeBtn:SetPoint("TOP", themeLabel, "BOTTOM", 0, -10)
-
-    local function UpdateThemeBtn()
-        themeBtn.text:SetText(wizardState.theme or "Shadow")
-        themeBtn:FitText()
-    end
-    UpdateThemeBtn()
 
     themeBtn:SetScript("OnClick", function()
         local themes = { "Frost", "Blood", "Emerald", "Void", "Classic", "Neon",
@@ -186,48 +197,53 @@ local function RenderPage1(content)
         UpdateThemeBtn()
     end)
 
-    local note = content:CreateFontString(nil, "OVERLAY", "FSKFontNormalSmall")
-    note:SetPoint("BOTTOM", content, "BOTTOM", 0, 20)
-    note:SetWidth(content:GetWidth() - 80)
-    note:SetText(L_("setup_page_1_note", ""))
-    note:SetTextColor(unpack(_tc("textDim")))
-    note:SetJustifyH("CENTER")
-    note:SetWordWrap(true)
+    local function RefreshTexts()
+        title:SetText(L["setup_page_1_title"])
+        desc:SetText(L["setup_page_1_desc"])
+        langLabel:SetText(L["settings_language"] .. ":")
+        themeLabel:SetText((L["options_theme"] or "Theme") .. ":")
+        note:SetText(L_("setup_page_1_note", ""))
+        UpdateLangBtn()
+        UpdateThemeBtn()
+    end
+
+    RefreshTexts()
+    return RefreshTexts
 end
 
-local function RenderPage2(content)
-    ClearPageContent(content)
-
+local function BuildPage2(content)
     local title = content:CreateFontString(nil, "OVERLAY", "FSKFontNormalLarge")
     title:SetPoint("TOP", content, "TOP", 0, -10)
-    title:SetText(L["setup_page_2_title"])
     title:SetTextColor(unpack(_tc("textAccent")))
 
     local body = content:CreateFontString(nil, "OVERLAY", "FSKFontNormal")
     body:SetPoint("TOPLEFT", content, "TOPLEFT", 20, -50)
     body:SetPoint("BOTTOMRIGHT", content, "BOTTOMRIGHT", -20, 20)
-    body:SetText(L_("setup_page_2_body", ""))
     body:SetTextColor(unpack(_tc("textPrimary")))
     body:SetJustifyH("LEFT")
     body:SetJustifyV("TOP")
     body:SetWordWrap(true)
+
+    local function RefreshTexts()
+        title:SetText(L["setup_page_2_title"])
+        body:SetText(L_("setup_page_2_body", ""))
+    end
+
+    RefreshTexts()
+    return RefreshTexts
 end
 
-local function RenderPage3(content)
-    ClearPageContent(content)
-
+local function BuildPage3(content)
     local cw = content:GetWidth()
     if not cw or cw < 300 then cw = 610 end
 
     local title = content:CreateFontString(nil, "OVERLAY", "FSKFontNormalLarge")
     title:SetPoint("TOP", content, "TOP", 0, -10)
-    title:SetText(L["setup_page_3_title"])
     title:SetTextColor(unpack(_tc("textAccent")))
 
     local desc = content:CreateFontString(nil, "OVERLAY", "FSKFontNormal")
     desc:SetPoint("TOP", title, "BOTTOM", 0, -10)
     desc:SetWidth(cw - 40)
-    desc:SetText(L["setup_page_3_desc"])
     desc:SetTextColor(unpack(_tc("textMuted")))
 
     local popupsBtn = CreateModernButton(content, L["setup_enable_popups"], 320, 36)
@@ -240,16 +256,10 @@ local function RenderPage3(content)
         end
         popupsBtn:FitText()
     end
-    UpdatePopupsBtn()
-    popupsBtn:SetScript("OnClick", function()
-        wizardState.enablePopups = not wizardState.enablePopups
-        UpdatePopupsBtn()
-    end)
 
     local popupsDesc = content:CreateFontString(nil, "OVERLAY", "FSKFontNormalSmall")
     popupsDesc:SetPoint("TOPLEFT", popupsBtn, "BOTTOMLEFT", 6, -8)
     popupsDesc:SetWidth(cw - 100)
-    popupsDesc:SetText(L_("setup_page_3_popups_desc", ""))
     popupsDesc:SetTextColor(unpack(_tc("textDim")))
     popupsDesc:SetJustifyH("LEFT")
     popupsDesc:SetWordWrap(true)
@@ -264,33 +274,48 @@ local function RenderPage3(content)
         end
         chatFilterBtn:FitText()
     end
-    UpdateChatFilterBtn()
+
+    local chatFilterDesc = content:CreateFontString(nil, "OVERLAY", "FSKFontNormalSmall")
+    chatFilterDesc:SetPoint("TOPLEFT", chatFilterBtn, "BOTTOMLEFT", 6, -8)
+    chatFilterDesc:SetWidth(cw - 100)
+    chatFilterDesc:SetTextColor(unpack(_tc("textDim")))
+    chatFilterDesc:SetJustifyH("LEFT")
+    chatFilterDesc:SetWordWrap(true)
+
+    popupsBtn:SetScript("OnClick", function()
+        wizardState.enablePopups = not wizardState.enablePopups
+        UpdatePopupsBtn()
+    end)
+
     chatFilterBtn:SetScript("OnClick", function()
         wizardState.enableChatFilter = not wizardState.enableChatFilter
         UpdateChatFilterBtn()
     end)
 
-    local chatFilterDesc = content:CreateFontString(nil, "OVERLAY", "FSKFontNormalSmall")
-    chatFilterDesc:SetPoint("TOPLEFT", chatFilterBtn, "BOTTOMLEFT", 6, -8)
-    chatFilterDesc:SetWidth(cw - 100)
-    chatFilterDesc:SetText(L_("setup_page_3_chatfilter_desc", ""))
-    chatFilterDesc:SetTextColor(unpack(_tc("textDim")))
-    chatFilterDesc:SetJustifyH("LEFT")
-    chatFilterDesc:SetWordWrap(true)
+    local function RefreshTexts()
+        title:SetText(L["setup_page_3_title"])
+        desc:SetText(L["setup_page_3_desc"])
+        popupsDesc:SetText(L_("setup_page_3_popups_desc", ""))
+        chatFilterDesc:SetText(L_("setup_page_3_chatfilter_desc", ""))
+        UpdatePopupsBtn()
+        UpdateChatFilterBtn()
+    end
+
+    RefreshTexts()
+    return RefreshTexts
 end
 
-local function RenderPage4(content)
-    ClearPageContent(content)
+local function BuildPage4(content)
+    local cw = content:GetWidth()
+    if not cw or cw < 300 then cw = 610 end
 
     local title = content:CreateFontString(nil, "OVERLAY", "FSKFontNormalLarge")
     title:SetPoint("TOP", content, "TOP", 0, -30)
-    title:SetText(L["setup_page_4_title"])
     title:SetTextColor(unpack(_tc("textAccent")))
 
     local body = content:CreateFontString(nil, "OVERLAY", "FSKFontNormal")
     body:SetPoint("TOPLEFT", content, "TOPLEFT", 30, -80)
     body:SetPoint("BOTTOMRIGHT", content, "BOTTOMRIGHT", -30, 60)
-    body:SetText(L_("setup_page_4_body", ""))
     body:SetTextColor(unpack(_tc("textPrimary")))
     body:SetJustifyH("LEFT")
     body:SetJustifyV("TOP")
@@ -298,31 +323,58 @@ local function RenderPage4(content)
 
     local hint = content:CreateFontString(nil, "OVERLAY", "FSKFontNormalSmall")
     hint:SetPoint("BOTTOM", content, "BOTTOM", 0, 20)
-    hint:SetText(L["setup_finish_hint"])
     hint:SetTextColor(unpack(_tc("textDim")))
 
     local extra = content:CreateFontString(nil, "OVERLAY", "FSKFontNormalSmall")
     extra:SetPoint("BOTTOM", hint, "TOP", 0, 10)
-    extra:SetWidth(content:GetWidth() - 80)
-    extra:SetText(L_("setup_page_4_extra", ""))
+    extra:SetWidth(cw - 80)
     extra:SetTextColor(unpack(_tc("textMuted")))
     extra:SetJustifyH("CENTER")
     extra:SetWordWrap(true)
+
+    local function RefreshTexts()
+        title:SetText(L["setup_page_4_title"])
+        body:SetText(L_("setup_page_4_body", ""))
+        hint:SetText(L["setup_finish_hint"])
+        extra:SetText(L_("setup_page_4_extra", ""))
+    end
+
+    RefreshTexts()
+    return RefreshTexts
 end
 
-local pageRenderers = {
-    [1] = RenderPage1,
-    [2] = RenderPage2,
-    [3] = RenderPage3,
-    [4] = RenderPage4,
+local pageBuilders = {
+    [1] = BuildPage1,
+    [2] = BuildPage2,
+    [3] = BuildPage3,
+    [4] = BuildPage4,
 }
+
+local function EnsurePages()
+    if pagesBuilt then return end
+    if not (wizardFrame and wizardFrame.content) then return end
+    pagesBuilt = true
+    for i = 1, TOTAL_PAGES do
+        local container = CreateFrame("Frame", nil, wizardFrame.content)
+        container:SetAllPoints()
+        container:Hide()
+        pageFrames[i] = container
+        local builder = pageBuilders[i]
+        if builder then
+            local ok, refresher = pcall(builder, container)
+            if ok and type(refresher) == "function" then
+                pageRefreshers[i] = refresher
+            end
+        end
+    end
+end
 
 
 local function UpdateNavButtons()
     if not wizardFrame then return end
-    wizardFrame.backBtn:SetShown(currentPage > 1)
-    wizardFrame.nextBtn:SetShown(currentPage < TOTAL_PAGES)
-    wizardFrame.finishBtn:SetShown(currentPage == TOTAL_PAGES)
+    SetVisible(wizardFrame.backBtn, currentPage > 1)
+    SetVisible(wizardFrame.nextBtn, currentPage < TOTAL_PAGES)
+    SetVisible(wizardFrame.finishBtn, currentPage == TOTAL_PAGES)
     wizardFrame.pageText:SetText(string.format("%d / %d", currentPage, TOTAL_PAGES))
     if wizardFrame.titleBar then
         wizardFrame.titleBar:SetText("|cff88ccff" .. (L["setup_title"]) .. "|r")
@@ -348,8 +400,11 @@ end
 function ShowPage(pageNum)
     if pageNum < 1 or pageNum > TOTAL_PAGES then return end
     currentPage = pageNum
-    if pageRenderers[currentPage] and wizardFrame and wizardFrame.content then
-        pageRenderers[currentPage](wizardFrame.content)
+    for i = 1, TOTAL_PAGES do
+        SetVisible(pageFrames[i], i == currentPage)
+    end
+    if pageRefreshers[currentPage] then
+        pcall(pageRefreshers[currentPage])
     end
     UpdateNavButtons()
 end
@@ -386,7 +441,7 @@ function Setup.Show()
 
     local titleBar = wizardFrame:CreateFontString(nil, "OVERLAY", "FSKFontNormalLarge")
     titleBar:SetPoint("TOP", wizardFrame, "TOP", 0, -18)
-    
+
     if FSK_FontSystem and FSK_FontSystem.SafeText then
         FSK_FontSystem.SafeText(titleBar, "FSKFontNormalLarge",
             "|cff88ccff" .. (L["setup_title"]) .. "|r")
@@ -453,6 +508,8 @@ function Setup.Show()
         print(L["msg_setup_skipped"])
     end)
 
+    EnsurePages()
+
     wizardFrame:Show()
     ShowPage(1)
 
@@ -467,9 +524,18 @@ function Setup.ShouldShow()
 end
 
 function Setup.MaybeShow()
+    if showScheduled then return end
+    if wizardFrame and wizardFrame.IsShown and wizardFrame:IsShown() then return end
     if Setup.ShouldShow() then
+        showScheduled = true
         C_Timer.After(4, function()
-            Setup.Show()
+            showScheduled = false
+            local msgh = _G.debugstack or debug.traceback
+            local ok, err = xpcall(Setup.Show, msgh)
+            if not ok then
+                local handler = _G.geterrorhandler or function(e) print(e) end
+                handler(err)
+            end
         end)
     end
 end
