@@ -1,4 +1,0 @@
-<Ui xmlns="http://www.blizzard.com/wow/ui/">
-<Script file="Listings.lua"/>
-<Script file="Listings_UI.lua"/>
-</Ui>
