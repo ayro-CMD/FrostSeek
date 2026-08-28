@@ -1,0 +1,19 @@
+<Ui xmlns="http://www.blizzard.com/wow/ui/">
+<Script file="Modules\UI\Fonts.lua"/>
+<Script file="Modules\Compat.lua"/>
+<Script file="Modules\UI\Theme.lua"/>
+<Script file="Modules\UI\UIUtils.lua"/>
+<Script file="Modules\Shared.lua"/>
+<Script file="Core.lua"/>
+<Include file="Locales\locales.xml"/>
+<Include file="Modules\Network\network.xml"/>
+<Include file="Modules\Presence\presence.xml"/>
+<Include file="Modules\Profile\profile.xml"/>
+<Include file="Modules\LFG\lf.xml"/>
+<Include file="Modules\Listings\listings.xml"/>
+<Include file="Modules\Community\community.xml"/>
+<Include file="Modules\VoiceBridge\voicebridge.xml"/>
+<Include file="Modules\VersionCheck\versioncheck.xml"/>
+<Include file="Modules\Module.xml"/>
+<Include file="Modules\Setup\setup.xml"/>
+</Ui>

@@ -1,0 +1,5 @@
+<Ui xmlns="http://www.blizzard.com/wow/ui/">
+<Script file="Community.lua"/>
+<Script file="Community_Events.lua"/>
+<Script file="Community_Recruit.lua"/>
+</Ui>

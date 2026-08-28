@@ -1,0 +1,57 @@
+<Ui xmlns="http://www.blizzard.com/wow/ui/">
+<!--
+==============================================================================
+ FrostSeek - Font System (Fonts.xml)  [v2.4.4]
+==============================================================================
+ Definisce i 5 oggetti Font FSKFont* usati da tutta l'UI dell'addon
+ (oltre 350 FontString su 20+ file), in PURO XML e con il font INCLUSO
+ NELL'ADDON: Media\Fonts\Carlito-Regular.ttf (SIL Open Font License 1.1,
+ vedi Media\Fonts\LICENSE-Carlito.txt).
+
+ Questo e' lo stesso meccanismo con cui il client definisce i propri
+ GameFont* (FontStyles.xml): non dipende da CreateFont/CopyFontObject,
+ da GetFont o da percorsi font del client. Il file viene processato dal
+ TOC PRIMA di loader.xml: gli oggetti esistono quindi prima che qualunque
+ Lua dell'addon giri.
+
+ Modules\UI\Fonts.lua (caricato per primo da loader.xml) verifica poi
+ funzionalmente gli oggetti e, sui client sani, li aggiorna al look
+ nativo derivandoli dai GameFont*; dove i font del client non sono
+ utilizzabili resta il font bundled definito qui.
+==============================================================================
+-->
+    <Font name="FSKFontNormalSmall" font="Interface\AddOns\FrostSeek\Media\Fonts\Carlito-Regular.ttf" virtual="true">
+        <FontHeight>
+            <AbsValue val="10"/>
+        </FontHeight>
+        <Color r="1.0" g="0.82" b="0.0"/>
+    </Font>
+
+    <Font name="FSKFontNormal" font="Interface\AddOns\FrostSeek\Media\Fonts\Carlito-Regular.ttf" virtual="true">
+        <FontHeight>
+            <AbsValue val="12"/>
+        </FontHeight>
+        <Color r="1.0" g="0.82" b="0.0"/>
+    </Font>
+
+    <Font name="FSKFontNormalLarge" font="Interface\AddOns\FrostSeek\Media\Fonts\Carlito-Regular.ttf" virtual="true">
+        <FontHeight>
+            <AbsValue val="14"/>
+        </FontHeight>
+        <Color r="1.0" g="0.82" b="0.0"/>
+    </Font>
+
+    <Font name="FSKFontNormalHuge" font="Interface\AddOns\FrostSeek\Media\Fonts\Carlito-Regular.ttf" virtual="true">
+        <FontHeight>
+            <AbsValue val="20"/>
+        </FontHeight>
+        <Color r="1.0" g="0.82" b="0.0"/>
+    </Font>
+
+    <Font name="FSKFontDisableSmall" font="Interface\AddOns\FrostSeek\Media\Fonts\Carlito-Regular.ttf" virtual="true">
+        <FontHeight>
+            <AbsValue val="10"/>
+        </FontHeight>
+        <Color r="0.5" g="0.5" b="0.5"/>
+    </Font>
+</Ui>
