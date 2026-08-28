@@ -11,5 +11,4 @@
 ## X-License: All Rights Reserved - More info in License file
 ## X-Curse-Project-ID: 1460315
 
-Modules\UI\Fonts.xml
 loader.xml
