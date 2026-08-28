@@ -1,0 +1,36 @@
+Bundled fonts - additional typefaces
+======================================
+
+This folder bundles the following fonts (in addition to Carlito,
+see LICENSE-Carlito.txt) to give FrostSeek users a choice of bundled
+typefaces that work on ANY client - including heavily modified custom
+clients that do not expose any usable font to addons:
+
+  * LiberationSans-Regular.ttf  (neutral sans, Arial metrics)
+  * LiberationSerif-Regular.ttf (classic serif, Times metrics)
+  * DejaVuSans.ttf              (sturdy, wide-coverage sans)
+
+Licenses
+--------
+Liberation Sans / Liberation Serif:
+    Copyright (c) 2012 Red Hat, Inc.
+    Licensed under the SIL Open Font License, Version 1.1.
+    https://openfontlicense.org/open-font-license-official-text/
+    The SIL OFL 1.1 permits use, bundling and redistribution of
+    unmodified copies of the font in any software, provided that
+    this notice accompanies the font.
+
+DejaVu Sans:
+    Copyright (c) 2003 by Bitstream, Inc. (Bitstream Vera Fonts)
+    Copyright (c) 2006 by Tavmjong Bah. DejaVu changes are in the
+    public domain.
+    Free license: permission is granted to copy, distribute and/or
+    modify this font under the terms of the Bitstream Vera / DejaVu
+    free-font licenses (redistribution of unmodified copies, with
+    copyright notices preserved, is expressly allowed).
+
+All font files are bundled UNMODIFIED inside the FrostSeek addon
+(Media\Fonts\). The FrostSeek addon code itself remains under the
+FrostSeek Proprietary License (see the "License" file in the addon
+root folder). These license notices apply ONLY to the font files in
+Media\Fonts\, which remain under their respective free licenses.

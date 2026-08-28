@@ -1,0 +1,20 @@
+Carlito - font bundled with FrostSeek
+======================================
+
+File:     Carlito-Regular.ttf
+Author:  Lukasz Dziedzic (tyPoland), commissioned by Google
+License: SIL Open Font License, Version 1.1
+         https://openfontlicense.org/open-font-license-official-text/
+Copyright (c) 2010-2013 by tyPoland Lukasz Dziedzic, with Reserved
+Font Name "Carlito".
+
+This font file is bundled UNMODIFIED inside the FrostSeek addon
+(Media\Fonts\) because some heavily modified custom clients do not
+expose any usable font file to addons. The SIL Open Font License 1.1
+permits use, bundling and redistribution of unmodified copies of the
+font in any software, provided that this notice accompanies the font.
+
+The FrostSeek addon code itself remains under the FrostSeek Proprietary
+License (see the "License" file in the addon root folder). This license
+notice applies ONLY to the font files in Media\Fonts\, which remain
+under the SIL Open Font License 1.1.
