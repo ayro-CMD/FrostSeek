@@ -1,4 +1,0 @@
-<Ui xmlns="http://www.blizzard.com/wow/ui/">
-<Script file="LFG.lua"/>
-<Script file="LFM.lua"/>
-</Ui>
